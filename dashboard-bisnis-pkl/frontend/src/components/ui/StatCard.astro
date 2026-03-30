@@ -1,0 +1,101 @@
+---
+interface Props {
+  title: string;
+  value: string | number;
+  change?: string;
+  changeType?: 'positive' | 'negative' | 'neutral';
+  color?: 'sales' | 'finance' | 'crm' | 'hr' | 'inventory';
+  icon?: string;
+  href?: string;
+}
+
+const { title, value, change, changeType = 'neutral', color = 'sales', icon, href } = Astro.props;
+
+const bgClasses: Record<string, string> = {
+  sales: 'bg-gradient-to-br from-sales-50 to-sales-100 border-sales-200',
+  finance: 'bg-gradient-to-br from-finance-50 to-finance-100 border-finance-200',
+  crm: 'bg-gradient-to-br from-crm-50 to-crm-100 border-crm-200',
+  hr: 'bg-gradient-to-br from-hr-50 to-hr-100 border-hr-200',
+  inventory: 'bg-gradient-to-br from-inventory-50 to-inventory-100 border-inventory-200'
+};
+
+const iconBgClasses: Record<string, string> = {
+  sales: 'bg-sales-500 text-white',
+  finance: 'bg-finance-600 text-white',
+  crm: 'bg-crm-500 text-white',
+  hr: 'bg-hr-500 text-white',
+  inventory: 'bg-inventory-500 text-white'
+};
+
+const changeColors: Record<string, string> = {
+  positive: 'text-green-600',
+  negative: 'text-red-600',
+  neutral: 'text-gray-600'
+};
+
+const iconSvg = icon ? icon : '';
+---
+
+{href ? (
+  <a href={href} class={`block bg-white rounded-xl shadow-sm border ${bgClasses[color]} p-6 hover:shadow-md transition-shadow`}>
+    <div class="flex items-center justify-between">
+      <div class="flex-1">
+        <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">{title}</p>
+        <p class="mt-2 text-3xl font-bold text-gray-900">{value}</p>
+        {change && (
+          <p class={`mt-2 text-sm font-medium ${changeColors[changeType]} flex items-center`}>
+            {changeType === 'positive' && (
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            )}
+            {changeType === 'negative' && (
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+              </svg>
+            )}
+            {change}
+          </p>
+        )}
+      </div>
+      {icon && (
+        <div class={`p-4 rounded-xl ${iconBgClasses[color]}`}>
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={icon} />
+          </svg>
+        </div>
+      )}
+    </div>
+  </a>
+) : (
+  <div class={`bg-white rounded-xl shadow-sm border ${bgClasses[color]} p-6`}>
+    <div class="flex items-center justify-between">
+      <div class="flex-1">
+        <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">{title}</p>
+        <p class="mt-2 text-3xl font-bold text-gray-900">{value}</p>
+        {change && (
+          <p class={`mt-2 text-sm font-medium ${changeColors[changeType]} flex items-center`}>
+            {changeType === 'positive' && (
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            )}
+            {changeType === 'negative' && (
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+              </svg>
+            )}
+            {change}
+          </p>
+        )}
+      </div>
+      {icon && (
+        <div class={`p-4 rounded-xl ${iconBgClasses[color]}`}>
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={icon} />
+          </svg>
+        </div>
+      )}
+    </div>
+  </div>
+)}

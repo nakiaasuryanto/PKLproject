@@ -1,0 +1,144 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Card from '../components/ui/Card.astro';
+import Button from '../components/ui/Button.astro';
+import StatCard from '../components/ui/StatCard.astro';
+import { dashboardApi, api } from '../lib/api';
+
+// Fetch dashboard overview stats (optional)
+let dashboardStats = null;
+try {
+  const response = await dashboardApi.getOverview();
+  if (response.success) {
+    dashboardStats = response.data;
+  }
+} catch (error) {
+  console.error('Failed to fetch dashboard stats:', error);
+}
+
+// Fetch recent transactions for activity log
+let recentActivities = [];
+try {
+  const response = await api.get('/transactions?limit=5');
+  if (response.success && Array.isArray(response.data)) {
+    recentActivities = response.data;
+  }
+} catch (error) {
+  console.error('Failed to fetch recent activities:', error);
+}
+---
+
+<MainLayout title="Dashboard Bisnis - Digital360" activeModule="home">
+  <!-- Hero Section -->
+  <div class="mb-8">
+    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+      Selamat Datang di Dashboard Bisnis
+    </h1>
+    <p class="text-base sm:text-lg text-gray-600">
+      Sistem terintegrasi untuk mengelola operasional bisnis Anda
+    </p>
+  </div>
+
+  <!-- Quick Stats Overview (if API data available) -->
+  {dashboardStats && (
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+      <StatCard
+        title="Total Penjualan"
+        value={`Rp ${(dashboardStats.sales?.total_sales || 0).toLocaleString('id-ID')}`}
+        change={dashboardStats.sales?.sales_growth_label || '0%'}
+        changeType={(dashboardStats.sales?.sales_growth || 0) >= 0 ? 'positive' : 'negative'}
+        color="sales"
+        href="/sales"
+      />
+      <StatCard
+        title="Customer Aktif"
+        value={dashboardStats.crm?.active_customers || 0}
+        change={`dari ${dashboardStats.crm?.total_customers || 0} total`}
+        changeType="neutral"
+        color="crm"
+        href="/crm"
+      />
+      <StatCard
+        title="Stok Tersedia"
+        value={dashboardStats.inventory?.total_stock || 0}
+        change={`${dashboardStats.inventory?.low_stock_items || 0} item rendah`}
+        changeType={(dashboardStats.inventory?.low_stock_items || 0) > 5 ? "negative" : "neutral"}
+        color="inventory"
+        href="/inventory"
+      />
+      <StatCard
+        title="Karyawan Aktif"
+        value={dashboardStats.hr?.active_employees || 0}
+        change={`dari ${dashboardStats.hr?.total_employees || 0} total`}
+        changeType="neutral"
+        color="hr"
+        href="/hr"
+      />
+    </div>
+  )}
+
+  <!-- Quick Actions -->
+  <Card title="Aksi Cepat" color="gray" className="mb-6 sm:mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <Button variant="primary" color="sales" size="lg" href="/sales" className="w-full justify-center">
+        <span class="mr-2">➕</span> Transaksi Baru
+      </Button>
+      <Button variant="primary" color="crm" size="lg" href="/crm" className="w-full justify-center">
+        <span class="mr-2">👤</span> Tambah Customer
+      </Button>
+      <Button variant="primary" color="inventory" size="lg" href="/inventory" className="w-full justify-center">
+        <span class="mr-2">📥</span> Input Stok
+      </Button>
+    </div>
+  </Card>
+
+  <!-- Recent Activity -->
+  <Card title="Aktivitas Terbaru" color="gray">
+    <div class="space-y-3 sm:space-y-4">
+      {recentActivities.length > 0 ? recentActivities.map((activity: any) => {
+        const isSale = activity.transaction_type === 'SALE';
+        const isExpense = activity.transaction_type === 'EXPENSE';
+        const colorClass = isSale ? 'sales' : isExpense ? 'finance' : 'gray';
+
+        return (
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 border-b border-gray-100 gap-1">
+            <div class="flex items-center space-x-3">
+              <div class={`w-2 h-2 bg-${colorClass}-500 rounded-full flex-shrink-0`}></div>
+              <div>
+                <p class="text-sm font-medium text-gray-900">
+                  {isSale ? 'Transaksi penjualan baru' : isExpense ? 'Pengeluaran baru' : 'Transaksi baru'}
+                </p>
+                <p class="text-xs text-gray-500">
+                  {new Date(activity.transaction_date).toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+            </div>
+            <span class={`text-sm font-semibold text-${colorClass}-600`}>
+              {isSale ? `Rp ${(activity.total_amount || 0).toLocaleString('id-ID')}` : activity.notes || '-'}
+            </span>
+          </div>
+        );
+      }) : (
+        <div class="py-8 text-center text-gray-500">
+          <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p class="text-sm">Belum ada aktivitas</p>
+        </div>
+      )}
+    </div>
+
+    {recentActivities.length > 0 && (
+      <div class="mt-5 sm:mt-6 text-center">
+        <a href="/sales" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+          Lihat Semua Aktivitas →
+        </a>
+      </div>
+    )}
+  </Card>
+</MainLayout>

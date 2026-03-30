@@ -1,0 +1,43 @@
+---
+interface Props {
+  title?: string;
+  color?: 'sales' | 'finance' | 'crm' | 'hr' | 'inventory' | 'gray';
+  className?: string;
+  noPadding?: boolean;
+  headerAction?: boolean;
+}
+
+const { title, color = 'gray', className = '', noPadding = false, headerAction = false } = Astro.props;
+
+const colorClasses: Record<string, string> = {
+  sales: 'border-sales-200',
+  finance: 'border-finance-200',
+  crm: 'border-crm-200',
+  hr: 'border-hr-200',
+  inventory: 'border-inventory-200',
+  gray: 'border-gray-200'
+};
+
+const titleColorClasses: Record<string, string> = {
+  sales: 'text-sales-700',
+  finance: 'text-finance-700',
+  crm: 'text-crm-700',
+  hr: 'text-hr-700',
+  inventory: 'text-inventory-700',
+  gray: 'text-gray-700'
+};
+---
+
+<div class={`bg-white rounded-xl shadow-sm border ${colorClasses[color]} ${className}`}>
+  {title && (
+    <div class={`px-6 py-4 border-b ${colorClasses[color]} flex items-center justify-between`}>
+      <h3 class={`text-lg font-semibold ${titleColorClasses[color]}`}>{title}</h3>
+      {headerAction && (
+        <slot name="header-action" />
+      )}
+    </div>
+  )}
+  <div class={noPadding ? '' : 'p-6'}>
+    <slot />
+  </div>
+</div>

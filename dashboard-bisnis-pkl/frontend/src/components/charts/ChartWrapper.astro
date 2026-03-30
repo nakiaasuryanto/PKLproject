@@ -1,0 +1,33 @@
+---
+interface Props {
+  chartId: string;
+  title?: string;
+  description?: string;
+  height?: string;
+  className?: string;
+}
+
+const { chartId, title, description, height = '300px', className = '' } = Astro.props;
+---
+
+<div class={`chart-container ${className}`}>
+  {(title || description) && (
+    <div class="mb-4">
+      {title && <h3 class="text-lg font-semibold text-gray-900">{title}</h3>}
+      {description && <p class="text-sm text-gray-500 mt-1">{description}</p>}
+    </div>
+  )}
+  <div class="relative" style={`height: ${height}`}>
+    <canvas id={chartId}></canvas>
+  </div>
+</div>
+
+<style>
+  .chart-container {
+    position: relative;
+  }
+
+  .chart-container canvas {
+    max-height: 100%;
+  }
+</style>

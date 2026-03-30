@@ -1,0 +1,353 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import Button from '../../components/ui/Button.astro';
+
+const currentYear = new Date().getFullYear();
+---
+
+<MainLayout title="Tambah Karyawan - HR" activeModule="hr">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <a href="/hr" class="inline-flex items-center text-hr-600 hover:text-hr-700 mb-4">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Kembali ke HR
+    </a>
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Tambah Karyawan Baru</h1>
+    <p class="mt-2 text-gray-600">Lengkapi formulir di bawah untuk menambahkan karyawan baru</p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+    <form id="employeeForm" class="p-6 sm:p-8">
+      <!-- Personal Information Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          📋 Informasi Pribadi
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Kode Inisial -->
+          <div>
+            <label for="initial_code" class="block text-sm font-medium text-gray-700 mb-2">
+              Kode Inisial <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="initial_code"
+              name="initial_code"
+              required
+              maxlength="5"
+              placeholder="Contoh: ABC"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+            <p class="mt-1 text-xs text-gray-500">Maksimal 5 karakter huruf kapital</p>
+          </div>
+
+          <!-- Nama Lengkap -->
+          <div>
+            <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">
+              Nama Lengkap <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="full_name"
+              name="full_name"
+              required
+              placeholder="Contoh: John Doe"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+          </div>
+
+          <!-- Nama Panggilan -->
+          <div>
+            <label for="nickname" class="block text-sm font-medium text-gray-700 mb-2">
+              Nama Panggilan <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="nickname"
+              name="nickname"
+              required
+              placeholder="Contoh: John"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+          </div>
+
+          <!-- Jenis Kelamin -->
+          <div>
+            <label for="gender" class="block text-sm font-medium text-gray-700 mb-2">
+              Jenis Kelamin <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="gender"
+              name="gender"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            >
+              <option value="">Pilih Jenis Kelamin</option>
+              <option value="L">Laki-laki</option>
+              <option value="P">Perempuan</option>
+            </select>
+          </div>
+
+          <!-- Tempat Lahir -->
+          <div>
+            <label for="birth_place" class="block text-sm font-medium text-gray-700 mb-2">
+              Tempat Lahir <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="birth_place"
+              name="birth_place"
+              required
+              placeholder="Contoh: Jakarta"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+          </div>
+
+          <!-- Tanggal Lahir -->
+          <div>
+            <label for="birth_date" class="block text-sm font-medium text-gray-700 mb-2">
+              Tanggal Lahir <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              id="birth_date"
+              name="birth_date"
+              required
+              max={`${currentYear}-12-31`}
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Information Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          📞 Informasi Kontak
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Email -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+              Email <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder="contoh@email.com"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+          </div>
+
+          <!-- Telepon -->
+          <div>
+            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+              Telepon <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              required
+              placeholder="08xxxxxxxxxx"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+          </div>
+
+          <!-- Alamat KTP -->
+          <div class="md:col-span-2">
+            <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+              Alamat KTP <span class="text-red-500">*</span>
+            </label>
+            <textarea
+              id="address"
+              name="address"
+              required
+              rows="3"
+              placeholder="Masukkan alamat lengkap sesuai KTP"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employment Information Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          💼 Informasi Pekerjaan
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Divisi -->
+          <div>
+            <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
+              Divisi <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="department"
+              name="department"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            >
+              <option value="">Pilih Divisi</option>
+              <option value="Management">Management</option>
+              <option value="Finance">Finance</option>
+              <option value="Sales">Sales</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Operations">Operations</option>
+              <option value="IT">IT</option>
+              <option value="HR">HR</option>
+              <option value="Customer Service">Customer Service</option>
+            </select>
+          </div>
+
+          <!-- Posisi -->
+          <div>
+            <label for="position" class="block text-sm font-medium text-gray-700 mb-2">
+              Posisi <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="position"
+              name="position"
+              required
+              placeholder="Contoh: Staff Admin"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+          </div>
+
+          <!-- Status Karyawan -->
+          <div>
+            <label for="employee_status" class="block text-sm font-medium text-gray-700 mb-2">
+              Status Karyawan <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="employee_status"
+              name="employee_status"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            >
+              <option value="">Pilih Status</option>
+              <option value="TRAINING">Training</option>
+              <option value="PERMANENT">Permanen</option>
+              <option value="CONTRACT">Kontrak</option>
+              <option value="PROBATION">Masa Percobaan</option>
+            </select>
+          </div>
+
+          <!-- Tanggal Masuk -->
+          <div>
+            <label for="hire_date" class="block text-sm font-medium text-gray-700 mb-2">
+              Tanggal Masuk <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              id="hire_date"
+              name="hire_date"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hr-500 focus:border-hr-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-200">
+        <a href="/hr">
+          <Button variant="outline" color="hr" size="md" tag="span">
+            Batal
+          </Button>
+        </a>
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 px-6 py-2 text-sm bg-hr-500 text-white hover:bg-hr-600 focus:ring-hr-500 shadow-sm hover:shadow"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Simpan Karyawan
+        </button>
+      </div>
+    </form>
+  </div>
+</MainLayout>
+
+<script>
+  const employeeForm = document.getElementById('employeeForm') as HTMLFormElement;
+  const currentYear = new Date().getFullYear();
+
+  // Set minimum and maximum dates for date fields
+  const birthDateInput = document.getElementById('birth_date') as HTMLInputElement;
+  const hireDateInput = document.getElementById('hire_date') as HTMLInputElement;
+
+  if (birthDateInput) {
+    birthDateInput.max = `${currentYear - 16}-12-31`;
+    birthDateInput.min = `${currentYear - 60}-01-01`;
+  }
+
+  if (hireDateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    hireDateInput.min = today;
+    hireDateInput.value = today;
+  }
+
+  // Form submission
+  employeeForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(employeeForm);
+    const data = {
+      initial_code: formData.get('initial_code')?.toUpperCase(),
+      name: formData.get('full_name'),
+      nickname: formData.get('nickname'),
+      gender: formData.get('gender'),
+      birth_place: formData.get('birth_place'),
+      birth_date: formData.get('birth_date'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      address: formData.get('address'),
+      department: formData.get('department'),
+      position: formData.get('position'),
+      status: formData.get('employee_status'),
+      hire_date: formData.get('hire_date')
+    };
+
+    try {
+      const response = await fetch('http://localhost:3001/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('✅ Karyawan berhasil ditambahkan!');
+        window.location.href = '/hr';
+      } else {
+        alert('❌ ' + (result.error || 'Gagal menambahkan karyawan'));
+      }
+    } catch (error) {
+      console.error('Error creating employee:', error);
+      alert('❌ Terjadi kesalahan saat menambahkan karyawan');
+    }
+  });
+</script>
+
+<style>
+  input:invalid, select:invalid, textarea:invalid {
+    border-color: #EF4444;
+  }
+
+  input:valid, select:valid, textarea:valid {
+    border-color: #10B981;
+  }
+</style>

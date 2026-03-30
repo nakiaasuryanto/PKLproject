@@ -1,0 +1,279 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Card from '../components/ui/Card.astro';
+import StatCard from '../components/ui/StatCard.astro';
+import Button from '../components/ui/Button.astro';
+import { api } from '../lib/api';
+
+// Fetch CRM data
+const customersData = await api.get('/customers');
+const statsData = await api.get('/customers/stats/summary');
+
+const customers = (customersData?.success && Array.isArray(customersData?.data)) ? customersData.data : [];
+const stats = (statsData?.success && statsData?.data) ? statsData.data : {};
+
+// Group customers by type
+const customersByType = customers.reduce((acc: Record<string, number>, c: any) => {
+  acc[c.customer_type] = (acc[c.customer_type] || 0) + 1;
+  return acc;
+}, {});
+
+// Top customers
+const topCustomers = [...customers]
+  .sort((a: any, b: any) => (b.total_spent || 0) - (a.total_spent || 0))
+  .slice(0, 5);
+---
+
+<MainLayout title="CRM - Dashboard Bisnis" activeModule="crm">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Customer Relationship Management</h1>
+      <p class="mt-2 text-gray-600">Kelola hubungan dengan pelanggan Anda</p>
+    </div>
+    <div class="mt-4 sm:mt-0">
+      <Button variant="primary" color="crm" size="lg" href="/crm/customers/new">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        Tambah Customer
+      </Button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+    <StatCard
+      title="Total Customer"
+      value={stats.total_customers || 0}
+      change="Terdaftar di sistem"
+      changeType="neutral"
+      color="crm"
+      icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+    />
+    <StatCard
+      title="Customer Aktif"
+      value={stats.active_customers || 0}
+      change={stats.total_customers ? `${Math.round((stats.active_customers / stats.total_customers) * 100)}% dari total` : '0% dari total'}
+      changeType="positive"
+      color="crm"
+      icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+    <StatCard
+      title="Total Pesanan"
+      value={stats.total_orders || 0}
+      change="Transaksi"
+      changeType="neutral"
+      color="crm"
+      icon="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+    />
+    <StatCard
+      title="Total Revenue"
+      value={`Rp ${((stats.total_revenue || 0) / 1000000).toFixed(1)}M`}
+      change="Dari semua customer"
+      changeType="positive"
+      color="crm"
+      icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  </div>
+
+  <!-- Customer Type Breakdown -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+    <Card title="Perusahaan" color="crm">
+      <div class="text-center py-4">
+        <p class="text-3xl sm:text-4xl font-bold text-crm-600">{customersByType.COMPANY || 0}</p>
+        <p class="text-sm text-gray-600 mt-2">Customer Korporat</p>
+      </div>
+    </Card>
+    <Card title="Individual" color="crm">
+      <div class="text-center py-4">
+        <p class="text-3xl sm:text-4xl font-bold text-crm-600">{customersByType.INDIVIDUAL || 0}</p>
+        <p class="text-sm text-gray-600 mt-2">Customer Perorangan</p>
+      </div>
+    </Card>
+    <Card title="Reseller" color="crm">
+      <div class="text-center py-4">
+        <p class="text-3xl sm:text-4xl font-bold text-crm-600">{customersByType.RESELLER || 0}</p>
+        <p class="text-sm text-gray-600 mt-2">Mitra Reseller</p>
+      </div>
+    </Card>
+  </div>
+
+  <!-- Top Customers -->
+  <Card title="Top 5 Customer" color="crm" className="mb-8">
+    <div class="space-y-4">
+      {topCustomers.map((customer: any, index: number) => (
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-lg hover:bg-crm-50 transition-colors">
+          <div class="flex items-center space-x-4 mb-3 sm:mb-0">
+            <div class="w-10 h-10 bg-crm-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <span class="text-lg font-bold text-crm-600">#{index + 1}</span>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">{customer.name}</p>
+              <p class="text-sm text-gray-600">
+                {customer.customer_type} • {customer.city}
+              </p>
+            </div>
+          </div>
+          <div class="text-right sm:ml-4">
+            <p class="font-bold text-crm-600">
+              Rp {(customer.total_spent / 1000000).toFixed(1)}M
+            </p>
+            <p class="text-sm text-gray-600">{customer.total_purchases} pesanan</p>
+          </div>
+        </div>
+      ))}
+      {topCustomers.length === 0 && (
+        <p class="text-center text-gray-500 py-8">Belum ada data customer</p>
+      )}
+    </div>
+  </Card>
+
+  <!-- Customer List -->
+  <Card title="Daftar Customer" color="crm">
+    <!-- Search and Filter -->
+    <div class="mb-6 flex flex-col md:flex-row gap-4">
+      <div class="flex-1">
+        <input
+          type="text"
+          id="customerSearch"
+          placeholder="Cari customer..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crm-500 focus:border-crm-500"
+        />
+      </div>
+      <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crm-500 focus:border-crm-500">
+        <option value="">Semua Status</option>
+        <option value="active">Aktif</option>
+        <option value="inactive">Tidak Aktif</option>
+      </select>
+      <select id="typeFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crm-500 focus:border-crm-500">
+        <option value="">Semua Tipe</option>
+        <option value="COMPANY">Perusahaan</option>
+        <option value="INDIVIDUAL">Individual</option>
+        <option value="RESELLER">Reseller</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200" id="customerTable">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Kota</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Kontak</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Status</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="customerTableBody">
+          {customers.slice(0, 20).map((customer: any) => (
+            <tr class="hover:bg-crm-50 customer-row" data-status={customer.status} data-type={customer.customer_type} data-name={customer.name.toLowerCase()}>
+              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {customer.customer_code}
+              </td>
+              <td class="px-4 sm:px-6 py-4 text-sm text-gray-900">
+                <div>
+                  <p class="font-semibold">{customer.name}</p>
+                  {customer.company_name && (
+                    <p class="text-xs text-gray-500">{customer.company_name}</p>
+                  )}
+                </div>
+              </td>
+              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                <span class="px-2 py-1 text-xs font-medium rounded-full bg-crm-100 text-crm-800">
+                  {customer.customer_type}
+                </span>
+              </td>
+              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell">
+                {customer.city}
+              </td>
+              <td class="px-4 sm:px-6 py-4 text-sm text-gray-600 hidden lg:table-cell">
+                <div>
+                  <p>{customer.phone}</p>
+                  <p class="text-xs text-gray-500">{customer.email}</p>
+                </div>
+              </td>
+              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-semibold text-crm-600">
+                Rp {(customer.total_spent / 1000000).toFixed(1)}M
+              </td>
+              <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                <span class={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  customer.status === 'active'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {customer.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                </span>
+              </td>
+              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                <a href={`/crm/customer/${customer.id}`} class="text-crm-600 hover:text-crm-700 font-medium">
+                  Detail
+                </a>
+              </td>
+            </tr>
+          ))}
+          {customers.length === 0 && (
+            <tr>
+              <td colSpan="8" class="px-6 py-8 text-center text-gray-500">
+                Belum ada data customer
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-gray-600">
+        Menampilkan 1-{Math.min(20, customers.length)} dari {customers.length} customer
+      </p>
+      <div class="flex space-x-2">
+        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          Sebelumnya
+        </button>
+        <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled={customers.length <= 20}>
+          Selanjutnya
+        </button>
+      </div>
+    </div>
+  </Card>
+</MainLayout>
+
+<script>
+  // Client-side filtering
+  const searchInput = document.getElementById('customerSearch') as HTMLInputElement;
+  const statusFilter = document.getElementById('statusFilter') as HTMLSelectElement;
+  const typeFilter = document.getElementById('typeFilter') as HTMLSelectElement;
+  const tableBody = document.getElementById('customerTableBody') as HTMLTableSectionElement;
+
+  function filterCustomers() {
+    const searchTerm = searchInput?.value.toLowerCase() || '';
+    const statusValue = statusFilter?.value || '';
+    const typeValue = typeFilter?.value || '';
+
+    const rows = tableBody?.querySelectorAll('.customer-row');
+    rows?.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const status = row.getAttribute('data-status') || '';
+      const type = row.getAttribute('data-type') || '';
+
+      const matchesSearch = name.includes(searchTerm);
+      const matchesStatus = !statusValue || status === statusValue;
+      const matchesType = !typeValue || type === typeValue;
+
+      if (matchesSearch && matchesStatus && matchesType) {
+        (row as HTMLElement).style.display = '';
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+  }
+
+  searchInput?.addEventListener('input', filterCustomers);
+  statusFilter?.addEventListener('change', filterCustomers);
+  typeFilter?.addEventListener('change', filterCustomers);
+</script>

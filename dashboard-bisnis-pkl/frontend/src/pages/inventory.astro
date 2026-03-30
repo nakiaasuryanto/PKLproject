@@ -1,0 +1,418 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Card from '../components/ui/Card.astro';
+import StatCard from '../components/ui/StatCard.astro';
+import Button from '../components/ui/Button.astro';
+import Modal from '../components/ui/Modal.astro';
+import { api } from '../lib/api';
+
+// Fetch inventory data
+const stockData = await api.get('/inventory/stock');
+const lowStockData = await api.get('/inventory/stock?low_stock=true');
+const recentMovements = await api.get('/inventory/movements?limit=15');
+const locations = await api.get('/inventory/locations');
+
+const stock = (stockData.success && stockData.data) ? stockData.data : [];
+const lowStock = (lowStockData.success && lowStockData.data) ? lowStockData.data : [];
+const movements = (recentMovements.success && recentMovements.data) ? recentMovements.data : [];
+const locationList = (locations.success && locations.data) ? locations.data : [];
+
+// Calculate stats
+const totalStock = stock.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+const totalSKUs = stock.length;
+const lowStockCount = lowStock.length;
+---
+
+<MainLayout title="Persediaan - Dashboard Bisnis" activeModule="inventory">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Manajemen Persediaan</h1>
+      <p class="mt-2 text-gray-600">Monitor stok dan pergerakan barang</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex space-x-3">
+      <Button href="/inventory/input" variant="outline" color="inventory" size="md">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        Input Stok
+      </Button>
+      <Button variant="primary" color="inventory" size="md" onclick="openModal('stockMovementModal')">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l-4-4" />
+        </svg>
+        Pergerakan Stok
+      </Button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+    <StatCard
+      title="Total Stok"
+      value={totalStock}
+      change="Unit tersedia"
+      changeType="neutral"
+      color="inventory"
+      icon="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+    />
+    <StatCard
+      title="Total SKU"
+      value={totalSKUs}
+      change="Varian produk"
+      changeType="neutral"
+      color="inventory"
+      icon="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+    />
+    <StatCard
+      title="Stok Rendah"
+      value={lowStockCount}
+      change={lowStockCount > 5 ? "Perlu perhatian!" : "Terkendali"}
+      changeType={lowStockCount > 5 ? "negative" : "neutral"}
+      color="inventory"
+      icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+    />
+    <StatCard
+      title="Lokasi"
+      value={locationList.length}
+      change="Area penyimpanan"
+      changeType="neutral"
+      color="inventory"
+      icon="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+    />
+  </div>
+
+  <!-- Low Stock Alerts -->
+  {lowStockCount > 0 && (
+    <div class="mb-8">
+      <div class="bg-inventory-50 border-l-4 border-inventory-500 p-4 rounded-lg">
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-inventory-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div class="ml-3 flex-1">
+            <h3 class="text-sm font-medium text-inventory-800">
+              Peringatan Stok Rendah
+            </h3>
+            <p class="mt-1 text-sm text-inventory-700">
+              {lowStockCount} item memiliki stok di bawah 10 unit. Segera lakukan restocking.
+            </p>
+            <div class="mt-3">
+              <a href="#low-stock-table" class="text-sm font-medium text-inventory-600 hover:text-inventory-700">
+                Lihat detail &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <!-- Stock by Location -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    {locationList.map((location: any) => {
+      const locationStock = stock.filter((s: any) => s.location_name === location.name);
+      const locationTotal = locationStock.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
+
+      return (
+        <Card title={location.name} color="inventory">
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-600">Total Stok</span>
+              <span class="text-2xl font-bold text-inventory-600">{locationTotal}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-600">Varian</span>
+              <span class="font-semibold text-gray-900">{locationStock.length} SKU</span>
+            </div>
+            <div class="pt-3 border-t border-gray-200">
+              <a href={`/inventory/location/${location.id}`} class="text-sm font-medium text-inventory-600 hover:text-inventory-700">
+                Lihat Detail &rarr;
+              </a>
+            </div>
+          </div>
+        </Card>
+      );
+    })}
+  </div>
+
+  <!-- Low Stock Table -->
+  {lowStockCount > 0 && (
+    <div id="low-stock-table" class="mb-8">
+      <Card title="Item Stok Rendah" color="inventory">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warna</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ukuran</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {lowStock.map((item: any) => (
+                <tr class="hover:bg-inventory-50">
+                  <td class="px-6 py-4 text-sm font-medium text-gray-900">{item.product_name}</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">{item.color_name}</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">{item.size_name}</td>
+                  <td class="px-6 py-4 text-sm text-gray-600">{item.location_name}</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                      {item.quantity} pcs
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <button
+                      class="text-inventory-600 hover:text-inventory-700 font-medium"
+                      onclick="quickAddStock('{item.variant_id}', '{item.product_name} - {item.color_name} - {item.size_name}')"
+                    >
+                      + Tambah
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  )}
+
+  <!-- Stock Movements -->
+  <Card title="Pergerakan Stok Terbaru" color="inventory">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alasan</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {movements.map((mov: any) => (
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {new Date(mov.movement_date).toLocaleString('id-ID')}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-900">
+                {mov.product_name} - {mov.color_name} - {mov.size_name}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  mov.movement_type === 'IN'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {mov.movement_type}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                {mov.movement_type === 'IN' ? '+' : '-'}{mov.quantity}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-600">{mov.reason_code}</td>
+              <td class="px-6 py-4 text-sm text-gray-600">{mov.location_name}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-6 flex justify-between items-center">
+      <a href="/inventory/movements" class="text-sm font-medium text-inventory-600 hover:text-inventory-700">
+        Lihat Semua Pergerakan &rarr;
+      </a>
+      <a href="/inventory/import" class="text-sm font-medium text-inventory-600 hover:text-inventory-700">
+        📄 Import CSV &rarr;
+      </a>
+    </div>
+  </Card>
+
+  <!-- Stock Movement Modal -->
+  <Modal id="stockMovementModal" title="Pergerakan Stok" color="inventory" size="lg">
+    <form id="quickMovementForm" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Pergerakan</label>
+          <select
+            name="movement_type"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
+          >
+            <option value="IN">Masuk (IN)</option>
+            <option value="OUT">Keluar (OUT)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
+          <input
+            type="number"
+            name="quantity"
+            min="1"
+            required
+            placeholder="Jumlah"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+        <select
+          name="location_id"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
+        >
+          <option value="">Pilih Lokasi</option>
+          {locationList.map((location: any) => (
+            <option value={location.id}>{location.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Alasan</label>
+        <select
+          name="reason_code"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
+        >
+          <option value="">Pilih Alasan</option>
+          <option value="PURCHASE">Pembelian</option>
+          <option value="SALES">Penjualan</option>
+          <option value="RETURN">Retur</option>
+          <option value="DAMAGE">Rusak</option>
+          <option value="TRANSFER">Transfer</option>
+          <option value="ADJUSTMENT_IN">Penyesuaian (Tambah)</option>
+          <option value="ADJUSTMENT_OUT">Penyesuaian (Kurang)</option>
+          <option value="OTHER">Lainnya</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+        <textarea
+          name="notes"
+          rows="2"
+          placeholder="Catatan tambahan..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
+        ></textarea>
+      </div>
+
+      <div class="flex gap-3 pt-4">
+        <button
+          type="submit"
+          class="flex-1 bg-inventory-600 text-white py-2 px-4 rounded-lg hover:bg-inventory-700 transition-colors font-medium"
+        >
+          Simpan Pergerakan
+        </button>
+        <button
+          type="button"
+          onclick="closeModal('stockMovementModal')"
+          class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+        >
+          Batal
+        </button>
+      </div>
+    </form>
+  </Modal>
+
+  <!-- Alert Toast -->
+  <div id="alertToast" class="fixed bottom-4 right-4 max-w-sm hidden z-50">
+    <div class="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <span id="alertMessage" class="font-medium">Success!</span>
+    </div>
+  </div>
+</MainLayout>
+
+<script define:vars={{ locationList }}>
+  const API_BASE = 'http://localhost:3001/api';
+
+  let selectedVariantId = null;
+
+  // Quick add stock function
+  function quickAddStock(variantId, variantName) {
+    selectedVariantId = variantId;
+    const modal = document.getElementById('stockMovementModal');
+    modal.classList.remove('hidden');
+  }
+
+  // Make it available globally
+  window.quickAddStock = quickAddStock;
+
+  // Quick movement form handler
+  document.getElementById('quickMovementForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const data = {
+      product_color_size_id: selectedVariantId,
+      location_id: formData.get('location_id'),
+      movement_type: formData.get('movement_type'),
+      quantity: parseInt(formData.get('quantity')),
+      reason_code: formData.get('reason_code'),
+      notes: formData.get('notes'),
+      created_by: 'current_user'
+    };
+
+    if (!data.product_color_size_id) {
+      showAlert('error', 'Silakan pilih varian dari tabel stok rendah');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/inventory/movements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showAlert('success', `Berhasil ${data.movement_type === 'IN' ? 'menambahkan' : 'mengurangi'} ${data.quantity} unit stok!`);
+        closeModal('stockMovementModal');
+        e.target.reset();
+        selectedVariantId = null;
+        // Refresh page after 2 seconds
+        setTimeout(() => location.reload(), 2000);
+      } else {
+        showAlert('error', result.error?.message || 'Gagal menyimpan pergerakan');
+      }
+    } catch (error) {
+      showAlert('error', 'Terjadi kesalahan saat menyimpan pergerakan');
+    }
+  });
+
+  // Show alert
+  function showAlert(type, message) {
+    const toast = document.getElementById('alertToast');
+    const alertMessage = document.getElementById('alertMessage');
+    const innerDiv = toast.querySelector('div');
+
+    alertMessage.textContent = message;
+
+    if (type === 'success') {
+      innerDiv.className = 'bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3';
+    } else {
+      innerDiv.className = 'bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3';
+    }
+
+    toast.classList.remove('hidden');
+
+    setTimeout(() => {
+      toast.classList.add('hidden');
+    }, 5000);
+  }
+</script>

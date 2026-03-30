@@ -1,0 +1,76 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  color?: 'sales' | 'finance' | 'crm' | 'hr' | 'inventory' | 'gray';
+  size?: 'sm' | 'md' | 'lg';
+  type?: 'button' | 'submit' | 'reset';
+  className?: string;
+  disabled?: boolean;
+  href?: string;
+}
+
+const {
+  variant = 'primary',
+  color = 'gray',
+  size = 'md',
+  type = 'button',
+  className = '',
+  disabled = false,
+  href
+} = Astro.props;
+
+const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+
+const sizeClasses = {
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-6 py-3 text-base'
+};
+
+const variantClasses: Record<string, Record<string, string>> = {
+  primary: {
+    sales: 'bg-sales-500 text-white hover:bg-sales-600 focus:ring-sales-500 shadow-sm hover:shadow',
+    finance: 'bg-finance-600 text-white hover:bg-finance-700 focus:ring-finance-500 shadow-sm hover:shadow',
+    crm: 'bg-crm-500 text-white hover:bg-crm-600 focus:ring-crm-500 shadow-sm hover:shadow',
+    hr: 'bg-hr-500 text-white hover:bg-hr-600 focus:ring-hr-500 shadow-sm hover:shadow',
+    inventory: 'bg-inventory-500 text-white hover:bg-inventory-600 focus:ring-inventory-500 shadow-sm hover:shadow',
+    gray: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 shadow-sm hover:shadow'
+  },
+  secondary: {
+    sales: 'bg-sales-100 text-sales-700 hover:bg-sales-200 focus:ring-sales-500',
+    finance: 'bg-finance-100 text-finance-700 hover:bg-finance-200 focus:ring-finance-500',
+    crm: 'bg-crm-100 text-crm-700 hover:bg-crm-200 focus:ring-crm-500',
+    hr: 'bg-hr-100 text-hr-700 hover:bg-hr-200 focus:ring-hr-500',
+    inventory: 'bg-inventory-100 text-inventory-700 hover:bg-inventory-200 focus:ring-inventory-500',
+    gray: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500'
+  },
+  outline: {
+    sales: 'border-2 border-sales-500 text-sales-600 hover:bg-sales-50 focus:ring-sales-500',
+    finance: 'border-2 border-finance-500 text-finance-600 hover:bg-finance-50 focus:ring-finance-500',
+    crm: 'border-2 border-crm-500 text-crm-600 hover:bg-crm-50 focus:ring-crm-500',
+    hr: 'border-2 border-hr-500 text-hr-600 hover:bg-hr-50 focus:ring-hr-500',
+    inventory: 'border-2 border-inventory-500 text-inventory-600 hover:bg-inventory-50 focus:ring-inventory-500',
+    gray: 'border-2 border-gray-500 text-gray-600 hover:bg-gray-50 focus:ring-gray-500'
+  },
+  ghost: {
+    sales: 'text-sales-600 hover:bg-sales-50 focus:ring-sales-500',
+    finance: 'text-finance-600 hover:bg-finance-50 focus:ring-finance-500',
+    crm: 'text-crm-600 hover:bg-crm-50 focus:ring-crm-500',
+    hr: 'text-hr-600 hover:bg-hr-50 focus:ring-hr-500',
+    inventory: 'text-inventory-600 hover:bg-inventory-50 focus:ring-inventory-500',
+    gray: 'text-gray-600 hover:bg-gray-50 focus:ring-gray-500'
+  }
+};
+
+const classes = `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant][color]} ${className}`;
+---
+
+{href ? (
+  <a href={href} class={classes}>
+    <slot />
+  </a>
+) : (
+  <button type={type} class={classes} disabled={disabled}>
+    <slot />
+  </button>
+)}

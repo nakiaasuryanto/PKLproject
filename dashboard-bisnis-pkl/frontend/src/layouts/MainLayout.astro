@@ -1,0 +1,38 @@
+---
+import BaseHead from './BaseHead.astro';
+import Navbar from '../components/Navbar.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  activeModule?: 'sales' | 'finance' | 'crm' | 'hr' | 'inventory' | 'home';
+}
+
+const { title, description, activeModule = 'home' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="id">
+  <BaseHead title={title} description={description} />
+  <body>
+    <div class="min-h-screen">
+      <!-- Fixed Navbar -->
+      <Navbar activeModule={activeModule} />
+
+      <!-- Fixed Sidebar -->
+      <Sidebar activeModule={activeModule} />
+
+      <!-- Main Content Area with Footer inside -->
+      <main class="xl:ml-64 pt-16 min-h-[calc(100vh-4rem)] flex flex-col">
+        <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <slot />
+        </div>
+
+        <!-- Footer only under main content, not under sidebar -->
+        <Footer />
+      </main>
+    </div>
+  </body>
+</html>

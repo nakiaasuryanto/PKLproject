@@ -1,0 +1,97 @@
+---
+interface Props {
+  activeModule?: string;
+}
+
+const { activeModule } = Astro.props;
+
+const modules = [
+  { id: 'home', name: 'Beranda', href: '/' },
+  { id: 'sales', name: 'Penjualan', href: '/sales' },
+  { id: 'finance', name: 'Keuangan', href: '/finance' },
+  { id: 'inventory', name: 'Persediaan', href: '/inventory' },
+  { id: 'crm', name: 'CRM', href: '/crm' },
+  { id: 'hr', name: 'HR', href: '/hr' },
+];
+
+const getColorClasses = (id: string) => {
+  const colors = {
+    sales: 'sales',
+    finance: 'finance',
+    inventory: 'inventory',
+    crm: 'crm',
+    hr: 'hr'
+  };
+  const color = colors[id as keyof typeof colors] || 'gray';
+
+  return activeModule === id
+    ? `bg-${color}-100 text-${color}-700`
+    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+};
+
+const getMobileLinkColor = (id: string) => {
+  const colors = {
+    sales: 'sales',
+    finance: 'finance',
+    inventory: 'inventory',
+    crm: 'crm',
+    hr: 'hr'
+  };
+  const color = colors[id as keyof typeof colors] || 'gray';
+
+  return activeModule === id
+    ? `bg-${color}-50 text-${color}-700 font-medium`
+    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900';
+};
+---
+
+<nav class="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
+  <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <!-- Logo -->
+      <div class="flex items-center">
+        <a href="/" class="flex items-center space-x-3">
+          <img src="/logo.png" alt="Logo" class="w-10 h-10 rounded-lg" />
+          <div>
+            <span class="text-xl font-bold text-gray-900 block leading-tight">Dashboard Bisnis</span>
+            <span class="text-xs text-gray-500">Nakia Suryanto's PKL Project</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- User Menu -->
+      <div class="flex items-center space-x-3">
+        <button class="hidden sm:flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+          <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+            <span class="text-white text-sm font-medium">A</span>
+          </div>
+          <span class="text-sm font-medium text-gray-700">Admin</span>
+        </button>
+        <button class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation -->
+  <div class="lg:hidden border-t border-gray-200">
+    <div class="px-2 pt-2 pb-3 space-y-1 overflow-x-auto">
+      <div class="flex space-x-1">
+        {modules.map(module => (
+          <a
+            href={module.href}
+            class:list={[
+              "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+              activeModule === module.id ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            ]}
+          >
+            {module.name}
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</nav>

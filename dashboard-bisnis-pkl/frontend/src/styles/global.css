@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sales-500: #EF4444;
+  --finance-500: #6B7280;
+  --crm-500: #10B981;
+  --hr-500: #3B82F6;
+  --inventory-500: #F59E0B;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-50 font-sans text-gray-900;
+}

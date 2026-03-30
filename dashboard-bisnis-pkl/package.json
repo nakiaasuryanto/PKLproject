@@ -1,0 +1,29 @@
+{
+  "name": "dashboard-bisnis-pkl",
+  "version": "1.0.0",
+  "description": "Integrated Business Dashboard for Nakia Suryanto's PKL Project",
+  "private": true,
+  "workspaces": [
+    "server"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=server",
+    "start": "npm run start --workspace=server",
+    "build": "npm run build --workspace=server",
+    "install:all": "npm install && cd server && npm install"
+  },
+  "keywords": [
+    "dashboard",
+    "business",
+    "astro",
+    "express",
+    "pkl",
+    "digital360"
+  ],
+  "author": "Nakia Suryanto",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

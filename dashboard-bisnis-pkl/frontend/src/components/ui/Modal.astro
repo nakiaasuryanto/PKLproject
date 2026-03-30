@@ -1,0 +1,154 @@
+---
+/**
+ * Modal Component
+ * A reusable modal component for displaying content in an overlay
+ *
+ * @param id - Unique identifier for the modal
+ * @param title - Modal title
+ * @param color - Theme color (sales, finance, crm, hr, inventory, gray)
+ * @param size - Modal size (sm, md, lg, xl, full)
+ * @param show - Whether to show the modal (client-side controlled)
+ */
+
+interface Props {
+  id: string;
+  title: string;
+  color?: 'sales' | 'finance' | 'crm' | 'hr' | 'inventory' | 'gray';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  show?: boolean;
+}
+
+const {
+  id,
+  title,
+  color = 'gray',
+  size = 'md',
+  show = false
+} = Astro.props;
+
+const colorClasses: Record<string, string> = {
+  sales: 'text-sales-600',
+  finance: 'text-finance-600',
+  crm: 'text-crm-600',
+  hr: 'text-hr-600',
+  inventory: 'text-inventory-600',
+  gray: 'text-gray-600'
+};
+
+const sizeClasses: Record<string, string> = {
+  sm: 'max-w-md',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+  full: 'max-w-full mx-4'
+};
+
+const headerColorClass: Record<string, string> = {
+  sales: 'bg-sales-50 border-sales-200',
+  finance: 'bg-finance-50 border-finance-200',
+  crm: 'bg-crm-50 border-crm-200',
+  hr: 'bg-hr-50 border-hr-200',
+  inventory: 'bg-inventory-50 border-inventory-200',
+  gray: 'bg-gray-50 border-gray-200'
+};
+---
+
+<div
+  id={id}
+  class="fixed inset-0 z-50 hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby={`${id}-title`}
+>
+  <!-- Backdrop -->
+  <div
+    class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+    data-modal-backdrop={id}
+  ></div>
+
+  <!-- Modal Panel -->
+  <div class="fixed inset-0 z-10 overflow-y-auto">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div
+        class="relative bg-white rounded-lg shadow-xl w-full {sizeClasses[size]} transition-all"
+        data-modal-panel={id}
+      >
+        <!-- Header -->
+        <div class={`flex items-center justify-between p-4 border-b ${headerColorClass[color]} rounded-t-lg`}>
+          <h3 id={`${id}-title`} class={`text-lg font-semibold ${colorClasses[color]}`}>
+            {title}
+          </h3>
+          <button
+            type="button"
+            class="text-gray-400 hover:text-gray-600 transition-colors"
+            data-modal-close={id}
+            aria-label="Close modal"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6">
+          <slot />
+        </div>
+
+        <!-- Footer (optional) -->
+        <slot name="footer" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ id }}>
+  // Modal functionality
+  const modalId = id;
+
+  // Close modal on backdrop click
+  document.addEventListener('click', (e) => {
+    const backdrop = e.target.closest(`[data-modal-backdrop="${modalId}"]`);
+    const closeBtn = e.target.closest(`[data-modal-close="${modalId}"]`);
+
+    if (backdrop || closeBtn) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+  });
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById(modalId);
+      if (modal && !modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+      }
+    }
+  });
+
+  // Export openModal function
+  (window as any).openModal = (modalId: string) => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.remove('hidden');
+    }
+  };
+
+  // Export closeModal function
+  (window as any).closeModal = (modalId: string) => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+  };
+</script>
+
+<style>
+  /* Prevent body scroll when modal is open */
+  body:has(.fixed:not(.hidden)) {
+    overflow: hidden;
+  }
+</style>

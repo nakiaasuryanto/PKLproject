@@ -1,0 +1,299 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Card from '../components/ui/Card.astro';
+import StatCard from '../components/ui/StatCard.astro';
+import Button from '../components/ui/Button.astro';
+import ChartWrapper from '../components/charts/ChartWrapper.astro';
+import { api } from '../lib/api';
+
+// Fetch financial data from backend API
+const dashboardResponse = await api.get('/dashboard/overview');
+const expensesResponse = await api.get('/transactions?type=EXPENSE&limit=10');
+const salesTrendResponse = await api.get('/dashboard/sales-trend?period=monthly&limit=6');
+
+const dashboardStats = (dashboardResponse.success && dashboardResponse.data) ? dashboardResponse.data : {};
+const expenseList = (expensesResponse.success && Array.isArray(expensesResponse.data)) ? expensesResponse.data : [];
+const trend = (salesTrendResponse.success && Array.isArray(salesTrendResponse.data)) ? salesTrendResponse.data : [];
+
+// Calculate metrics from API data
+const totalRevenue = dashboardStats.sales?.total_sales || 0;
+const totalExpenses = dashboardStats.expenses?.total || 0;
+const netProfit = totalRevenue - totalExpenses;
+const profitMargin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+
+// Get growth data from API
+const revenueGrowth = dashboardStats.sales?.sales_growth_label || '0%';
+const revenueGrowthType = (dashboardStats.sales?.sales_growth || 0) >= 0 ? 'positive' : 'negative';
+const expenseGrowth = dashboardStats.expenses?.growth_label || '0%';
+const expenseGrowthType = (dashboardStats.expenses?.growth || 0) >= 0 ? 'negative' : 'positive';
+
+// Calculate payment method totals from transactions
+const paymentStatsResponse = await api.get('/transactions/stats?start_date=2025-01-01');
+const stats = (paymentStatsResponse.success && Array.isArray(paymentStatsResponse.data)) ? paymentStatsResponse.data : [];
+const cashTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'CASH' ? sum + (s.total || 0) : sum, 0) : 0;
+const transferTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'BANK_TRANSFER' ? sum + (s.total || 0) : sum, 0) : 0;
+const ewalletTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'OTHER' || s.payment_method === 'EWALLET' ? sum + (s.total || 0) : sum, 0) : 0;
+
+// Format currency
+function formatCurrency(amount: number): string {
+  if (amount >= 1000000) {
+    return `Rp ${(amount / 1000000).toFixed(1)}M`;
+  } else if (amount >= 1000) {
+    return `Rp ${(amount / 1000).toFixed(0)}K`;
+  }
+  return `Rp ${amount.toLocaleString('id-ID')}`;
+}
+---
+
+<MainLayout title="Keuangan - Dashboard Bisnis" activeModule="finance">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Keuangan</h1>
+      <p class="mt-2 text-gray-600">Monitor arus kas dan kesehatan finansial</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex space-x-3">
+      <Button variant="primary" color="finance" size="lg" href="/finance/transactions/new">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        Transaksi Baru
+      </Button>
+    </div>
+  </div>
+
+  <!-- Financial Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+    <StatCard
+      title="Total Pendapatan"
+      value={formatCurrency(totalRevenue)}
+      change={revenueGrowth}
+      changeType={revenueGrowthType}
+      color="finance"
+      icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+    <StatCard
+      title="Total Pengeluaran"
+      value={formatCurrency(totalExpenses)}
+      change={expenseGrowth}
+      changeType={expenseGrowthType}
+      color="finance"
+      icon="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+    />
+    <StatCard
+      title="Laba Bersih"
+      value={formatCurrency(netProfit)}
+      change={netProfit > 0 ? "Positif" : "Negatif"}
+      changeType={netProfit > 0 ? "positive" : "negative"}
+      color="finance"
+      icon="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+    />
+    <StatCard
+      title="Margin Laba"
+      value={`${profitMargin}%`}
+      change={profitMargin >= 20 ? "Sehat" : profitMargin >= 10 ? "Cukup" : "Rendah"}
+      changeType={profitMargin >= 10 ? "positive" : "negative"}
+      color="finance"
+      icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+    />
+  </div>
+
+  <!-- Charts Row -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Revenue vs Expense Chart -->
+    <Card title="Pendapatan vs Pengeluaran" color="finance">
+      <ChartWrapper chartId="revenueExpenseChart" height="300px" />
+    </Card>
+
+    <!-- Expense Breakdown -->
+    <Card title="Kategori Pengeluaran" color="finance">
+      <ChartWrapper chartId="expenseCategoryChart" height="300px" />
+    </Card>
+  </div>
+
+  <!-- Cash Flow Summary -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Profit & Loss Statement -->
+    <Card title="Laporan Laba Rugi (Ringkasan)" color="finance">
+      <div class="space-y-3">
+        <div class="flex justify-between py-2 border-b border-gray-200">
+          <span class="font-medium text-gray-700">Pendapatan</span>
+          <span class="font-semibold text-gray-900">
+            {formatCurrency(totalRevenue)}
+          </span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-gray-200">
+          <span class="font-medium text-gray-700">Pengeluaran</span>
+          <span class="font-semibold text-red-600">
+            ({formatCurrency(totalExpenses)})
+          </span>
+        </div>
+        <div class={`flex justify-between py-3 px-4 rounded-lg ${netProfit > 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+          <span class="font-bold text-gray-900">Laba Bersih</span>
+          <span class={`font-bold ${netProfit > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {formatCurrency(netProfit)}
+          </span>
+        </div>
+      </div>
+    </Card>
+
+    <!-- Payment Method Breakdown -->
+    <Card title="Pembayaran Berdasarkan Metode" color="finance">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-finance-100 rounded-lg flex items-center justify-center text-2xl">
+              💵
+            </div>
+            <div>
+              <p class="font-medium text-gray-900">Cash</p>
+              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'CASH').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
+            </div>
+          </div>
+          <span class="font-semibold text-gray-900">{formatCurrency(cashTotal)}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-finance-100 rounded-lg flex items-center justify-center text-2xl">
+              🏦
+            </div>
+            <div>
+              <p class="font-medium text-gray-900">Bank Transfer</p>
+              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'TRANSFER').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
+            </div>
+          </div>
+          <span class="font-semibold text-gray-900">{formatCurrency(transferTotal)}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-finance-100 rounded-lg flex items-center justify-center text-2xl">
+              📱
+            </div>
+            <div>
+              <p class="font-medium text-gray-900">E-Wallet / QRIS</p>
+              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'EWALLET' || s.payment_method === 'QRIS').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
+            </div>
+          </div>
+          <span class="font-semibold text-gray-900">{formatCurrency(ewalletTotal)}</span>
+        </div>
+      </div>
+    </Card>
+  </div>
+
+  <!-- Recent Expenses -->
+  <Card title="Pengeluaran Terbaru" color="finance" className="overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead class="text-xs uppercase bg-finance-100 text-finance-800">
+          <tr>
+            <th class="px-6 py-3">Tanggal</th>
+            <th class="px-6 py-3">Deskripsi</th>
+            <th class="px-6 py-3">Kategori</th>
+            <th class="px-6 py-3">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {expenseList.length > 0 ? expenseList.map((exp: any) => {
+            const items = typeof exp.items === 'string' ? JSON.parse(exp.items || '[]') : (exp.items || []);
+            const description = items[0]?.description || exp.description || exp.notes || 'Pengeluaran';
+
+            return (
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {new Date(exp.transaction_date).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">{description}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <span class="px-2 py-1 text-xs rounded-full bg-finance-100 text-finance-700">
+                    {exp.category || exp.transaction_type || 'N/A'}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">
+                  {formatCurrency(exp.total_amount)}
+                </td>
+              </tr>
+            );
+          }) : (
+            <tr>
+              <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p>Belum ada data pengeluaran</p>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </Card>
+</MainLayout>
+
+<script>
+  import { createBarChart, createDoughnutChart } from '../lib/chartUtils';
+
+  // Define global interface for window data
+  interface WindowData {
+    financeTrendData?: any[];
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Get trend data from server (passed via global)
+    const trendData = (window as unknown as WindowData).financeTrendData || [];
+
+    // Revenue vs Expense Chart
+    if (trendData.length > 0) {
+      const labels = trendData.map((d: any) => {
+        const date = new Date(d.period);
+        return date.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' });
+      });
+      const revenue = trendData.map((d: any) => d.sales || d.revenue || 0);
+      const expenses = trendData.map((d: any) => d.expenses || 0);
+
+      createBarChart('revenueExpenseChart', labels, [
+        {
+          label: 'Pendapatan',
+          data: revenue,
+          backgroundColor: '#10B981',
+        },
+        {
+          label: 'Pengeluaran',
+          data: expenses,
+          backgroundColor: '#EF4444',
+        }
+      ]);
+    } else {
+      // Fallback with zero data if no data available
+      createBarChart('revenueExpenseChart',
+        ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+        [
+          {
+            label: 'Pendapatan',
+            data: [0, 0, 0, 0, 0, 0],
+            backgroundColor: '#10B981',
+          },
+          {
+            label: 'Pengeluaran',
+            data: [0, 0, 0, 0, 0, 0],
+            backgroundColor: '#EF4444',
+          }
+        ]
+      );
+    }
+
+    // Expense Category Chart - shows no data if no expenses
+    createDoughnutChart(
+      'expenseCategoryChart',
+      ['Belum Ada Data'],
+      [1],
+      ['#E5E7EB']
+    );
+  });
+</script>
+
+<style define:vars={{ financeTrendData: JSON.stringify(trend) }}>
+</style>

@@ -1,0 +1,566 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import Card from '../../../components/ui/Card.astro';
+import Button from '../../../components/ui/Button.astro';
+import { api } from '../../../lib/api';
+---
+
+<MainLayout title="Buat Invoice Baru - Penjualan" activeModule="sales">
+  <div class="max-w-4xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <div class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+        <a href="/sales" class="hover:text-sales-600">Penjualan</a>
+        <span>/</span>
+        <span>Buat Invoice Baru</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Buat Invoice Penjualan Baru</h1>
+      <p class="mt-2 text-gray-600">Input data transaksi penjualan produk</p>
+    </div>
+
+    <!-- Sales Invoice Form -->
+    <Card color="sales">
+      <form id="salesForm" class="space-y-6">
+        <!-- Transaction Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Date -->
+          <div>
+            <label for="date" class="block text-sm font-medium text-gray-700 mb-2">
+              Tanggal Transaksi <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            />
+          </div>
+
+          <!-- Payment Method -->
+          <div>
+            <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">
+              Metode Pembayaran <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="payment_method"
+              name="payment_method"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            >
+              <option value="">Pilih Metode Pembayaran</option>
+              <option value="CASH">Cash</option>
+              <option value="TRANSFER">Transfer Bank</option>
+              <option value="EWALLET">E-Wallet</option>
+              <option value="QRIS">QRIS</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Customer Info Section -->
+        <div class="border-t border-gray-200 pt-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Informasi Customer</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Customer Name -->
+            <div>
+              <label for="customer_name" class="block text-sm font-medium text-gray-700 mb-2">
+                Nama Customer <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  type="text"
+                  id="customer_name"
+                  name="customer_name"
+                  placeholder="Nama lengkap customer"
+                  required
+                  class="w-full px-4 py-2 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+                />
+                <button
+                  type="button"
+                  onclick="openCustomerModal()"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-xs px-2 py-1 bg-sales-100 text-sales-700 rounded hover:bg-sales-200"
+                >
+                  Cari
+                </button>
+              </div>
+              <p class="mt-1 text-sm text-gray-500">Ketik nama customer atau cari dari CRM</p>
+            </div>
+
+            <!-- Customer Phone -->
+            <div>
+              <label for="customer_phone" class="block text-sm font-medium text-gray-700 mb-2">
+                No. Telepon <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                id="customer_phone"
+                name="customer_phone"
+                placeholder="08xxxxxxxxxx"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+              />
+            </div>
+          </div>
+
+          <!-- Customer Selection Link -->
+          <div class="mt-3 flex items-center space-x-2 text-sm">
+            <svg class="w-4 h-4 text-sales-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-gray-600">Customer baru?</span>
+            <a href="/crm/customers/new" target="_blank" class="text-sales-600 hover:text-sales-700 font-medium">
+              Daftarkan di CRM →
+            </a>
+          </div>
+        </div>
+
+        <!-- PIC Sales -->
+        <div>
+          <label for="pic_sales" class="block text-sm font-medium text-gray-700 mb-2">
+            PIC Sales <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="pic_sales"
+            name="pic_sales"
+            placeholder="Nama staff penjualan"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+          />
+        </div>
+
+        <!-- Promo Type -->
+        <div>
+          <label for="promo_type" class="block text-sm font-medium text-gray-700 mb-2">
+            Tipe Promo
+          </label>
+          <select
+            id="promo_type"
+            name="promo_type"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+          >
+            <option value="none">Tanpa Promo</option>
+            <option value="normal">Normal</option>
+            <option value="promo">Promo</option>
+            <option value="clearance">Clearance</option>
+            <option value="special">Special</option>
+          </select>
+        </div>
+
+        <!-- Items Section -->
+        <div class="border-t border-gray-200 pt-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Items Produk</h3>
+            <button
+              type="button"
+              id="addItemBtn"
+              class="text-sm font-medium text-sales-600 hover:text-sales-700 inline-flex items-center"
+            >
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Tambah Item
+            </button>
+          </div>
+
+          <!-- Items Container -->
+          <div id="itemsContainer" class="space-y-4">
+            <!-- Items will be added here dynamically -->
+          </div>
+        </div>
+
+        <!-- Manual Price (Optional) -->
+        <div>
+          <label for="manual_price" class="block text-sm font-medium text-gray-700 mb-2">
+            Harga Manual (Opsional)
+          </label>
+          <input
+            type="number"
+            id="manual_price"
+            name="manual_price"
+            placeholder="0"
+            min="0"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+          />
+          <p class="mt-1 text-sm text-gray-500">Kosongkan untuk menggunakan harga standar</p>
+        </div>
+
+        <!-- Total Display -->
+        <div class="bg-sales-50 rounded-lg p-4">
+          <div class="flex justify-between items-center">
+            <span class="text-lg font-semibold text-gray-900">Total Transaksi</span>
+            <span id="totalDisplay" class="text-2xl font-bold text-sales-600">Rp 0</span>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+          <Button
+            variant="primary"
+            color="sales"
+            size="lg"
+            type="submit"
+            className="flex-1"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Simpan Invoice
+          </Button>
+          <Button
+            variant="outline"
+            color="sales"
+            size="lg"
+            href="/sales"
+            className="sm:flex-none"
+          >
+            Batal
+          </Button>
+        </div>
+      </form>
+    </Card>
+  </div>
+</MainLayout>
+
+<!-- Customer Search Modal -->
+<div id="customerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900">Pilih Customer dari CRM</h3>
+        <button onclick="closeCustomerModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="px-6 py-4 border-b border-gray-200">
+        <input
+          type="text"
+          id="customerSearchInput"
+          placeholder="Cari nama customer..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+        />
+      </div>
+
+      <!-- Customer List -->
+      <div id="customerList" class="overflow-y-auto max-h-96">
+        <div class="p-6 text-center text-gray-500">
+          <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <p>Ketik untuk mencari customer...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let items = [];
+  let itemIdCounter = 0;
+  let customersCache: any[] = [];
+
+  // Set default date to today
+  document.addEventListener('DOMContentLoaded', () => {
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+      dateInput.valueAsDate = new Date();
+    }
+
+    // Add initial item row
+    addNewItem();
+
+    // Add item button handler
+    document.getElementById('addItemBtn')?.addEventListener('click', addNewItem);
+
+    // Form submit handler
+    document.getElementById('salesForm')?.addEventListener('submit', handleSubmit);
+
+    // Customer search input
+    document.getElementById('customerSearchInput')?.addEventListener('input', searchCustomers);
+  });
+
+  // Customer Modal Functions
+  (window as any).openCustomerModal = async function() {
+    const modal = document.getElementById('customerModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      // Load customers when modal opens
+      await loadCustomers();
+    }
+  };
+
+  (window as any).closeCustomerModal = function() {
+    const modal = document.getElementById('customerModal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+  };
+
+  // Close modal when clicking outside
+  document.getElementById('customerModal')?.addEventListener('click', (e: Event) => {
+    if ((e.target as HTMLElement).id === 'customerModal') {
+      (window as any).closeCustomerModal();
+    }
+  });
+
+  async function loadCustomers() {
+    try {
+      const response = await fetch('http://localhost:3001/api/customers');
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        customersCache = result.data;
+        displayCustomers(customersCache);
+      }
+    } catch (error) {
+      console.error('Error loading customers:', error);
+    }
+  }
+
+  function searchCustomers(e: Event) {
+    const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+    const filtered = customersCache.filter((c: any) =>
+      c.name.toLowerCase().includes(searchTerm) ||
+      c.phone?.includes(searchTerm) ||
+      c.customer_code?.toLowerCase().includes(searchTerm)
+    );
+    displayCustomers(filtered);
+  }
+
+  function displayCustomers(customers: any[]) {
+    const listContainer = document.getElementById('customerList');
+    if (!listContainer) return;
+
+    if (customers.length === 0) {
+      listContainer.innerHTML = `
+        <div class="p-6 text-center text-gray-500">
+          <p>Tidak ada customer ditemukan</p>
+        </div>
+      `;
+      return;
+    }
+
+    listContainer.innerHTML = customers.map((customer: any) => `
+      <div
+        onclick="selectCustomer('${customer.name}', '${customer.phone || ''}')"
+        class="px-6 py-4 border-b border-gray-100 hover:bg-sales-50 cursor-pointer flex items-center justify-between"
+      >
+        <div>
+          <p class="font-medium text-gray-900">${customer.name}</p>
+          <p class="text-sm text-gray-500">
+            ${customer.customer_code || ''} ${customer.city ? '• ' + customer.city : ''}
+          </p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm text-gray-600">${customer.phone || '-'}</p>
+          <p class="text-xs text-gray-500">${customer.customer_type || ''}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  (window as any).selectCustomer = function(name: string, phone: string) {
+    const nameInput = document.getElementById('customer_name') as HTMLInputElement;
+    const phoneInput = document.getElementById('customer_phone') as HTMLInputElement;
+
+    if (nameInput) nameInput.value = name;
+    if (phoneInput) phoneInput.value = phone;
+
+    (window as any).closeCustomerModal();
+  };
+
+  function addNewItem() {
+    const container = document.getElementById('itemsContainer');
+    if (!container) return;
+
+    const itemId = ++itemIdCounter;
+
+    const itemHtml = `
+      <div class="item-row bg-gray-50 rounded-lg p-4" data-item-id="${itemId}">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-sm font-medium text-gray-700">Item #${itemId}</span>
+          <button type="button" onclick="removeItem(${itemId})" class="text-red-500 hover:text-red-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Product ID</label>
+            <input
+              type="text"
+              name="items[${itemId}][product_id]"
+              placeholder="Product ID"
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Jumlah</label>
+            <input
+              type="number"
+              name="items[${itemId}][quantity]"
+              placeholder="1"
+              min="1"
+              value="1"
+              onchange="updateTotal()"
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Harga</label>
+            <input
+              type="number"
+              name="items[${itemId}][price]"
+              placeholder="0"
+              min="0"
+              onchange="updateTotal()"
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Warna</label>
+            <input
+              type="text"
+              name="items[${itemId}][color]"
+              placeholder="Nama warna"
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Ukuran</label>
+            <input
+              type="text"
+              name="items[${itemId}][size]"
+              placeholder="S/M/L/XL"
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            />
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-medium text-gray-600 mb-1">Nama Produk</label>
+            <input
+              type="text"
+              name="items[${itemId}][name]"
+              placeholder="Nama produk"
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            />
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', itemHtml);
+  }
+
+  // Make removeItem and updateTotal available globally
+  (window as any).removeItem = function(itemId: number) {
+    const itemRow = document.querySelector(`[data-item-id="${itemId}"]`);
+    if (itemRow) {
+      itemRow.remove();
+      updateTotal();
+    }
+  };
+
+  (window as any).updateTotal = function() {
+    const itemRows = document.querySelectorAll('.item-row');
+    let total = 0;
+
+    itemRows.forEach(row => {
+      const qtyInput = row.querySelector('input[name*="[quantity]"]') as HTMLInputElement;
+      const priceInput = row.querySelector('input[name*="[price]"]') as HTMLInputElement;
+
+      const qty = parseInt(qtyInput?.value || '0') || 0;
+      const price = parseInt(priceInput?.value || '0') || 0;
+      total += qty * price;
+    });
+
+    const totalDisplay = document.getElementById('totalDisplay');
+    if (totalDisplay) {
+      totalDisplay.textContent = `Rp ${total.toLocaleString('id-ID')}`;
+    }
+
+    return total;
+  };
+
+  async function handleSubmit(e: Event) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    // Build items array
+    const itemRows = document.querySelectorAll('.item-row');
+    const items: any[] = [];
+
+    itemRows.forEach(row => {
+      const itemId = row.getAttribute('data-item-id');
+      const productId = (form.querySelector(`input[name="items[${itemId}][product_id]"]`) as HTMLInputElement)?.value;
+      const quantity = parseInt((form.querySelector(`input[name="items[${itemId}][quantity]"]`) as HTMLInputElement)?.value || '1');
+      const price = parseInt((form.querySelector(`input[name="items[${itemId}][price]"]`) as HTMLInputElement)?.value || '0');
+      const color = (form.querySelector(`input[name="items[${itemId}][color]"]`) as HTMLInputElement)?.value;
+      const size = (form.querySelector(`input[name="items[${itemId}][size]"]`) as HTMLInputElement)?.value;
+      const name = (form.querySelector(`input[name="items[${itemId}][name]"]`) as HTMLInputElement)?.value;
+
+      if (productId) {
+        items.push({
+          product_id: productId,
+          quantity,
+          price,
+          ...(color && { color }),
+          ...(size && { size }),
+          ...(name && { name })
+        });
+      }
+    });
+
+    if (items.length === 0) {
+      alert('Mohon tambahkan minimal 1 item produk');
+      return;
+    }
+
+    // Build request payload
+    const payload = {
+      type: 'penjualan',
+      date: formData.get('date'),
+      payment_method: formData.get('payment_method'),
+      promo_type: formData.get('promo_type') === 'none' ? null : formData.get('promo_type'),
+      pic_sales: formData.get('pic_sales'),
+      customer_name: formData.get('customer_name'),
+      customer_phone: formData.get('customer_phone'),
+      manual_price: parseInt(formData.get('manual_price') as string) || 0,
+      items,
+      total: (window as any).updateTotal()
+    };
+
+    console.log('Submitting sales invoice:', payload);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/transactions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Invoice berhasil dibuat!');
+        window.location.href = '/sales';
+      } else {
+        alert('Gagal membuat invoice: ' + (result.error || result.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Terjadi kesalahan saat membuat invoice. Silakan coba lagi.');
+    }
+  }
+</script>

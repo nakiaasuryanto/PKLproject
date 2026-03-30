@@ -1,0 +1,239 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import Card from '../../../components/ui/Card.astro';
+import Button from '../../../components/ui/Button.astro';
+import { api } from '../../../lib/api';
+---
+
+<MainLayout title="Transaksi Baru - Keuangan" activeModule="finance">
+  <div class="max-w-3xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <div class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+        <a href="/finance" class="hover:text-finance-600">Keuangan</a>
+        <span>/</span>
+        <span>Transaksi Baru</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Buat Transaksi Pengeluaran</h1>
+      <p class="mt-2 text-gray-600">Input data transaksi pengeluaran operasional</p>
+    </div>
+
+    <!-- Expense Transaction Form -->
+    <Card color="finance">
+      <form id="expenseForm" class="space-y-6">
+        <!-- Transaction Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Date -->
+          <div>
+            <label for="date" class="block text-sm font-medium text-gray-700 mb-2">
+              Tanggal Transaksi <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500 focus:border-finance-500"
+            />
+          </div>
+
+          <!-- Payment Method -->
+          <div>
+            <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">
+              Metode Pembayaran <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="payment_method"
+              name="payment_method"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500 focus:border-finance-500"
+            >
+              <option value="">Pilih Metode Pembayaran</option>
+              <option value="CASH">Cash</option>
+              <option value="TRANSFER">Transfer Bank</option>
+              <option value="EWALLET">E-Wallet</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Expense Category -->
+        <div>
+          <label for="expense_category" class="block text-sm font-medium text-gray-700 mb-2">
+            Kategori Pengeluaran <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="expense_category"
+            name="expense_category"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500 focus:border-finance-500"
+          >
+            <option value="">Pilih Kategori</option>
+            <option value="Bahan Baku">Bahan Baku</option>
+            <option value="Gaji">Gaji & Upah</option>
+            <option value="Operasional">Operasional</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Sewa">Sewa Tempat</option>
+            <option value="Listrik">Listrik & Air</option>
+            <option value="Transportasi">Transportasi</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+            Deskripsi Pengeluaran <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows="3"
+            required
+            placeholder="Jelaskan detail pengeluaran..."
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500 focus:border-finance-500"
+          ></textarea>
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+            Jumlah Pengeluaran (Rp) <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Rp</span>
+            <input
+              type="number"
+              id="amount"
+              name="amount"
+              required
+              min="0"
+              placeholder="0"
+              oninput="updateAmountDisplay()"
+              class="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500 focus:border-finance-500"
+            />
+          </div>
+        </div>
+
+        <!-- PIC (Person in Charge) -->
+        <div>
+          <label for="pic" class="block text-sm font-medium text-gray-700 mb-2">
+            PIC (Person in Charge)
+          </label>
+          <input
+            type="text"
+            id="pic"
+            name="pic"
+            placeholder="Nama penanggung jawab"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500 focus:border-finance-500"
+          />
+        </div>
+
+        <!-- Amount Display -->
+        <div class="bg-finance-50 rounded-lg p-4">
+          <div class="flex justify-between items-center">
+            <span class="text-lg font-semibold text-gray-900">Total Pengeluaran</span>
+            <span id="amountDisplay" class="text-2xl font-bold text-finance-600">Rp 0</span>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+          <Button
+            variant="primary"
+            color="finance"
+            size="lg"
+            type="submit"
+            className="flex-1"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Simpan Transaksi
+          </Button>
+          <Button
+            variant="outline"
+            color="finance"
+            size="lg"
+            href="/finance"
+            className="sm:flex-none"
+          >
+            Batal
+          </Button>
+        </div>
+      </form>
+    </Card>
+  </div>
+</MainLayout>
+
+<script>
+  // Set default date to today
+  document.addEventListener('DOMContentLoaded', () => {
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+      dateInput.valueAsDate = new Date();
+    }
+
+    // Form submit handler
+    document.getElementById('expenseForm')?.addEventListener('submit', handleSubmit);
+  });
+
+  // Make updateAmountDisplay available globally
+  (window as any).updateAmountDisplay = function() {
+    const amountInput = document.getElementById('amount') as HTMLInputElement;
+    const amountDisplay = document.getElementById('amountDisplay');
+
+    if (amountInput && amountDisplay) {
+      const amount = parseInt(amountInput.value) || 0;
+      amountDisplay.textContent = `Rp ${amount.toLocaleString('id-ID')}`;
+    }
+  };
+
+  async function handleSubmit(e: Event) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const amount = parseInt(formData.get('amount') as string) || 0;
+
+    if (amount <= 0) {
+      alert('Mohon masukkan jumlah pengeluaran yang valid');
+      return;
+    }
+
+    // Build request payload
+    const payload = {
+      type: 'pengeluaran',
+      date: formData.get('date'),
+      payment_method: formData.get('payment_method'),
+      expense_category: formData.get('expense_category'),
+      description: formData.get('description'),
+      amount: amount,
+      pic: formData.get('pic') || null
+    };
+
+    console.log('Submitting expense transaction:', payload);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/transactions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Transaksi pengeluaran berhasil dibuat!');
+        window.location.href = '/finance';
+      } else {
+        alert('Gagal membuat transaksi: ' + (result.error || result.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Terjadi kesalahan saat membuat transaksi. Silakan coba lagi.');
+    }
+  }
+</script>

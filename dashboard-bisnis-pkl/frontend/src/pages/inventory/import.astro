@@ -1,0 +1,548 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import Card from '../../components/ui/Card.astro';
+import Button from '../../components/ui/Button.astro';
+---
+
+<MainLayout title="Import CSV Stok - Dashboard Bisnis" activeModule="inventory">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+      <a href="/inventory" class="hover:text-inventory-600">Persediaan</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Import CSV</span>
+    </div>
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Import CSV Stok</h1>
+    <p class="mt-2 text-gray-600">Upload file CSV untuk menambahkan stok secara bulk</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- CSV Format Guide -->
+      <Card title="📋 Format CSV" color="inventory">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <h4 class="font-semibold text-blue-900 mb-2">Kolom yang Diperlukan:</h4>
+          <code class="text-xs text-blue-800 block mb-2">product_name, color_name, size_name, location_name, quantity, unit_cost</code>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <h5 class="font-medium text-gray-700 mb-2">Contoh Format CSV:</h5>
+            <div class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+              <pre class="text-xs">product_name,color_name,size_name,location_name,quantity,unit_cost
+Hoodie Basic,Hitam,S,Display,10,150000
+Hoodie Basic,Hitam,M,Display,15,150000
+Hoodie Basic,Hitam,L,Lemari,20,150000
+T-Shirt Premium,Putih,XL,Display,5,75000
+T-Shirt Premium,Putih,XXL,Lemari,8,75000</pre>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-gray-50 p-3 rounded-lg">
+              <h6 class="font-medium text-gray-700 text-sm mb-1">📦 product_name</h6>
+              <p class="text-xs text-gray-600">Nama produk yang sudah terdaftar</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+              <h6 class="font-medium text-gray-700 text-sm mb-1">🎨 color_name</h6>
+              <p class="text-xs text-gray-600">Nama warna varian</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+              <h6 class="font-medium text-gray-700 text-sm mb-1">📏 size_name</h6>
+              <p class="text-xs text-gray-600">Ukuran (XS, S, M, L, XL, XXL, dll)</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+              <h6 class="font-medium text-gray-700 text-sm mb-1">📍 location_name</h6>
+              <p class="text-xs text-gray-600">Nama lokasi penyimpanan</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+              <h6 class="font-medium text-gray-700 text-sm mb-1">🔢 quantity</h6>
+              <p class="text-xs text-gray-600">Jumlah stok (angka positif)</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+              <h6 class="font-medium text-gray-700 text-sm mb-1">💰 unit_cost</h6>
+              <p class="text-xs text-gray-600">Harga satuan (opsional, dalam Rupiah)</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <!-- File Upload -->
+      <Card title="📄 Upload File CSV" color="inventory">
+        <form id="csvImportForm" class="space-y-6">
+          <!-- File Input -->
+          <div>
+            <label for="csvFileInput" class="block text-sm font-medium text-gray-700 mb-2">
+              Pilih File CSV <span class="text-red-500">*</span>
+            </label>
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-inventory-500 transition-colors">
+              <div class="space-y-1 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="flex text-sm text-gray-600">
+                  <label for="csvFileInput" class="relative cursor-pointer bg-white rounded-md font-medium text-inventory-600 hover:text-inventory-500 focus-within:outline-none">
+                    <span>Upload file</span>
+                    <input id="csvFileInput" name="csvFile" type="file" accept=".csv" class="sr-only" required>
+                  </label>
+                  <p class="pl-1">atau drag & drop</p>
+                </div>
+                <p class="text-xs text-gray-500">CSV saja, maksimal 5MB</p>
+                <p id="fileName" class="text-sm text-inventory-600 font-medium hidden"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Import Mode -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Mode Import
+            </label>
+            <div class="space-y-2">
+              <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input type="radio" name="importMode" value="add" checked class="h-4 w-4 text-inventory-600 focus:ring-inventory-500">
+                <div class="ml-3">
+                  <span class="block text-sm font-medium text-gray-900">Tambah ke Stok</span>
+                  <span class="block text-xs text-gray-500">Menambah jumlah ke stok yang sudah ada</span>
+                </div>
+              </label>
+              <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input type="radio" name="importMode" value="set" class="h-4 w-4 text-inventory-600 focus:ring-inventory-500">
+                <div class="ml-3">
+                  <span class="block text-sm font-medium text-gray-900">Set Stok</span>
+                  <span class="block text-xs text-gray-500">Mengganti jumlah stok dengan nilai baru</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Reason Code -->
+          <div>
+            <label for="reasonSelect" class="block text-sm font-medium text-gray-700 mb-2">
+              Alasan Import <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="reasonSelect"
+              name="reason_code"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500 focus:border-inventory-500"
+            >
+              <option value="">Pilih Alasan</option>
+              <option value="PURCHASE">Pembelian Baru</option>
+              <option value="STOCK_OPNAME">Hasil Stock Opname</option>
+              <option value="TRANSFER">Transfer Antar Gudang</option>
+              <option value="ADJUSTMENT_IN">Penyesuaian Stok</option>
+              <option value="RETURN">Retur</option>
+              <option value="OTHER">Lainnya</option>
+            </select>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label for="notesInput" class="block text-sm font-medium text-gray-700 mb-2">
+              Catatan
+            </label>
+            <textarea
+              id="notesInput"
+              name="notes"
+              rows="3"
+              placeholder="Catatan tambahan untuk import ini..."
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500 focus:border-inventory-500"
+            ></textarea>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+            <Button
+              type="button"
+              id="previewBtn"
+              variant="outline"
+              color="inventory"
+              size="md"
+              disabled
+              class="flex-1"
+            >
+              👁️ Preview Data
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              color="inventory"
+              size="md"
+              id="importBtn"
+              disabled
+              class="flex-1"
+            >
+              📥 Import Stok
+            </Button>
+          </div>
+        </form>
+      </Card>
+
+      <!-- Preview Section -->
+      <div id="previewSection" class="hidden">
+        <Card title="👁️ Preview Data (5 baris pertama)" color="inventory">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Warna</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ukuran</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harga</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody id="previewTableBody" class="bg-white divide-y divide-gray-200">
+                <!-- Preview rows will be inserted here -->
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-4 text-sm text-gray-600">
+            <span id="totalRows">Total 0 baris data</span>
+          </div>
+        </Card>
+      </div>
+
+      <!-- Progress Section -->
+      <div id="progressSection" class="hidden">
+        <Card title="⏳ Memproses Import..." color="inventory">
+          <div class="space-y-4">
+            <div class="w-full bg-gray-200 rounded-full h-4">
+              <div id="progressBar" class="bg-inventory-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="progressText" class="text-sm text-gray-600 text-center">Memproses 0 / 0</p>
+          </div>
+        </Card>
+      </div>
+
+      <!-- Results Section -->
+      <div id="resultsSection" class="hidden">
+        <Card title="✅ Hasil Import" color="inventory">
+          <div id="resultsContent" class="space-y-4">
+            <!-- Results will be inserted here -->
+          </div>
+        </Card>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Download Template -->
+      <Card title="📝 Download Template" color="inventory">
+        <p class="text-sm text-gray-600 mb-4">Download template CSV untuk memulai import stok.</p>
+        <button
+          id="downloadTemplateBtn"
+          class="w-full px-4 py-2 bg-inventory-100 text-inventory-700 rounded-lg hover:bg-inventory-200 transition-colors text-sm font-medium"
+        >
+          📥 Download Template CSV
+        </button>
+      </Card>
+
+      <!-- Quick Actions -->
+      <Card title="Aksi Cepat" color="inventory">
+        <div class="space-y-2">
+          <a href="/inventory" class="block w-full text-center px-4 py-2 bg-inventory-50 text-inventory-700 rounded-lg hover:bg-inventory-100 transition-colors text-sm font-medium">
+            ← Kembali ke Persediaan
+          </a>
+          <a href="/inventory/input" class="block w-full text-center px-4 py-2 bg-inventory-50 text-inventory-700 rounded-lg hover:bg-inventory-100 transition-colors text-sm font-medium">
+            ➕ Input Stok Manual
+          </a>
+        </div>
+      </Card>
+    </div>
+  </div>
+
+  <!-- Alert Box -->
+  <div id="alertBox" class="fixed top-20 right-4 max-w-md hidden z-50"></div>
+</MainLayout>
+
+<script>
+  const API_BASE = 'http://localhost:3001/api';
+
+  // State
+  let parsedData = [];
+  let validatedData = [];
+
+  // DOM Elements
+  const csvFileInput = document.getElementById('csvFileInput');
+  const fileName = document.getElementById('fileName');
+  const previewBtn = document.getElementById('previewBtn');
+  const importBtn = document.getElementById('importBtn');
+  const previewSection = document.getElementById('previewSection');
+  const previewTableBody = document.getElementById('previewTableBody');
+  const totalRows = document.getElementById('totalRows');
+  const progressSection = document.getElementById('progressSection');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  const resultsSection = document.getElementById('resultsSection');
+  const resultsContent = document.getElementById('resultsContent');
+  const csvImportForm = document.getElementById('csvImportForm');
+  const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+
+  // File input change handler
+  csvFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showAlert('error', 'Ukuran file terlalu besar. Maksimal 5MB.');
+        csvFileInput.value = '';
+        fileName.classList.add('hidden');
+        previewBtn.disabled = true;
+        importBtn.disabled = true;
+        return;
+      }
+      fileName.textContent = `File terpilih: ${file.name}`;
+      fileName.classList.remove('hidden');
+      parseCSV(file);
+    }
+  });
+
+  // Parse CSV file
+  function parseCSV(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n').filter(line => line.trim());
+
+      if (lines.length < 2) {
+        showAlert('error', 'File CSV tidak valid atau kosong');
+        previewBtn.disabled = true;
+        importBtn.disabled = true;
+        return;
+      }
+
+      // Parse header
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+
+      // Validate headers
+      const requiredHeaders = ['product_name', 'color_name', 'size_name', 'location_name', 'quantity'];
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+
+      if (missingHeaders.length > 0) {
+        showAlert('error', `Kolom yang kurang: ${missingHeaders.join(', ')}`);
+        previewBtn.disabled = true;
+        importBtn.disabled = true;
+        return;
+      }
+
+      // Parse data rows
+      parsedData = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length >= 5) {
+          const row = {};
+          headers.forEach((header, index) => {
+            row[header] = values[index] || '';
+          });
+          row.quantity = parseInt(row.quantity) || 0;
+          row.unit_cost = parseFloat(row.unit_cost) || 0;
+          parsedData.push(row);
+        }
+      }
+
+      if (parsedData.length > 0) {
+        showAlert('success', `Berhasil memuat ${parsedData.length} baris data`);
+        previewBtn.disabled = false;
+        importBtn.disabled = false;
+      } else {
+        showAlert('error', 'Tidak ada data valid yang ditemukan');
+        previewBtn.disabled = true;
+        importBtn.disabled = true;
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Preview button handler
+  previewBtn.addEventListener('click', async () => {
+    if (parsedData.length === 0) {
+      showAlert('error', 'Tidak ada data untuk dipreview');
+      return;
+    }
+
+    // Validate data with API
+    try {
+      const response = await fetch(`${API_BASE}/inventory/validate-import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: parsedData.slice(0, 5) })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        validatedData = result.data.valid_items || [];
+        showPreview();
+      } else {
+        showAlert('error', 'Gagal memvalidasi data');
+      }
+    } catch (error) {
+      // Show preview without validation
+      showPreview();
+    }
+  });
+
+  // Show preview
+  function showPreview() {
+    const previewData = parsedData.slice(0, 5);
+
+    previewTableBody.innerHTML = previewData.map(row => `
+      <tr class="${row.valid === false ? 'bg-red-50' : ''}">
+        <td class="px-4 py-3 text-sm text-gray-900">${row.product_name}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${row.color_name}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${row.size_name}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${row.location_name}</td>
+        <td class="px-4 py-3 text-sm font-medium text-gray-900">${row.quantity}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${row.unit_cost ? 'Rp ' + row.unit_cost.toLocaleString('id-ID') : '-'}</td>
+        <td class="px-4 py-3">
+          <span class="px-2 py-1 text-xs font-semibold rounded-full ${row.valid === false ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+            ${row.valid === false ? '❌ Invalid' : '✅ Valid'}
+          </span>
+        </td>
+      </tr>
+    `).join('');
+
+    totalRows.textContent = `Total ${parsedData.length} baris data`;
+    previewSection.classList.remove('hidden');
+  }
+
+  // Form submit handler
+  csvImportForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (parsedData.length === 0) {
+      showAlert('error', 'Silakan upload file CSV terlebih dahulu');
+      return;
+    }
+
+    const formData = new FormData(csvImportForm);
+    const importData = {
+      data: parsedData,
+      import_mode: formData.get('importMode'),
+      reason_code: formData.get('reason_code'),
+      notes: formData.get('notes')
+    };
+
+    // Show progress
+    previewSection.classList.add('hidden');
+    progressSection.classList.remove('hidden');
+    resultsSection.classList.add('hidden');
+    importBtn.disabled = true;
+
+    try {
+      const response = await fetch(`${API_BASE}/inventory/import-csv`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(importData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showResults(result.data);
+        showAlert('success', 'Import CSV berhasil!');
+      } else {
+        showAlert('error', result.error?.message || 'Gagal melakukan import');
+        progressSection.classList.add('hidden');
+      }
+    } catch (error) {
+      showAlert('error', 'Terjadi kesalahan saat melakukan import');
+      progressSection.classList.add('hidden');
+    }
+
+    importBtn.disabled = false;
+  });
+
+  // Show results
+  function showResults(data) {
+    progressSection.classList.add('hidden');
+    resultsSection.classList.remove('hidden');
+
+    const { imported, failed, errors } = data || {};
+
+    resultsContent.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-green-50 p-4 rounded-lg text-center">
+          <p class="text-2xl font-bold text-green-600">${imported || 0}</p>
+          <p class="text-sm text-green-700">Berhasil</p>
+        </div>
+        <div class="bg-red-50 p-4 rounded-lg text-center">
+          <p class="text-2xl font-bold text-red-600">${failed || 0}</p>
+          <p class="text-sm text-red-700">Gagal</p>
+        </div>
+        <div class="bg-blue-50 p-4 rounded-lg text-center">
+          <p class="text-2xl font-bold text-blue-600">${parsedData.length}</p>
+          <p class="text-sm text-blue-700">Total</p>
+        </div>
+      </div>
+
+      ${errors && errors.length > 0 ? `
+        <div class="mt-4">
+          <h4 class="font-medium text-gray-700 mb-2">Error Details:</h4>
+          <div class="max-h-40 overflow-y-auto bg-red-50 p-3 rounded-lg">
+            ${errors.map(e => `<p class="text-sm text-red-700">Row ${e.row}: ${e.message}</p>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="mt-4 flex gap-2">
+        <a href="/inventory" class="flex-1 text-center px-4 py-2 bg-inventory-600 text-white rounded-lg hover:bg-inventory-700 transition-colors text-sm font-medium">
+          Lihat Persediaan
+        </a>
+        <button onclick="location.reload()" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium">
+          Import Lagi
+        </button>
+      </div>
+    `;
+  }
+
+  // Download template
+  downloadTemplateBtn.addEventListener('click', () => {
+    const template = `product_name,color_name,size_name,location_name,quantity,unit_cost
+Hoodie Basic,Hitam,S,Display,10,150000
+Hoodie Basic,Hitam,M,Display,15,150000
+Hoodie Basic,Hitam,L,Lemari,20,150000
+T-Shirt Premium,Putih,XL,Display,5,75000
+T-Shirt Premium,Putih,XXL,Lemari,8,75000`;
+
+    const blob = new Blob([template], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'inventory-import-template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    showAlert('success', 'Template CSV berhasil didownload');
+  });
+
+  // Show alert
+  function showAlert(type, message) {
+    const alertBox = document.getElementById('alertBox');
+    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const icon = type === 'success'
+      ? '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+      : '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+    alertBox.innerHTML = `
+      <div class="${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3">
+        ${icon}
+        <span class="font-medium">${message}</span>
+        <button onclick="this.parentElement.parentElement.classList.add('hidden')" class="ml-auto hover:opacity-75">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+    `;
+    alertBox.classList.remove('hidden');
+
+    setTimeout(() => {
+      alertBox.classList.add('hidden');
+    }, 5000);
+  }
+</script>
