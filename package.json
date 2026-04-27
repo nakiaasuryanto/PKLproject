@@ -1,0 +1,19 @@
+{
+  "name": "pklproject",
+  "version": "1.0.0",
+  "description": "Dashboard Bisnis PKL - Backend API for Railway deployment",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
+  "engines": {
+    "node": ">=18.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nakiaasuryanto/PKLproject.git"
+  },
+  "author": "Nakia Suryanto",
+  "license": "MIT"
+}
