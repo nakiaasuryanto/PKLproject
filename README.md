@@ -183,6 +183,46 @@ npm run dev
 
 ---
 
+## 🚀 Deploy ke Production
+
+**Architecture:** Railway (Backend) + Hostinger (Frontend + Database)
+
+Panduan lengkap ada di file [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
+### Quick Summary:
+
+| Component | Platform | URL |
+|-----------|----------|-----|
+| Frontend | Hostinger (Static) | https://pklproject.nakiasuryanto.com |
+| Backend | Railway (Node.js) | https://pklproject-backend.railway.app |
+| Database | Hostinger MySQL | u705828172.hostinger.io |
+
+### Quick Start Deploy:
+
+1. **Backend (Railway):**
+   ```bash
+   # Push ke GitHub
+   git push origin main
+
+   # Deploy via Railway dashboard
+   # - Connect GitHub repo
+   # - Set root directory: server
+   # - Set environment variables
+   ```
+
+2. **Frontend (Hostinger):**
+   ```bash
+   cd dashboard-bisnis-pkl/frontend
+   PUBLIC_API_URL=https://pklproject-backend.railway.app/api npm run build
+   # Upload folder dist/ ke public_html/pklproject/
+   ```
+
+3. **Database (Hostinger):**
+   - Import SQL files via phpMyAdmin
+   - Enable Remote MySQL untuk Railway access
+
+---
+
 ## 📝 Update Terakhir
 
 - ✅ Growth percentage dynamic (bukan hardcoded)
@@ -190,6 +230,9 @@ npm run dev
 - ✅ Empty states untuk semua halaman
 - ✅ Clean up file-file gak kepake
 - ✅ Reorganize struktur folder
+- ✅ Railway deployment configuration siap
+- ✅ Deployment guide untuk Railway + Hostinger
+- ✅ Project siap deploy!
 
 ---
 
