@@ -240,7 +240,3 @@ Panduan lengkap ada di file [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 
 **Nakia Suryanto**
 PKL Project 2025
-
----
-
-**Happy Coding!** 🎉
