@@ -76,15 +76,32 @@ router.post('/', async (req, res) => {
   try {
     const { customer_code, name, company_name, email, phone, address, city, customer_type } = req.body;
 
+    // Auto-generate customer_code if not provided
+    let finalCustomerCode = customer_code;
+    if (!finalCustomerCode) {
+      // Get last customer code
+      const [lastCustomer] = await db.query(
+        'SELECT customer_code FROM customers ORDER BY id DESC LIMIT 1'
+      );
+
+      if (lastCustomer.length === 0) {
+        finalCustomerCode = 'CUST001';
+      } else {
+        const lastCode = lastCustomer[0].customer_code;
+        const lastNumber = parseInt(lastCode.replace('CUST', ''));
+        finalCustomerCode = `CUST${String(lastNumber + 1).padStart(3, '0')}`;
+      }
+    }
+
     const [result] = await db.query(
       `INSERT INTO customers (customer_code, name, company_name, email, phone, address, city, customer_type)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [customer_code, name, company_name, email, phone, address, city, customer_type]
+      [finalCustomerCode, name, company_name, email, phone, address, city, customer_type]
     );
 
     res.status(201).json({
       success: true,
-      data: { id: result.insertId }
+      data: { id: result.insertId, customer_code: finalCustomerCode }
     });
   } catch (error) {
     console.error('Error creating customer:', error);
