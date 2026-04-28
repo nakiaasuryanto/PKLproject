@@ -3,7 +3,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
 import Card from '../../components/ui/Card.astro';
 import Button from '../../components/ui/Button.astro';
 
-const API_BASE = import.meta.env.PUBLIC_API_URL || '${API_BASE}';
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 ---
 
 <MainLayout title="Import CSV Stok - Dashboard Bisnis" activeModule="inventory">
@@ -263,7 +263,7 @@ T-Shirt Premium,Putih,XXL,Lemari,8,75000</pre>
 </MainLayout>
 
 <script>
-  const API_BASE = '${API_BASE}';
+  const API_BASE = 'https://pklproject-production.up.railway.app/api';
 
   // State
   let parsedData = [];
