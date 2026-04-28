@@ -215,7 +215,7 @@ import { api } from '../../../lib/api';
     console.log('Submitting expense transaction:', payload);
 
     try {
-      const response = await fetch('http://localhost:3001/api/transactions/create', {
+      const response = await fetch('https://pklproject-production.up.railway.app/api/transactions/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

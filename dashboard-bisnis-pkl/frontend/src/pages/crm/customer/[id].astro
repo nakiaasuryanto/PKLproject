@@ -3,6 +3,8 @@ import MainLayout from '../../../layouts/MainLayout.astro';
 import Card from '../../../components/ui/Card.astro';
 import Button from '../../../components/ui/Button.astro';
 
+const API_BASE = import.meta.env.PUBLIC_API_URL || '${API_BASE}';
+
 // Get customer ID from URL params
 const { id } = Astro.params;
 ---
@@ -51,7 +53,7 @@ const { id } = Astro.params;
 </MainLayout>
 
 <script define:vars={{ id }}>
-  const API_BASE = 'http://localhost:3001/api';
+  const API_BASE = '${API_BASE}';
 
   async function fetchCustomerData() {
     try {

@@ -385,7 +385,7 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
   // Check today's attendance
   async function checkTodayAttendance() {
     try {
-      const response = await fetch('http://localhost:3001/api/employees/attendance/today', {
+      const response = await fetch('https://pklproject-production.up.railway.app/api/employees/attendance/today', {
         credentials: 'include'
       });
       const data = await response.json();
@@ -420,7 +420,7 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
   checkInBtn?.addEventListener('click', async () => {
     try {
       const now = new Date();
-      const response = await fetch('http://localhost:3001/api/employees/attendance/check-in', {
+      const response = await fetch('https://pklproject-production.up.railway.app/api/employees/attendance/check-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -448,7 +448,7 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
   checkOutBtn?.addEventListener('click', async () => {
     try {
       const now = new Date();
-      const response = await fetch('http://localhost:3001/api/employees/attendance/check-out', {
+      const response = await fetch('https://pklproject-production.up.railway.app/api/employees/attendance/check-out', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -310,7 +310,7 @@ import { api } from '../../../lib/api';
 
   async function loadCustomers() {
     try {
-      const response = await fetch('http://localhost:3001/api/customers');
+      const response = await fetch('https://pklproject-production.up.railway.app/api/customers');
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -542,7 +542,7 @@ import { api } from '../../../lib/api';
     console.log('Submitting sales invoice:', payload);
 
     try {
-      const response = await fetch('http://localhost:3001/api/transactions/create', {
+      const response = await fetch('https://pklproject-production.up.railway.app/api/transactions/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

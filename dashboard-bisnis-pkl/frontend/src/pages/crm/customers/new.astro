@@ -1,6 +1,8 @@
 ---
 import MainLayout from '../../../layouts/MainLayout.astro';
 import Button from '../../../components/ui/Button.astro';
+
+const API_BASE = import.meta.env.PUBLIC_API_URL || '${API_BASE}';
 ---
 
 <MainLayout title="Tambah Customer - CRM" activeModule="crm">
@@ -334,7 +336,7 @@ import Button from '../../../components/ui/Button.astro';
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/customers', {
+      const response = await fetch('${API_BASE}/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

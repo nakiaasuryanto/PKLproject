@@ -2,6 +2,7 @@
 import MainLayout from '../../layouts/MainLayout.astro';
 import Button from '../../components/ui/Button.astro';
 
+const API_BASE = import.meta.env.PUBLIC_API_URL || '${API_BASE}';
 const currentYear = new Date().getFullYear();
 ---
 
@@ -320,7 +321,7 @@ const currentYear = new Date().getFullYear();
     };
 
     try {
-      const response = await fetch('http://localhost:3001/api/employees', {
+      const response = await fetch('${API_BASE}/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
