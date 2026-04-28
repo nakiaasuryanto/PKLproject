@@ -330,6 +330,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     const customerType = formData.get('customer_type');
 
     const data: Record<string, any> = {
+      customer_code: formData.get('customer_code'),
       customer_type: customerType,
       name: formData.get('name'),
       email: formData.get('email'),
