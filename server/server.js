@@ -10,6 +10,9 @@ import customerRoutes from './routes/customers.js';
 import employeeRoutes from './routes/employees.js';
 import dashboardRoutes from './routes/dashboard.js';
 
+// Import migration
+import { runMigrations } from './migrate.js';
+
 dotenv.config();
 
 const app = express();
@@ -63,9 +66,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Dashboard API ready`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
-});
+// Start server with migrations
+async function startServer() {
+  // Run migrations if enabled (set RUN_MIGRATIONS=true in Railway)
+  if (process.env.RUN_MIGRATIONS === 'true') {
+    console.log('Running database migrations...');
+    const result = await runMigrations();
+    if (!result.success) {
+      console.error('Migration failed, but continuing server startup...');
+    }
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Dashboard API ready`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+  });
+}
+
+startServer();

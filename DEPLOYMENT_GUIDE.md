@@ -54,19 +54,18 @@
    - `MYSQLPASSWORD`
    - `MYSQLDATABASE`
 
-### Import Database Schema
+### Database Schema (Auto-Migration)
 
+Database schema akan **otomatis dijalankan** saat backend pertama kali start jika `RUN_MIGRATIONS=true`.
+
+**Opsi 1: Auto-Migration (Recommended)**
+- Set `RUN_MIGRATIONS=true` di environment variables backend
+- Backend akan otomatis menjalankan semua migration saat startup
+- Migration yang sudah dijalankan tidak akan diulang
+
+**Opsi 2: Manual Import**
 1. Di MySQL service, klik tab **Data**
-2. Atau gunakan MySQL client dengan credentials dari Railway
-3. Import file SQL secara berurutan:
-   ```
-   database/migrations/001_core_tables.sql
-   database/migrations/002_inventory_tables.sql
-   database/migrations/003_transactions_tables.sql
-   database/migrations/004_crm_tables.sql
-   database/migrations/005_hr_tables.sql
-   database/migrations/006_integrations.sql
-   ```
+2. Import file SQL secara berurutan dari folder `server/migrations/`
 
 ---
 
@@ -83,6 +82,7 @@ Di tab **Variables**, tambahkan:
 
 ```
 NODE_ENV=production
+RUN_MIGRATIONS=true
 ALLOWED_ORIGINS=https://<frontend-url>.up.railway.app
 ```
 
@@ -90,6 +90,8 @@ Untuk koneksi database, reference variabel dari MySQL service:
 - Klik **Add Variable Reference**
 - Pilih MySQL service
 - Railway akan auto-connect dengan variabel `MYSQL*`
+
+> **Note:** Set `RUN_MIGRATIONS=true` untuk pertama kali deploy. Setelah database ter-setup, bisa diubah ke `false`.
 
 ### Verifikasi Backend
 
@@ -151,6 +153,7 @@ Setelah semua selesai, kamu akan punya:
 |----------|-------------|---------|
 | `NODE_ENV` | Environment mode | `production` |
 | `PORT` | Server port (auto by Railway) | `3001` |
+| `RUN_MIGRATIONS` | Auto-run migrations on startup | `true` |
 | `ALLOWED_ORIGINS` | CORS allowed origins | `https://xxx.up.railway.app` |
 | `MYSQLHOST` | MySQL host (from Railway) | auto |
 | `MYSQLPORT` | MySQL port (from Railway) | auto |
