@@ -1,14 +1,3 @@
--- ============================================================================
--- Migration 001: Core Tables
--- Description: Products, Colors, Sizes, Locations
--- Author: Nakia Suryanto
--- Date: 2025-02-01
--- ============================================================================
-
--- ----------------------------------------------------------------------------
--- Table: products
--- Description: Master product catalog
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS products (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(100) NOT NULL,
@@ -26,10 +15,6 @@ CREATE TABLE IF NOT EXISTS products (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Master product catalog';
 
--- ----------------------------------------------------------------------------
--- Table: colors
--- Description: Available colors for products
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS colors (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(50) NOT NULL UNIQUE,
@@ -38,10 +23,6 @@ CREATE TABLE IF NOT EXISTS colors (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Available colors for product variants';
 
--- ----------------------------------------------------------------------------
--- Table: sizes
--- Description: Available sizes for products
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sizes (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(20) NOT NULL UNIQUE,
@@ -51,10 +32,6 @@ CREATE TABLE IF NOT EXISTS sizes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Available sizes for product variants';
 
--- ----------------------------------------------------------------------------
--- Table: locations
--- Description: Storage/Display locations for inventory
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS locations (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(50) NOT NULL UNIQUE,

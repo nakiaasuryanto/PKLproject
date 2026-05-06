@@ -1,14 +1,3 @@
--- ============================================================================
--- Migration 003: Transactions & Finance Tables
--- Description: Sales transactions and expense tracking
--- Author: Nakia Suryanto
--- Date: 2025-02-01
--- ============================================================================
-
--- ----------------------------------------------------------------------------
--- Table: customers (CRM core - created here for FK reference)
--- Description: Customer master data
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS customers (
   id INT PRIMARY KEY AUTO_INCREMENT,
   customer_code VARCHAR(20) UNIQUE NOT NULL,
@@ -38,10 +27,6 @@ CREATE TABLE IF NOT EXISTS customers (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Customer master data';
 
--- ----------------------------------------------------------------------------
--- Table: transactions
--- Description: Sales, gifts, and other transactions
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS transactions (
   id INT PRIMARY KEY AUTO_INCREMENT,
   transaction_type ENUM('SALE', 'EXPENSE', 'GIFT') NOT NULL,
@@ -51,9 +36,9 @@ CREATE TABLE IF NOT EXISTS transactions (
   total_amount DECIMAL(15,2) DEFAULT 0,
   payment_method ENUM('CASH', 'BANK_TRANSFER', 'OTHER') DEFAULT 'CASH',
   payment_status ENUM('PENDING', 'PAID', 'CANCELLED') DEFAULT 'PAID',
-  pic VARCHAR(100) COMMENT 'Person in charge',
+  pic VARCHAR(100),
   notes TEXT,
-  items JSON COMMENT 'Store multiple items: [{product_id, color_id, size_id, qty, price, free}, ...]',
+  items JSON,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
@@ -65,18 +50,14 @@ CREATE TABLE IF NOT EXISTS transactions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Sales and gift transactions';
 
--- ----------------------------------------------------------------------------
--- Table: expenses
--- Description: Detailed expense tracking
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS expenses (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  category VARCHAR(50) NOT NULL COMMENT 'MATERIALS, UTILITIES, SALARY, MARKETING, TRANSPORTATION, OTHER',
+  category VARCHAR(50) NOT NULL,
   description TEXT,
   amount DECIMAL(15,2) NOT NULL,
   expense_date DATE NOT NULL,
   payment_method ENUM('CASH', 'BANK_TRANSFER', 'OTHER') DEFAULT 'CASH',
-  pic VARCHAR(100) COMMENT 'Person in charge',
+  pic VARCHAR(100),
   receipt_number VARCHAR(50),
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

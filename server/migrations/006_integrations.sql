@@ -1,37 +1,15 @@
--- ============================================================================
--- Migration 006: Integrations & Additional Features
--- Description: Foreign key constraints and additional indexes
--- Author: Nakia Suryanto
--- Date: 2025-02-01
--- ============================================================================
-
--- ----------------------------------------------------------------------------
--- Additional indexes for performance optimization
--- ----------------------------------------------------------------------------
-
--- Transactions: Composite index for date range queries
 ALTER TABLE transactions ADD INDEX idx_date_type (transaction_date, transaction_type);
 
--- Stock movements: Composite index for reporting
 ALTER TABLE stock_movements ADD INDEX idx_date_location (movement_date, location_id);
 
--- Customers: Composite index for spending analytics
 ALTER TABLE customers ADD INDEX idx_spending (customer_type, total_spent);
 
--- Expenses: Composite index for category and date reporting
 ALTER TABLE expenses ADD INDEX idx_category_date (category, expense_date);
 
--- Attendance: Composite index for monthly reports
 ALTER TABLE attendance ADD INDEX idx_employee_date_status (employee_id, attendance_date, status);
 
--- Customer interactions: Composite index for follow-up tracking
 ALTER TABLE customer_interactions ADD INDEX idx_followup_tracking (follow_up_required, follow_up_date, status);
 
--- ----------------------------------------------------------------------------
--- Views for common queries
--- ----------------------------------------------------------------------------
-
--- View: Product variants with full details
 CREATE OR REPLACE VIEW v_product_variants AS
 SELECT
     pcs.id AS variant_id,
@@ -51,7 +29,6 @@ JOIN products p ON pc.product_id = p.id
 JOIN colors c ON pc.color_id = c.id
 JOIN sizes s ON pcs.size_id = s.id;
 
--- View: Current stock levels with product details
 CREATE OR REPLACE VIEW v_stock_levels AS
 SELECT
     v.variant_id,
@@ -69,7 +46,6 @@ JOIN v_product_variants v ON sb.product_color_size_id = v.variant_id
 JOIN locations l ON sb.location_id = l.id
 WHERE sb.quantity > 0;
 
--- View: Low stock alert
 CREATE OR REPLACE VIEW v_low_stock_alert AS
 SELECT
     v.product_name,
@@ -83,7 +59,6 @@ JOIN locations l ON sb.location_id = l.id
 WHERE sb.quantity < 10
 ORDER BY sb.quantity ASC;
 
--- View: Sales summary by month
 CREATE OR REPLACE VIEW v_sales_summary AS
 SELECT
     DATE_FORMAT(transaction_date, '%Y-%m') AS period,
@@ -96,7 +71,6 @@ WHERE transaction_type = 'SALE'
 GROUP BY DATE_FORMAT(transaction_date, '%Y-%m')
 ORDER BY period DESC;
 
--- View: Top customers
 CREATE OR REPLACE VIEW v_top_customers AS
 SELECT
     c.customer_code,
@@ -112,7 +86,6 @@ WHERE c.status = 'active'
     AND c.total_purchases > 0
 ORDER BY c.total_spent DESC;
 
--- View: Employee attendance summary
 CREATE OR REPLACE VIEW v_attendance_summary AS
 SELECT
     e.employee_code,
