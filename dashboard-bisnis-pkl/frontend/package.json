@@ -1,16 +1,16 @@
 {
-  "name": "frontend",
+  "name": "pklproject-frontend",
   "type": "module",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "build:prod": "PUBLIC_API_URL=https://pklproject.nakiasuryanto.com/backend/api astro build",
+    "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/vercel": "^8.0.0",
+    "@astrojs/node": "^9.0.0",
     "astro": "^5.17.1",
     "chart.js": "^4.5.1"
   },

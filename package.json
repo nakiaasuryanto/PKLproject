@@ -1,11 +1,13 @@
 {
   "name": "pklproject",
   "version": "1.0.0",
-  "description": "Dashboard Bisnis PKL - Backend API for Railway deployment",
-  "main": "server/server.js",
+  "description": "Dashboard Bisnis PKL - Full-stack monorepo (Backend + Frontend)",
+  "private": true,
   "scripts": {
-    "start": "node server/server.js",
-    "dev": "nodemon server/server.js"
+    "dev:backend": "cd server && npm run dev",
+    "dev:frontend": "cd dashboard-bisnis-pkl/frontend && npm run dev",
+    "install:all": "cd server && npm install && cd ../dashboard-bisnis-pkl/frontend && npm install",
+    "build:frontend": "cd dashboard-bisnis-pkl/frontend && npm run build"
   },
   "engines": {
     "node": ">=18.x"
