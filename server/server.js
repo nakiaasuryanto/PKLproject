@@ -10,21 +10,39 @@ import customerRoutes from './routes/customers.js';
 import employeeRoutes from './routes/employees.js';
 import dashboardRoutes from './routes/dashboard.js';
 
-// Import migration
-import { runMigrations } from './migrate.js';
-
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // CORS Configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
-  : [];
+const allowedOrigins = [
+  'http://localhost:4321',
+  'http://localhost:3000',
+  /^https:\/\/.*\.railway\.app$/,
+  /^https:\/\/.*\.vercel\.app$/,
+  process.env.ALLOWED_ORIGINS
+].filter(Boolean);
 
 app.use(cors({
-  origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc)
+    if (!origin) return callback(null, true);
+
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return allowed === origin;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now, log for debugging
+      console.log('CORS request from:', origin);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -72,22 +90,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server with migrations
-async function startServer() {
-  // Run migrations if enabled (set RUN_MIGRATIONS=true in Railway)
-  if (process.env.RUN_MIGRATIONS === 'true') {
-    console.log('Running database migrations...');
-    const result = await runMigrations();
-    if (!result.success) {
-      console.error('Migration failed, but continuing server startup...');
-    }
-  }
-
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Dashboard API ready`);
-    console.log(`Health check: http://localhost:${PORT}/health`);
-  });
-}
-
-startServer();
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Dashboard API ready`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+});

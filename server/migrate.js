@@ -56,7 +56,19 @@ async function executeMigration(filename) {
 
   for (const statement of statements) {
     if (statement.length > 0) {
-      await pool.query(statement);
+      try {
+        await pool.query(statement);
+      } catch (err) {
+        // Skip "already exists" errors (idempotent migrations)
+        if (err.message.includes('already exists') ||
+            err.message.includes('Duplicate column') ||
+            err.message.includes('Duplicate key name') ||
+            err.message.includes('Duplicate entry')) {
+          console.log(`  ⚠️  Skipped (already exists)`);
+        } else {
+          throw err;
+        }
+      }
     }
   }
 
@@ -104,17 +116,19 @@ export async function runMigrations() {
 const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (isMainModule) {
   runMigrations()
-    .then(result => {
+    .then(async result => {
       if (result.success) {
         console.log('Migration completed successfully');
-        process.exit(0);
       } else {
         console.error('Migration failed');
-        process.exit(1);
       }
+      // Close pool connection
+      await pool.end();
+      process.exit(result.success ? 0 : 1);
     })
-    .catch(err => {
+    .catch(async err => {
       console.error('Migration error:', err);
+      await pool.end();
       process.exit(1);
     });
 }
