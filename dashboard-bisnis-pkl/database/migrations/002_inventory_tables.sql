@@ -1,14 +1,3 @@
--- ============================================================================
--- Migration 002: Inventory Tables
--- Description: Product variants and stock management
--- Author: Nakia Suryanto
--- Date: 2025-02-01
--- ============================================================================
-
--- ----------------------------------------------------------------------------
--- Table: product_colors
--- Description: Product-color combinations (2nd level variant)
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS product_colors (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_id INT NOT NULL,
@@ -23,10 +12,6 @@ CREATE TABLE IF NOT EXISTS product_colors (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Product-color variant combinations';
 
--- ----------------------------------------------------------------------------
--- Table: product_color_sizes
--- Description: SKU level variants (product-color-size)
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS product_color_sizes (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_color_id INT NOT NULL,
@@ -43,10 +28,6 @@ CREATE TABLE IF NOT EXISTS product_color_sizes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='SKU level product variants';
 
--- ----------------------------------------------------------------------------
--- Table: stock_balances
--- Description: Current stock levels per variant per location
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS stock_balances (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_color_size_id INT NOT NULL,
@@ -63,18 +44,14 @@ CREATE TABLE IF NOT EXISTS stock_balances (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Current stock balances by variant and location';
 
--- ----------------------------------------------------------------------------
--- Table: stock_movements
--- Description: Historical stock movements (IN/OUT)
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS stock_movements (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_color_size_id INT NOT NULL,
   location_id INT NOT NULL,
   movement_type ENUM('IN', 'OUT') NOT NULL,
   quantity INT NOT NULL,
-  reason_code VARCHAR(50) NOT NULL COMMENT 'SALES_OUT, GIFT_OUT, ADJUSTMENT_IN, ADJUSTMENT_OUT, TRANSFER_IN, TRANSFER_OUT, PRODUCTION_IN, RETURN_IN',
-  reference_type VARCHAR(50) COMMENT 'Transaction, Manual, etc.',
+  reason_code VARCHAR(50) NOT NULL,
+  reference_type VARCHAR(50),
   reference_id INT,
   notes TEXT,
   movement_date DATETIME NOT NULL,

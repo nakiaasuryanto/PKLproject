@@ -1,14 +1,3 @@
--- ============================================================================
--- Migration 004: CRM Tables
--- Description: Customer interactions and relationship management
--- Author: Nakia Suryanto
--- Date: 2025-02-01
--- ============================================================================
-
--- ----------------------------------------------------------------------------
--- Table: customer_interactions
--- Description: Customer communication and interaction history
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS customer_interactions (
   id INT PRIMARY KEY AUTO_INCREMENT,
   customer_id INT NOT NULL,
@@ -16,7 +5,7 @@ CREATE TABLE IF NOT EXISTS customer_interactions (
   subject VARCHAR(200),
   description TEXT,
   interaction_date DATETIME NOT NULL,
-  pic VARCHAR(100) COMMENT 'Person in charge',
+  pic VARCHAR(100),
   follow_up_required BOOLEAN DEFAULT FALSE,
   follow_up_date DATE,
   status ENUM('PENDING', 'COMPLETED', 'CANCELLED') DEFAULT 'PENDING',

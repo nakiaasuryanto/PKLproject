@@ -1,15 +1,3 @@
-ALTER TABLE transactions ADD INDEX idx_date_type (transaction_date, transaction_type);
-
-ALTER TABLE stock_movements ADD INDEX idx_date_location (movement_date, location_id);
-
-ALTER TABLE customers ADD INDEX idx_spending (customer_type, total_spent);
-
-ALTER TABLE expenses ADD INDEX idx_category_date (category, expense_date);
-
-ALTER TABLE attendance ADD INDEX idx_employee_date_status (employee_id, attendance_date, status);
-
-ALTER TABLE customer_interactions ADD INDEX idx_followup_tracking (follow_up_required, follow_up_date, status);
-
 CREATE OR REPLACE VIEW v_product_variants AS
 SELECT
     pcs.id AS variant_id,

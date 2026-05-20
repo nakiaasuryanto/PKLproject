@@ -1,14 +1,3 @@
--- ============================================================================
--- Migration 005: HR Tables
--- Description: Employee and attendance management
--- Author: Nakia Suryanto
--- Date: 2025-02-01
--- ============================================================================
-
--- ----------------------------------------------------------------------------
--- Table: employees
--- Description: Employee master data
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS employees (
   id INT PRIMARY KEY AUTO_INCREMENT,
   employee_code VARCHAR(20) UNIQUE NOT NULL,
@@ -16,7 +5,7 @@ CREATE TABLE IF NOT EXISTS employees (
   email VARCHAR(100),
   phone VARCHAR(20),
   position VARCHAR(50),
-  department VARCHAR(50) COMMENT 'SALES, PRODUCTION, DESIGN, ADMIN, MANAGEMENT',
+  department VARCHAR(50),
   hire_date DATE NOT NULL,
   resignation_date DATE,
   status ENUM('ACTIVE', 'INACTIVE', 'RESIGNED') DEFAULT 'ACTIVE',
@@ -35,10 +24,6 @@ CREATE TABLE IF NOT EXISTS employees (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Employee master data';
 
--- ----------------------------------------------------------------------------
--- Table: attendance
--- Description: Employee attendance records
--- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS attendance (
   id INT PRIMARY KEY AUTO_INCREMENT,
   employee_id INT NOT NULL,
@@ -46,7 +31,7 @@ CREATE TABLE IF NOT EXISTS attendance (
   check_in TIME,
   check_out TIME,
   status ENUM('PRESENT', 'ABSENT', 'LATE', 'HALF_DAY', 'SICK', 'LEAVE', 'HOLIDAY') NOT NULL,
-  work_hours DECIMAL(4,2) COMMENT 'Total work hours',
+  work_hours DECIMAL(4,2),
   overtime_hours DECIMAL(4,2) DEFAULT 0,
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
