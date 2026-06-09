@@ -15,5 +15,15 @@ html {
 }
 
 body {
-  @apply bg-gray-50 font-sans text-gray-900;
+  @apply bg-gray-50 font-sans text-gray-900 font-medium;
+}
+
+/* Make all text slightly bolder for better readability */
+p, span, div, td, th, li, label, a {
+  @apply font-medium;
+}
+
+/* Ensure headings stay bold */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-bold;
 }
