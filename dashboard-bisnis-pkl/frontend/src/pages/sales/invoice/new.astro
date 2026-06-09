@@ -264,7 +264,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 <script define:vars={{ API_BASE }}>
   let items = [];
   let itemIdCounter = 0;
-  let customersCache: any[] = [];
+  let customersCache = [];
 
   // Set default date to today
   document.addEventListener('DOMContentLoaded', () => {

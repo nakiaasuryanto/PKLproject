@@ -204,8 +204,8 @@ function formatCurrency(amount: number): string {
     // Payment Method Chart - show empty when no data
     if (trendData.length > 0) {
       // Calculate payment methods from API data
-      const paymentMethods: { [key: string]: number } = {};
-      trendData.forEach((d: any) => {
+      const paymentMethods = {};
+      trendData.forEach(d => {
         if (d.payment_method) {
           paymentMethods[d.payment_method] = (paymentMethods[d.payment_method] || 0) + 1;
         }

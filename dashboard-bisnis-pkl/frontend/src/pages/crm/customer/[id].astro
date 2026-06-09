@@ -75,21 +75,26 @@ const { id } = Astro.params;
       renderCustomerDetail(customer, purchases);
     } catch (error) {
       console.error('Error fetching customer:', error);
-      document.getElementById('loadingState')!.innerHTML = `
-        <div class="text-center text-red-600">
-          <p>Gagal memuat data customer</p>
-          <a href="/crm" class="text-crm-600 hover:text-crm-700">Kembali ke daftar</a>
-        </div>
-      `;
+      const loadingEl = document.getElementById('loadingState');
+      if (loadingEl) {
+        loadingEl.innerHTML = `
+          <div class="text-center text-red-600">
+            <p>Gagal memuat data customer</p>
+            <a href="/crm" class="text-crm-600 hover:text-crm-700">Kembali ke daftar</a>
+          </div>
+        `;
+      }
     }
   }
 
-  function renderCustomerDetail(customer: any, purchases: any[]) {
+  function renderCustomerDetail(customer, purchases) {
     // Hide loading state
-    document.getElementById('loadingState')!.style.display = 'none';
+    const loadingState = document.getElementById('loadingState');
+    if (loadingState) loadingState.style.display = 'none';
 
     // Render header
-    const header = document.getElementById('customerHeader')!;
+    const header = document.getElementById('customerHeader');
+    if (!header) return;
     header.innerHTML = `
       <div>
         <div class="flex items-center space-x-3">
@@ -127,7 +132,7 @@ const { id } = Astro.params;
       ? new Date(customer.last_order_date).toLocaleDateString('id-ID')
       : 'Belum ada';
 
-    document.getElementById('statsCards')!.innerHTML = `
+    document.getElementById('statsCards').innerHTML = `
       <div class="bg-white rounded-xl shadow-sm border bg-gradient-to-br from-crm-50 to-crm-100 border-crm-200 p-6">
         <div class="flex items-center justify-between">
           <div class="flex-1">
@@ -186,7 +191,7 @@ const { id } = Astro.params;
     `;
 
     // Contact Info
-    document.getElementById('contactInfo')!.innerHTML = `
+    document.getElementById('contactInfo').innerHTML = `
       <div class="bg-white rounded-xl shadow-sm border border-crm-200">
         <div class="px-6 py-4 border-b border-crm-200">
           <h3 class="text-lg font-semibold text-crm-700">Informasi Kontak</h3>
@@ -216,7 +221,7 @@ const { id } = Astro.params;
     `;
 
     // Company Info (if applicable)
-    const companyInfoDiv = document.getElementById('companyInfo')!;
+    const companyInfoDiv = document.getElementById('companyInfo');
     if (customer.customer_type === 'COMPANY') {
       companyInfoDiv.innerHTML = `
         <div class="bg-white rounded-xl shadow-sm border border-crm-200">
@@ -244,7 +249,7 @@ const { id } = Astro.params;
     }
 
     // Payment Info
-    document.getElementById('paymentInfo')!.innerHTML = `
+    document.getElementById('paymentInfo').innerHTML = `
       <div class="bg-white rounded-xl shadow-sm border border-crm-200">
         <div class="px-6 py-4 border-b border-crm-200">
           <h3 class="text-lg font-semibold text-crm-700">Informasi Pembayaran</h3>
@@ -272,7 +277,7 @@ const { id } = Astro.params;
 
     // Purchase History
     const purchaseRows = purchases.length > 0
-      ? purchases.map((p: any) => {
+      ? purchases.map(p => {
           const statusClass = p.status === 'PAID'
             ? 'bg-green-100 text-green-800'
             : p.status === 'PENDING'
@@ -304,7 +309,7 @@ const { id } = Astro.params;
         }).join('')
       : `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">Belum ada riwayat pembelian</td></tr>`;
 
-    document.getElementById('purchaseHistory')!.innerHTML = `
+    document.getElementById('purchaseHistory').innerHTML = `
       <div class="bg-white rounded-xl shadow-sm border border-crm-200">
         <div class="px-6 py-4 border-b border-crm-200">
           <h3 class="text-lg font-semibold text-crm-700">Riwayat Pembelian</h3>
