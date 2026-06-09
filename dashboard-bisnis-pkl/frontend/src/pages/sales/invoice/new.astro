@@ -287,7 +287,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   });
 
   // Customer Modal Functions
-  (window as any).openCustomerModal = async function() {
+  window.openCustomerModal = async function() {
     const modal = document.getElementById('customerModal');
     if (modal) {
       modal.classList.remove('hidden');
@@ -296,7 +296,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     }
   };
 
-  (window as any).closeCustomerModal = function() {
+  window.closeCustomerModal = function() {
     const modal = document.getElementById('customerModal');
     if (modal) {
       modal.classList.add('hidden');
@@ -304,9 +304,9 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   };
 
   // Close modal when clicking outside
-  document.getElementById('customerModal')?.addEventListener('click', (e: Event) => {
-    if ((e.target as HTMLElement).id === 'customerModal') {
-      (window as any).closeCustomerModal();
+  document.getElementById('customerModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'customerModal') {
+      window.closeCustomerModal();
     }
   });
 
@@ -324,9 +324,9 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     }
   }
 
-  function searchCustomers(e: Event) {
-    const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
-    const filtered = customersCache.filter((c: any) =>
+  function searchCustomers(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const filtered = customersCache.filter(c =>
       c.name.toLowerCase().includes(searchTerm) ||
       c.phone?.includes(searchTerm) ||
       c.customer_code?.toLowerCase().includes(searchTerm)
@@ -334,7 +334,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     displayCustomers(filtered);
   }
 
-  function displayCustomers(customers: any[]) {
+  function displayCustomers(customers) {
     const listContainer = document.getElementById('customerList');
     if (!listContainer) return;
 
@@ -347,7 +347,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       return;
     }
 
-    listContainer.innerHTML = customers.map((customer: any) => `
+    listContainer.innerHTML = customers.map(customer => `
       <div
         onclick="selectCustomer('${customer.name}', '${customer.phone || ''}')"
         class="px-6 py-4 border-b border-gray-100 hover:bg-sales-50 cursor-pointer flex items-center justify-between"
@@ -366,14 +366,14 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     `).join('');
   }
 
-  (window as any).selectCustomer = function(name: string, phone: string) {
-    const nameInput = document.getElementById('customer_name') as HTMLInputElement;
-    const phoneInput = document.getElementById('customer_phone') as HTMLInputElement;
+  window.selectCustomer = function(name, phone) {
+    const nameInput = document.getElementById('customer_name');
+    const phoneInput = document.getElementById('customer_phone');
 
     if (nameInput) nameInput.value = name;
     if (phoneInput) phoneInput.value = phone;
 
-    (window as any).closeCustomerModal();
+    window.closeCustomerModal();
   };
 
   function addNewItem() {
@@ -462,7 +462,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   }
 
   // Make removeItem and updateTotal available globally
-  (window as any).removeItem = function(itemId: number) {
+  window.removeItem = function(itemId) {
     const itemRow = document.querySelector(`[data-item-id="${itemId}"]`);
     if (itemRow) {
       itemRow.remove();
@@ -470,13 +470,13 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     }
   };
 
-  (window as any).updateTotal = function() {
+  window.updateTotal = function() {
     const itemRows = document.querySelectorAll('.item-row');
     let total = 0;
 
     itemRows.forEach(row => {
-      const qtyInput = row.querySelector('input[name*="[quantity]"]') as HTMLInputElement;
-      const priceInput = row.querySelector('input[name*="[price]"]') as HTMLInputElement;
+      const qtyInput = row.querySelector('input[name*="[quantity]"]');
+      const priceInput = row.querySelector('input[name*="[price]"]');
 
       const qty = parseInt(qtyInput?.value || '0') || 0;
       const price = parseInt(priceInput?.value || '0') || 0;
@@ -491,24 +491,24 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     return total;
   };
 
-  async function handleSubmit(e: Event) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
-    const form = e.target as HTMLFormElement;
+    const form = e.target;
     const formData = new FormData(form);
 
     // Build items array
     const itemRows = document.querySelectorAll('.item-row');
-    const items: any[] = [];
+    const items = [];
 
     itemRows.forEach(row => {
       const itemId = row.getAttribute('data-item-id');
-      const productId = (form.querySelector(`input[name="items[${itemId}][product_id]"]`) as HTMLInputElement)?.value;
-      const quantity = parseInt((form.querySelector(`input[name="items[${itemId}][quantity]"]`) as HTMLInputElement)?.value || '1');
-      const price = parseInt((form.querySelector(`input[name="items[${itemId}][price]"]`) as HTMLInputElement)?.value || '0');
-      const color = (form.querySelector(`input[name="items[${itemId}][color]"]`) as HTMLInputElement)?.value;
-      const size = (form.querySelector(`input[name="items[${itemId}][size]"]`) as HTMLInputElement)?.value;
-      const name = (form.querySelector(`input[name="items[${itemId}][name]"]`) as HTMLInputElement)?.value;
+      const productId = form.querySelector(`input[name="items[${itemId}][product_id]"]`)?.value;
+      const quantity = parseInt(form.querySelector(`input[name="items[${itemId}][quantity]"]`)?.value || '1');
+      const price = parseInt(form.querySelector(`input[name="items[${itemId}][price]"]`)?.value || '0');
+      const color = form.querySelector(`input[name="items[${itemId}][color]"]`)?.value;
+      const size = form.querySelector(`input[name="items[${itemId}][size]"]`)?.value;
+      const name = form.querySelector(`input[name="items[${itemId}][name]"]`)?.value;
 
       if (productId) {
         items.push({
@@ -536,9 +536,9 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       pic_sales: formData.get('pic_sales'),
       customer_name: formData.get('customer_name'),
       customer_phone: formData.get('customer_phone'),
-      manual_price: parseInt(formData.get('manual_price') as string) || 0,
+      manual_price: parseInt(formData.get('manual_price')) || 0,
       items,
-      total: (window as any).updateTotal()
+      total: window.updateTotal()
     };
 
     console.log('Submitting sales invoice:', payload);

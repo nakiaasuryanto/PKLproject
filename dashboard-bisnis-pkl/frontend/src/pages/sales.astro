@@ -164,22 +164,17 @@ function formatCurrency(amount: number): string {
 <script>
   import { createLineChart, createDoughnutChart } from '../lib/chartUtils';
 
-  // Define global interface for window data
-  interface WindowData {
-    salesTrendData?: any[];
-  }
-
   document.addEventListener('DOMContentLoaded', () => {
     // Get trend data from server (passed via global)
-    const trendData = (window as unknown as WindowData).salesTrendData || [];
+    const trendData = window.salesTrendData || [];
 
     // Sales Trend Chart
     if (trendData.length > 0) {
-      const labels = trendData.map((d: any) => {
+      const labels = trendData.map(d => {
         const date = new Date(d.period);
         return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
       });
-      const salesData = trendData.map((d: any) => d.sales || 0);
+      const salesData = trendData.map(d => d.sales || 0);
 
       createLineChart('salesTrendChart', labels, [
         {

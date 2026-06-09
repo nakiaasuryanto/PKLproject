@@ -180,8 +180,8 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   });
 
   // Make updateAmountDisplay available globally
-  (window as any).updateAmountDisplay = function() {
-    const amountInput = document.getElementById('amount') as HTMLInputElement;
+  window.updateAmountDisplay = function() {
+    const amountInput = document.getElementById('amount');
     const amountDisplay = document.getElementById('amountDisplay');
 
     if (amountInput && amountDisplay) {
@@ -190,13 +190,13 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     }
   };
 
-  async function handleSubmit(e: Event) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
-    const form = e.target as HTMLFormElement;
+    const form = e.target;
     const formData = new FormData(form);
 
-    const amount = parseInt(formData.get('amount') as string) || 0;
+    const amount = parseInt(formData.get('amount')) || 0;
 
     if (amount <= 0) {
       alert('Mohon masukkan jumlah pengeluaran yang valid');

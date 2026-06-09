@@ -281,12 +281,12 @@ const currentYear = new Date().getFullYear();
 </MainLayout>
 
 <script define:vars={{ API_BASE }}>
-  const employeeForm = document.getElementById('employeeForm') as HTMLFormElement;
+  const employeeForm = document.getElementById('employeeForm');
   const currentYear = new Date().getFullYear();
 
   // Set minimum and maximum dates for date fields
-  const birthDateInput = document.getElementById('birth_date') as HTMLInputElement;
-  const hireDateInput = document.getElementById('hire_date') as HTMLInputElement;
+  const birthDateInput = document.getElementById('birth_date');
+  const hireDateInput = document.getElementById('hire_date');
 
   if (birthDateInput) {
     birthDateInput.max = `${currentYear - 16}-12-31`;

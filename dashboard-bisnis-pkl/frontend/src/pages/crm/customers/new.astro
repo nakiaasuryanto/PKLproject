@@ -294,7 +294,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 
   customerTypeInputs.forEach(input => {
     input?.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement;
+      const target = e.target;
       if (target.value === 'COMPANY') {
         companyInfoSection?.classList.remove('hidden');
         companyNameInput?.setAttribute('required', 'required');
@@ -306,7 +306,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   });
 
   // Form submission
-  const customerForm = document.getElementById('customerForm') as HTMLFormElement;
+  const customerForm = document.getElementById('customerForm');
 
   customerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -314,7 +314,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     const formData = new FormData(customerForm);
     const customerType = formData.get('customer_type');
 
-    const data: Record<string, any> = {
+    const data = {
       customer_type: customerType,
       name: formData.get('name'),
       email: formData.get('email'),
@@ -322,7 +322,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       whatsapp: formData.get('whatsapp') || formData.get('phone'),
       city: formData.get('city'),
       address: formData.get('address'),
-      credit_limit: formData.get('credit_limit') ? parseInt(formData.get('credit_limit') as string) : null,
+      credit_limit: formData.get('credit_limit') ? parseInt(formData.get('credit_limit')) : null,
       payment_terms: formData.get('payment_terms'),
       notes: formData.get('notes'),
       status: 'active'

@@ -245,10 +245,10 @@ const topCustomers = [...customers]
 
 <script>
   // Client-side filtering
-  const searchInput = document.getElementById('customerSearch') as HTMLInputElement;
-  const statusFilter = document.getElementById('statusFilter') as HTMLSelectElement;
-  const typeFilter = document.getElementById('typeFilter') as HTMLSelectElement;
-  const tableBody = document.getElementById('customerTableBody') as HTMLTableSectionElement;
+  const searchInput = document.getElementById('customerSearch');
+  const statusFilter = document.getElementById('statusFilter');
+  const typeFilter = document.getElementById('typeFilter');
+  const tableBody = document.getElementById('customerTableBody');
 
   function filterCustomers() {
     const searchTerm = searchInput?.value.toLowerCase() || '';
@@ -266,9 +266,9 @@ const topCustomers = [...customers]
       const matchesType = !typeValue || type === typeValue;
 
       if (matchesSearch && matchesStatus && matchesType) {
-        (row as HTMLElement).style.display = '';
+        row.style.display = '';
       } else {
-        (row as HTMLElement).style.display = 'none';
+        row.style.display = 'none';
       }
     });
   }
