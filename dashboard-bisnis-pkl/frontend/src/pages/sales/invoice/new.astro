@@ -312,7 +312,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 
   async function loadCustomers() {
     try {
-      const response = await fetch('${API_BASE}/customers');
+      const response = await fetch(`${API_BASE}/customers`);
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -544,7 +544,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     console.log('Submitting sales invoice:', payload);
 
     try {
-      const response = await fetch('${API_BASE}/transactions/create', {
+      const response = await fetch(`${API_BASE}/transactions/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
