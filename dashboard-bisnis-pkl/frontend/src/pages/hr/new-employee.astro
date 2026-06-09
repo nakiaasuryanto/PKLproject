@@ -280,7 +280,7 @@ const currentYear = new Date().getFullYear();
   </div>
 </MainLayout>
 
-<script>
+<script define:vars={{ API_BASE }}>
   const employeeForm = document.getElementById('employeeForm') as HTMLFormElement;
   const currentYear = new Date().getFullYear();
 
@@ -321,7 +321,7 @@ const currentYear = new Date().getFullYear();
     };
 
     try {
-      const response = await fetch('https://pklproject-production.up.railway.app/api/employees', {
+      const response = await fetch('${API_BASE}/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

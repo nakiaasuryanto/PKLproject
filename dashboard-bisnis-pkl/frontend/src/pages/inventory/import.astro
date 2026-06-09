@@ -262,9 +262,7 @@ T-Shirt Premium,Putih,XXL,Lemari,8,75000</pre>
   <div id="alertBox" class="fixed top-20 right-4 max-w-md hidden z-50"></div>
 </MainLayout>
 
-<script>
-  const API_BASE = 'https://pklproject-production.up.railway.app/api';
-
+<script define:vars={{ API_BASE }}>
   // State
   let parsedData = [];
   let validatedData = [];

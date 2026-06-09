@@ -6,6 +6,8 @@ import Button from '../components/ui/Button.astro';
 import Modal from '../components/ui/Modal.astro';
 import { api } from '../lib/api';
 
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+
 // Fetch inventory data
 const stockData = await api.get('/inventory/stock');
 const lowStockData = await api.get('/inventory/stock?low_stock=true');
@@ -336,9 +338,7 @@ const lowStockCount = lowStock.length;
   </div>
 </MainLayout>
 
-<script define:vars={{ locationList }}>
-  const API_BASE = 'https://pklproject-production.up.railway.app/api';
-
+<script define:vars={{ locationList, API_BASE }}>
   let selectedVariantId = null;
 
   // Quick add stock function

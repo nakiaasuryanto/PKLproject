@@ -286,7 +286,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   </div>
 </MainLayout>
 
-<script>
+<script define:vars={{ API_BASE }}>
   // Show/hide company info section based on customer type
   const customerTypeInputs = document.querySelectorAll('input[name="customer_type"]');
   const companyInfoSection = document.getElementById('companyInfoSection');
@@ -336,7 +336,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     }
 
     try {
-      const response = await fetch('https://pklproject-production.up.railway.app/api/customers', {
+      const response = await fetch(`${API_BASE}/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

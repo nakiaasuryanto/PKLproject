@@ -4,6 +4,8 @@ import Card from '../../components/ui/Card.astro';
 import Button from '../../components/ui/Button.astro';
 import { api } from '../../lib/api';
 
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+
 // Fetch data for form options
 const productsResponse = await api.get('/inventory/products');
 const locationsResponse = await api.get('/inventory/locations');
@@ -266,9 +268,7 @@ const sizes = sizesResponse.success ? (sizesResponse.data || []) : [];
   </div>
 </MainLayout>
 
-<script>
-  const API_BASE = 'https://pklproject-production.up.railway.app/api';
-
+<script define:vars={{ API_BASE }}>
   // State management
   let selectedVariant = null;
 

@@ -1,95 +1,88 @@
-# 📊 Dashboard Bisnis PKL
+# Dashboard Bisnis PKL
 
-Sistem dashboard bisnis terintegrasi untuk mengelola operasional bisnis kecil (PKL). Menggabungkan Sales, Inventory, Finance, CRM, dan HR dalam satu platform.
+Sistem dashboard bisnis terintegrasi untuk mengelola operasional bisnis. Menggabungkan Sales, Inventory, Finance, CRM, dan HR dalam satu platform.
 
 ---
 
-## 🚀 Cara Jalanin
+## Cara Jalanin (Local Development)
 
 ```bash
-# 1. Install dulu backend-nya
+# 1. Clone repo
+git clone https://github.com/nakiaasuryanto/PKLproject.git
+cd PKLproject
+
+# 2. Install backend
 cd server
 npm install
-
-# 2. Copy file env
 cp .env.example .env
-# Edit .env pake database kamu
+# Edit .env sesuai database lokal kamu
 
-# 3. Setup database (pake MySQL)
-mysql -u root -p < database/migrations/001_core_tables.sql
-mysql -u root -p < database/migrations/002_inventory_tables.sql
-mysql -u root -p < database/migrations/003_transactions_tables.sql
-mysql -u root -p < database/migrations/004_crm_tables.sql
-mysql -u root -p < database/migrations/005_hr_tables.sql
-mysql -u root -p < database/migrations/006_integrations.sql
+# 3. Setup database (auto-migration)
+npm run migrate
 
 # 4. Jalanin backend (terminal 1)
-cd server
-node server.js
+npm run dev
 # Backend jalan di http://localhost:3001
 
-# 5. Install frontend
-cd frontend
+# 5. Install & jalanin frontend (terminal 2)
+cd ../dashboard-bisnis-pkl/frontend
 npm install
-
-# 6. Jalanin frontend (terminal 2)
 npm run dev
 # Frontend jalan di http://localhost:4321
 ```
 
 ---
 
-## 📁 Struktur Folder
+## Struktur Folder
 
 ```
 PKLproject/
-│
-├── server/                 ⚙️  Backend API
-│   ├── routes/            - API endpoints (products, inventory, transactions, dll)
-│   ├── db.js              - Koneksi database
-│   ├── server.js          - Express app
+├── server/                          # Backend API (Express + Node.js)
+│   ├── routes/                      # API endpoints
+│   ├── migrations/                  # SQL migration files
+│   ├── db.js                        # Database connection
+│   ├── migrate.js                   # Auto-migration script
+│   ├── server.js                    # Express app
+│   ├── railway.json                 # Railway deploy config
 │   └── package.json
 │
-├── frontend/              🎨  Frontend (Astro)
-│   ├── src/
-│   │   ├── pages/        - Halaman-halaman (index, sales, inventory, dll)
-│   │   ├── components/   - Komponen reusable (Card, Button, Modal)
-│   │   ├── layouts/      - Layout templates
-│   │   └── lib/          - Utilities & API helper
-│   └── package.json
+├── dashboard-bisnis-pkl/
+│   ├── frontend/                    # Frontend (Astro + TailwindCSS)
+│   │   ├── src/
+│   │   │   ├── pages/               # Halaman (index, sales, inventory, dll)
+│   │   │   ├── components/          # Komponen UI
+│   │   │   ├── layouts/             # Layout templates
+│   │   │   └── lib/                 # API client & utilities
+│   │   ├── railway.json             # Railway deploy config
+│   │   └── package.json
+│   │
+│   └── database/                    # SQL files (backup)
+│       ├── migrations/
+│       └── seeds/
 │
-├── database/              🗄️  Database SQL files
-│   ├── migrations/       - Schema pembuatan tabel
-│   └── seeds/            - Data dummy buat testing
-│
-├── docs/                 📚  Documentation
-│   ├── API_ENDPOINTS.md
-│   ├── DATABASE_SCHEMA.md
-│   └── ...
-│
-└── dashboard-bisnis-pkl/  📦 Project files lama (README, logo, dll)
+├── DEPLOYMENT_GUIDE.md              # Panduan deploy ke Railway
+└── README.md
 ```
 
 ---
 
-## 🎨 Modul & Warna
+## Tech Stack
 
-| Modul | Warna | Hex |
-|-------|-------|-----|
-| **Penjualan** | Merah | `#EF4444` |
-| **Inventory** | Biru | `#3B82F6` |
-| **Keuangan** | Hijau | `#10B981` |
-| **CRM** | Ungu | `#8B5CF6` |
-| **HR** | Orange | `#F97316` |
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | Astro, TailwindCSS, Chart.js, TypeScript |
+| **Backend** | Node.js, Express |
+| **Database** | MySQL |
+| **Deployment** | Railway |
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ```
-Backend: http://localhost:3001
+Base URL: http://localhost:3001 (dev) atau https://xxx.railway.app (prod)
 
-GET  /api/health              - Cek server
+GET  /health                  - Health check
 GET  /api/dashboard/overview  - Stats dashboard
 GET  /api/products            - List produk
 POST /api/products            - Tambah produk
@@ -102,141 +95,96 @@ GET  /api/employees           - List karyawan
 
 ---
 
-## 🗄️ Database
+## Database
 
-14 Tabel + 6 Views:
+**14 Tabel + 6 Views:**
 
-**Tabel Utama:**
-- `products` - Data produk
-- `product_colors` - Warna varian
-- `product_color_sizes` - Ukuran varian (SKU)
-- `stock_balances` - Stok saat ini
-- `stock_movements` - Riwayat stok
-- `transactions` - Transaksi (jual/beli)
-- `customers` - Data pelanggan
-- `employees` - Data karyawan
-- `attendance` - Absensi
+| Tabel | Deskripsi |
+|-------|-----------|
+| `products` | Data produk |
+| `colors`, `sizes` | Varian warna & ukuran |
+| `product_colors`, `product_color_sizes` | Kombinasi varian (SKU) |
+| `stock_balances`, `stock_movements` | Stok & riwayat |
+| `transactions`, `expenses` | Transaksi & pengeluaran |
+| `customers`, `customer_interactions` | Data pelanggan & interaksi |
+| `employees`, `attendance` | Data karyawan & absensi |
 
-**Views:**
-- `v_product_variants` - Produk + harga
-- `v_stock_levels` - Stok per lokasi
-- `v_low_stock_alert` - Barang stok rendah
-- `v_sales_summary` - Summary penjualan bulanan
+**Views:** `v_product_variants`, `v_stock_levels`, `v_low_stock_alert`, `v_sales_summary`, `v_top_customers`, `v_attendance_summary`
 
 ---
 
-## 📱 Halaman-halaman
+## Halaman
 
 | Halaman | Route | Deskripsi |
 |---------|-------|-----------|
-| Dashboard | `/` | Home + stats + activity feed |
-| Penjualan | `/sales` | Transaksi + trend penjualan |
-| Inventory | `/inventory` | Stok + input/import |
-| Keuangan | `/finance` | Pendapatan + pengeluaran |
+| Dashboard | `/` | Overview + stats |
+| Penjualan | `/sales` | Transaksi penjualan |
+| Inventory | `/inventory` | Manajemen stok |
+| Keuangan | `/finance` | Pendapatan & pengeluaran |
 | CRM | `/crm` | Customer management |
-| HR | `/hr` | Karyawan + absensi |
+| HR | `/hr` | Karyawan & absensi |
 
 ---
 
-## 🔧 Tech Stack
+## Deploy ke Railway
 
-### Backend
-- **Node.js** - Runtime
-- **Express** - Web framework
-- **MySQL** - Database
-- **mysql2** - Database driver
+Semua service (Frontend, Backend, Database) di-deploy ke Railway.
 
-### Frontend
-- **Astro** - Framework
-- **TailwindCSS** - Styling
-- **Chart.js** - Grafik
-- **TypeScript** - Type safety
-
----
-
-## 🛠️ Troubleshooting
-
-**Backend gagal start?**
-```bash
-# Cek port 3001
-lsof -i:3001
-# Kill process yang pake port 3001
-kill -9 <PID>
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Railway Project                         │
+├─────────────────────────────────────────────────────────────┤
+│   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   │
+│   │   Frontend   │──▶│   Backend    │──▶│    MySQL     │   │
+│   │    (Astro)   │   │  (Express)   │   │   Database   │   │
+│   └──────────────┘   └──────────────┘   └──────────────┘   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Database error?**
-```bash
-# Cek koneksi
-mysql -u root -p
-# SHOW DATABASES;
-# USE nama_database;
-# SHOW TABLES;
+**Quick Deploy:**
+
+1. Push ke GitHub
+2. Buka Railway → New Project → Deploy from GitHub
+3. Tambah MySQL service
+4. Deploy Backend (Root: `server`)
+5. Deploy Frontend (Root: `dashboard-bisnis-pkl/frontend`)
+6. Set environment variables
+
+Panduan lengkap: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
+---
+
+## Environment Variables
+
+**Backend:**
+```env
+NODE_ENV=production
+MYSQLHOST=xxx (auto dari Railway)
+MYSQLPORT=xxx (auto dari Railway)
+MYSQLUSER=xxx (auto dari Railway)
+MYSQLPASSWORD=xxx (auto dari Railway)
+MYSQLDATABASE=xxx (auto dari Railway)
 ```
 
-**Frontend error?**
-```bash
-cd frontend
-rm -rf node_modules
-npm install
-npm run dev
+**Frontend:**
+```env
+PUBLIC_API_URL=https://your-backend.railway.app/api
 ```
 
 ---
 
-## 🚀 Deploy ke Production
+## Modul & Warna
 
-**Architecture:** Railway (Backend) + Hostinger (Frontend + Database)
-
-Panduan lengkap ada di file [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
-
-### Quick Summary:
-
-| Component | Platform | URL |
-|-----------|----------|-----|
-| Frontend | Hostinger (Static) | https://pklproject.nakiasuryanto.com |
-| Backend | Railway (Node.js) | https://pklproject-backend.railway.app |
-| Database | Hostinger MySQL | u705828172.hostinger.io |
-
-### Quick Start Deploy:
-
-1. **Backend (Railway):**
-   ```bash
-   # Push ke GitHub
-   git push origin main
-
-   # Deploy via Railway dashboard
-   # - Connect GitHub repo
-   # - Set root directory: server
-   # - Set environment variables
-   ```
-
-2. **Frontend (Hostinger):**
-   ```bash
-   cd dashboard-bisnis-pkl/frontend
-   PUBLIC_API_URL=https://pklproject-backend.railway.app/api npm run build
-   # Upload folder dist/ ke public_html/pklproject/
-   ```
-
-3. **Database (Hostinger):**
-   - Import SQL files via phpMyAdmin
-   - Enable Remote MySQL untuk Railway access
+| Modul | Warna | Hex |
+|-------|-------|-----|
+| Penjualan | Merah | `#EF4444` |
+| Inventory | Biru | `#3B82F6` |
+| Keuangan | Hijau | `#10B981` |
+| CRM | Ungu | `#8B5CF6` |
+| HR | Orange | `#F97316` |
 
 ---
 
-## 📝 Update Terakhir
+## Author
 
-- ✅ Growth percentage dynamic (bukan hardcoded)
-- ✅ Activity log real-time dari database
-- ✅ Empty states untuk semua halaman
-- ✅ Clean up file-file gak kepake
-- ✅ Reorganize struktur folder
-- ✅ Railway deployment configuration siap
-- ✅ Deployment guide untuk Railway + Hostinger
-- ✅ Project siap deploy!
-
----
-
-## 👤 Author
-
-**Nakia Suryanto**
-PKL Project 2025
+**Nakia Suryanto** - PKL Project 2025

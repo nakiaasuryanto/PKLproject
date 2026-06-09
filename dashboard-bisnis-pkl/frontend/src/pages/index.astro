@@ -31,10 +31,10 @@ try {
 <MainLayout title="Dashboard Bisnis - Digital360" activeModule="home">
   <!-- Hero Section -->
   <div class="mb-8">
-    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3">
       Selamat Datang di Dashboard Bisnis
     </h1>
-    <p class="text-base sm:text-lg text-gray-600">
+    <p class="text-lg sm:text-xl font-medium text-gray-700">
       Sistem terintegrasi untuk mengelola operasional bisnis Anda
     </p>
   </div>
@@ -105,10 +105,10 @@ try {
             <div class="flex items-center space-x-3">
               <div class={`w-2 h-2 bg-${colorClass}-500 rounded-full flex-shrink-0`}></div>
               <div>
-                <p class="text-sm font-medium text-gray-900">
+                <p class="text-base font-semibold text-gray-900">
                   {isSale ? 'Transaksi penjualan baru' : isExpense ? 'Pengeluaran baru' : 'Transaksi baru'}
                 </p>
-                <p class="text-xs text-gray-500">
+                <p class="text-sm font-medium text-gray-600">
                   {new Date(activity.transaction_date).toLocaleString('id-ID', {
                     day: 'numeric',
                     month: 'short',
@@ -118,7 +118,7 @@ try {
                 </p>
               </div>
             </div>
-            <span class={`text-sm font-semibold text-${colorClass}-600`}>
+            <span class={`text-base font-bold text-${colorClass}-700`}>
               {isSale ? `Rp ${(activity.total_amount || 0).toLocaleString('id-ID')}` : activity.notes || '-'}
             </span>
           </div>

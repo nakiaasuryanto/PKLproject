@@ -52,8 +52,7 @@ const { id } = Astro.params;
   </div>
 </MainLayout>
 
-<script define:vars={{ id }}>
-  const API_BASE = 'https://pklproject-production.up.railway.app/api';
+<script define:vars={{ id, API_BASE }}>
 
   async function fetchCustomerData() {
     try {
