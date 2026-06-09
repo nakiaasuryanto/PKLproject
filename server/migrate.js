@@ -1,10 +1,49 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import pool from './db.js';
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Database config
+const dbConfig = {
+  host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
+  user: process.env.MYSQLUSER || process.env.DB_USER,
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD,
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 5
+};
+
+// Wait for database to be ready with retries
+async function waitForDatabase(maxRetries = 10, delayMs = 3000) {
+  console.log('Waiting for database connection...');
+  console.log(`Host: ${dbConfig.host}, Port: ${dbConfig.port}, Database: ${dbConfig.database}`);
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const pool = mysql.createPool(dbConfig);
+      const connection = await pool.getConnection();
+      console.log(`Database connected on attempt ${attempt}`);
+      connection.release();
+      return pool;
+    } catch (error) {
+      console.log(`Attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+      if (attempt < maxRetries) {
+        console.log(`Retrying in ${delayMs/1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw new Error('Could not connect to database after maximum retries');
+}
+
+let pool = null;
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 
@@ -81,6 +120,9 @@ export async function runMigrations() {
   console.log('Starting database migration...');
 
   try {
+    // Wait for database to be ready
+    pool = await waitForDatabase(15, 3000);
+
     // Ensure migrations table exists
     await createMigrationsTable();
 
@@ -109,6 +151,15 @@ export async function runMigrations() {
   } catch (error) {
     console.error('Migration failed:', error.message);
     return { success: false, error: error.message };
+  } finally {
+    // Close pool if it was created
+    if (pool) {
+      try {
+        await pool.end();
+      } catch (e) {
+        // Ignore close errors
+      }
+    }
   }
 }
 
@@ -116,19 +167,17 @@ export async function runMigrations() {
 const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (isMainModule) {
   runMigrations()
-    .then(async result => {
+    .then(result => {
       if (result.success) {
         console.log('Migration completed successfully');
+        process.exit(0);
       } else {
         console.error('Migration failed');
+        process.exit(1);
       }
-      // Close pool connection
-      await pool.end();
-      process.exit(result.success ? 0 : 1);
     })
-    .catch(async err => {
+    .catch(err => {
       console.error('Migration error:', err);
-      await pool.end();
       process.exit(1);
     });
 }
