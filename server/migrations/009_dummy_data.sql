@@ -123,7 +123,7 @@ INSERT INTO attendance (employee_id, attendance_date, check_in, check_out, statu
 (8, '2024-01-03', '08:00:00', '17:15:00', 'PRESENT', 9.3),
 (8, '2024-01-04', '08:10:00', '17:00:00', 'PRESENT', 8.8),
 (8, '2024-01-05', '08:00:00', '17:00:00', 'PRESENT', 9.0)
-ON DUPLICATE KEY UPDATE status=status
+ON DUPLICATE KEY UPDATE status=status;
 
 INSERT INTO transactions (transaction_type, transaction_date, total_amount, payment_method, notes, payment_status) VALUES
 ('SALE', '2024-01-05', 950000, 'BANK_TRANSFER', 'Penjualan 10 Kaos Polos ke PT Maju Jaya', 'PAID'),
