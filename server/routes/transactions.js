@@ -250,7 +250,7 @@ router.post('/create', async (req, res) => {
         pic_sales || pic || null,
         notes,
         JSON.stringify(items || []),
-        'COMPLETED'
+        'PAID'
       ]
     );
 
