@@ -17,7 +17,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     }
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #f3f4f6;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -72,18 +72,17 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     button {
       width: 100%;
       padding: 0.875rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #374151;
       color: white;
       border: none;
       border-radius: 0.5rem;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: background 0.2s;
     }
     button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      background: #1f2937;
     }
     button:disabled {
       opacity: 0.7;
