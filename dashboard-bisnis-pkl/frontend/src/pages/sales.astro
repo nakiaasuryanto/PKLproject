@@ -23,15 +23,8 @@ const totalSales = saleStats.total || 0;
 const salesCount = saleStats.count || 0;
 const avgPerTransaction = salesCount > 0 ? Math.round(totalSales / salesCount) : 0;
 
-// Format currency
+// Format currency with Indonesian thousand separators
 function formatCurrency(amount: number): string {
-  if (amount >= 1000000000) {
-    return `Rp ${(amount / 1000000000).toFixed(1)} miliar`;
-  } else if (amount >= 1000000) {
-    return `Rp ${(amount / 1000000).toFixed(1)} juta`;
-  } else if (amount >= 1000) {
-    return `Rp ${(amount / 1000).toFixed(0)} ribu`;
-  }
   return `Rp ${amount.toLocaleString('id-ID')}`;
 }
 ---
