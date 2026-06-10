@@ -8,9 +8,12 @@ interface Props {
   title: string;
   description?: string;
   activeModule?: 'sales' | 'finance' | 'crm' | 'hr' | 'inventory' | 'home';
+  requireAuth?: boolean;
 }
 
-const { title, description, activeModule = 'home' } = Astro.props;
+const { title, description, activeModule = 'home', requireAuth = true } = Astro.props;
+
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 ---
 
 <!DOCTYPE html>
@@ -34,5 +37,134 @@ const { title, description, activeModule = 'home' } = Astro.props;
         <Footer />
       </main>
     </div>
+
+    <script define:vars={{ requireAuth, activeModule, API_BASE }}>
+      // Role display names
+      const roleNames = {
+        admin: 'Administrator',
+        it: 'IT',
+        customer_service: 'Customer Service',
+        operations: 'Operations',
+        finance: 'Finance'
+      };
+
+      // Check authentication
+      function checkAuth() {
+        const sessionId = localStorage.getItem('sessionId');
+        const user = localStorage.getItem('user');
+        const permissions = localStorage.getItem('permissions');
+
+        if (requireAuth && (!sessionId || !user)) {
+          window.location.href = '/login';
+          return null;
+        }
+
+        if (user && permissions) {
+          return {
+            user: JSON.parse(user),
+            permissions: JSON.parse(permissions)
+          };
+        }
+        return null;
+      }
+
+      // Update UI with user info
+      function updateUserInfo(user) {
+        const initial = user.name.charAt(0).toUpperCase();
+        const roleName = roleNames[user.role] || user.role;
+
+        // Sidebar
+        const userInitial = document.getElementById('userInitial');
+        const userName = document.getElementById('userName');
+        const userRole = document.getElementById('userRole');
+        if (userInitial) userInitial.textContent = initial;
+        if (userName) userName.textContent = user.name;
+        if (userRole) userRole.textContent = roleName;
+
+        // Navbar
+        const navUserInitial = document.getElementById('navUserInitial');
+        const navUserName = document.getElementById('navUserName');
+        if (navUserInitial) navUserInitial.textContent = initial;
+        if (navUserName) navUserName.textContent = user.name;
+      }
+
+      // Hide modules user doesn't have access to
+      function applyPermissions(permissions) {
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+          const module = item.getAttribute('data-module');
+          if (module && !permissions.modules.includes(module)) {
+            item.style.display = 'none';
+          }
+        });
+
+        // Hide summary sections for non-summary users
+        if (!permissions.canViewSummary) {
+          const summaryElements = document.querySelectorAll('[data-summary]');
+          summaryElements.forEach(el => el.style.display = 'none');
+        }
+      }
+
+      // Check module access
+      function checkModuleAccess(permissions) {
+        // Map page modules to permission modules
+        const moduleMap = {
+          'home': 'dashboard',
+          'sales': 'sales',
+          'finance': 'finance',
+          'inventory': 'inventory',
+          'crm': 'crm',
+          'hr': 'hr'
+        };
+
+        const requiredModule = moduleMap[activeModule];
+        if (requiredModule && !permissions.modules.includes(requiredModule)) {
+          // Redirect to first accessible module
+          const firstAccessible = permissions.modules[0];
+          const redirectMap = {
+            'dashboard': '/',
+            'sales': '/sales',
+            'finance': '/finance',
+            'inventory': '/inventory',
+            'crm': '/crm',
+            'hr': '/hr'
+          };
+          window.location.href = redirectMap[firstAccessible] || '/';
+        }
+      }
+
+      // Logout handler
+      function setupLogout() {
+        const logoutBtns = document.querySelectorAll('#logoutBtn, #navLogoutBtn');
+        logoutBtns.forEach(btn => {
+          btn?.addEventListener('click', async () => {
+            const sessionId = localStorage.getItem('sessionId');
+            try {
+              await fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'X-Session-Id': sessionId }
+              });
+            } catch (e) {
+              // Ignore errors
+            }
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('user');
+            localStorage.removeItem('permissions');
+            window.location.href = '/login';
+          });
+        });
+      }
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', () => {
+        const authData = checkAuth();
+        if (authData) {
+          updateUserInfo(authData.user);
+          applyPermissions(authData.permissions);
+          checkModuleAccess(authData.permissions);
+        }
+        setupLogout();
+      });
+    </script>
   </body>
 </html>

@@ -6,12 +6,12 @@ interface Props {
 const { activeModule } = Astro.props;
 
 const modules = [
-  { id: 'home', name: 'Beranda', href: '/' },
-  { id: 'sales', name: 'Penjualan', href: '/sales' },
-  { id: 'finance', name: 'Keuangan', href: '/finance' },
-  { id: 'inventory', name: 'Persediaan', href: '/inventory' },
-  { id: 'crm', name: 'CRM', href: '/crm' },
-  { id: 'hr', name: 'HR', href: '/hr' },
+  { id: 'home', name: 'Beranda', href: '/', module: 'dashboard' },
+  { id: 'sales', name: 'Penjualan', href: '/sales', module: 'sales' },
+  { id: 'finance', name: 'Keuangan', href: '/finance', module: 'finance' },
+  { id: 'inventory', name: 'Persediaan', href: '/inventory', module: 'inventory' },
+  { id: 'crm', name: 'CRM', href: '/crm', module: 'crm' },
+  { id: 'hr', name: 'HR', href: '/hr', module: 'hr' },
 ];
 
 const getColorClasses = (id: string) => {
@@ -61,13 +61,18 @@ const getMobileLinkColor = (id: string) => {
 
       <!-- User Menu -->
       <div class="flex items-center space-x-3">
-        <button class="hidden sm:flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+        <div id="navUserInfo" class="hidden sm:flex items-center space-x-2 px-3 py-2 rounded-lg">
           <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-            <span class="text-white text-sm font-medium">A</span>
+            <span id="navUserInitial" class="text-white text-sm font-medium">?</span>
           </div>
-          <span class="text-sm font-medium text-gray-700">Admin</span>
+          <span id="navUserName" class="text-sm font-medium text-gray-700">Loading...</span>
+        </div>
+        <button id="navLogoutBtn" class="hidden sm:flex p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
         </button>
-        <button class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+        <button class="xl:hidden p-2 rounded-lg hover:bg-gray-100">
           <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
@@ -80,15 +85,16 @@ const getMobileLinkColor = (id: string) => {
   <div class="lg:hidden border-t border-gray-200">
     <div class="px-2 pt-2 pb-3 space-y-1 overflow-x-auto">
       <div class="flex space-x-1">
-        {modules.map(module => (
+        {modules.map(mod => (
           <a
-            href={module.href}
+            href={mod.href}
+            data-module={mod.module}
             class:list={[
-              "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-              activeModule === module.id ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              "nav-item px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+              activeModule === mod.id ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             ]}
           >
-            {module.name}
+            {mod.name}
           </a>
         ))}
       </div>

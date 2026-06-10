@@ -294,8 +294,8 @@ const currentYear = new Date().getFullYear();
   }
 
   if (hireDateInput) {
+    // Set default to today but allow any date
     const today = new Date().toISOString().split('T')[0];
-    hireDateInput.min = today;
     hireDateInput.value = today;
   }
 
