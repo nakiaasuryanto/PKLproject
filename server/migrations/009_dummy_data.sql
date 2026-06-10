@@ -1,12 +1,12 @@
-INSERT INTO customers (customer_code, name, email, phone, whatsapp, city, address, customer_type, status) VALUES
-('CUST001', 'PT Maju Jaya', 'contact@majujaya.com', '021-5551234', '08111111111', 'Jakarta', 'Jl. Sudirman No. 100', 'COMPANY', 'active'),
-('CUST002', 'CV Berkah Abadi', 'info@berkahabadi.com', '022-5552345', '08122222222', 'Bandung', 'Jl. Asia Afrika No. 50', 'COMPANY', 'active'),
-('CUST003', 'Toko Sejahtera', 'toko.sejahtera@gmail.com', '024-5553456', '08133333333', 'Semarang', 'Jl. Pemuda No. 25', 'COMPANY', 'active'),
-('CUST004', 'Budi Santoso', 'budi.santoso@gmail.com', '08144444444', '08144444444', 'Surabaya', 'Jl. Basuki Rahmat No. 10', 'INDIVIDUAL', 'active'),
-('CUST005', 'Siti Rahayu', 'siti.rahayu@gmail.com', '08155555555', '08155555555', 'Yogyakarta', 'Jl. Malioboro No. 75', 'INDIVIDUAL', 'active'),
-('CUST006', 'PT Global Mandiri', 'sales@globalmandiri.co.id', '021-5556789', '08166666666', 'Jakarta', 'Jl. Gatot Subroto No. 200', 'COMPANY', 'active'),
-('CUST007', 'Ahmad Hidayat', 'ahmad.h@gmail.com', '08177777777', '08177777777', 'Medan', 'Jl. Diponegoro No. 30', 'INDIVIDUAL', 'active'),
-('CUST008', 'CV Sumber Rezeki', 'cv.sumberrezeki@yahoo.com', '031-5558901', '08188888888', 'Surabaya', 'Jl. Tunjungan No. 45', 'COMPANY', 'active')
+INSERT INTO customers (customer_code, name, email, phone, city, address, customer_type, status) VALUES
+('CUST001', 'PT Maju Jaya', 'contact@majujaya.com', '021-5551234', 'Jakarta', 'Jl. Sudirman No. 100', 'COMPANY', 'active'),
+('CUST002', 'CV Berkah Abadi', 'info@berkahabadi.com', '022-5552345', 'Bandung', 'Jl. Asia Afrika No. 50', 'COMPANY', 'active'),
+('CUST003', 'Toko Sejahtera', 'toko.sejahtera@gmail.com', '024-5553456', 'Semarang', 'Jl. Pemuda No. 25', 'COMPANY', 'active'),
+('CUST004', 'Budi Santoso', 'budi.santoso@gmail.com', '08144444444', 'Surabaya', 'Jl. Basuki Rahmat No. 10', 'INDIVIDUAL', 'active'),
+('CUST005', 'Siti Rahayu', 'siti.rahayu@gmail.com', '08155555555', 'Yogyakarta', 'Jl. Malioboro No. 75', 'INDIVIDUAL', 'active'),
+('CUST006', 'PT Global Mandiri', 'sales@globalmandiri.co.id', '021-5556789', 'Jakarta', 'Jl. Gatot Subroto No. 200', 'COMPANY', 'active'),
+('CUST007', 'Ahmad Hidayat', 'ahmad.h@gmail.com', '08177777777', 'Medan', 'Jl. Diponegoro No. 30', 'INDIVIDUAL', 'active'),
+('CUST008', 'CV Sumber Rezeki', 'cv.sumberrezeki@yahoo.com', '031-5558901', 'Surabaya', 'Jl. Tunjungan No. 45', 'COMPANY', 'active')
 ON DUPLICATE KEY UPDATE name=name;
 
 INSERT INTO colors (name, hex_code) VALUES
@@ -117,37 +117,37 @@ CROSS JOIN (
 ) d
 ON DUPLICATE KEY UPDATE status=status;
 
-INSERT INTO transactions (transaction_type, transaction_date, amount, payment_method, description, status) VALUES
-('SALE', '2024-01-05', 950000, 'BANK_TRANSFER', 'Penjualan 10 Kaos Polos ke PT Maju Jaya', 'completed'),
-('SALE', '2024-01-08', 780000, 'CASH', 'Penjualan 4 Jaket Hoodie', 'completed'),
-('EXPENSE', '2024-01-10', 500000, 'CASH', 'Pembelian bahan baku kain', 'completed'),
-('SALE', '2024-01-12', 1170000, 'BANK_TRANSFER', 'Penjualan 6 Jaket Bomber', 'completed'),
-('EXPENSE', '2024-01-15', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'completed'),
-('SALE', '2024-01-18', 495000, 'CASH', 'Penjualan 3 Sweater Crewneck', 'completed'),
-('EXPENSE', '2024-01-20', 2000000, 'BANK_TRANSFER', 'Pembelian stok kain cotton', 'completed'),
-('SALE', '2024-01-22', 575000, 'EWALLET', 'Penjualan 5 Polo Shirt', 'completed'),
-('SALE', '2024-01-25', 375000, 'CASH', 'Penjualan 5 Kaos Lengan Pendek', 'completed'),
-('EXPENSE', '2024-01-28', 800000, 'BANK_TRANSFER', 'Biaya Internet dan Telepon', 'completed'),
-('SALE', '2024-02-01', 1900000, 'BANK_TRANSFER', 'Penjualan 20 Kaos Polos ke CV Berkah Abadi', 'completed'),
-('SALE', '2024-02-05', 1125000, 'BANK_TRANSFER', 'Penjualan 5 Jaket Bomber', 'completed'),
-('EXPENSE', '2024-02-08', 350000, 'CASH', 'Biaya Pengiriman', 'completed'),
-('SALE', '2024-02-10', 585000, 'EWALLET', 'Penjualan 3 Jaket Hoodie', 'completed'),
-('EXPENSE', '2024-02-15', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'completed'),
-('SALE', '2024-02-20', 2850000, 'BANK_TRANSFER', 'Penjualan 30 Kaos ke Toko Sejahtera', 'completed'),
-('SALE', '2024-03-01', 1950000, 'BANK_TRANSFER', 'Penjualan 10 Jaket Hoodie', 'completed'),
-('EXPENSE', '2024-03-05', 3000000, 'BANK_TRANSFER', 'Pembelian mesin jahit baru', 'completed'),
-('SALE', '2024-03-10', 690000, 'CASH', 'Penjualan 6 Polo Shirt', 'completed'),
-('SALE', '2024-03-15', 1425000, 'BANK_TRANSFER', 'Penjualan 15 Kaos Lengan Panjang', 'completed'),
-('EXPENSE', '2024-03-20', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'completed'),
-('SALE', '2024-04-01', 2250000, 'BANK_TRANSFER', 'Penjualan 10 Jaket Bomber ke PT Global Mandiri', 'completed'),
-('SALE', '2024-04-10', 825000, 'EWALLET', 'Penjualan 5 Sweater Crewneck', 'completed'),
-('EXPENSE', '2024-04-15', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'completed'),
-('SALE', '2024-04-20', 1500000, 'CASH', 'Penjualan 20 Kaos Lengan Pendek', 'completed'),
-('SALE', '2024-05-01', 3900000, 'BANK_TRANSFER', 'Penjualan 20 Jaket Hoodie ke CV Sumber Rezeki', 'completed'),
-('EXPENSE', '2024-05-05', 2500000, 'BANK_TRANSFER', 'Pembelian bahan fleece', 'completed'),
-('SALE', '2024-05-10', 1140000, 'BANK_TRANSFER', 'Penjualan 12 Kaos Lengan Panjang', 'completed'),
-('EXPENSE', '2024-05-15', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'completed'),
-('SALE', '2024-05-20', 920000, 'CASH', 'Penjualan 8 Polo Shirt', 'completed'),
-('SALE', '2024-06-01', 2850000, 'BANK_TRANSFER', 'Penjualan 15 Jaket ke PT Maju Jaya', 'completed'),
-('SALE', '2024-06-05', 1650000, 'EWALLET', 'Penjualan 10 Sweater Crewneck', 'completed')
-ON DUPLICATE KEY UPDATE amount=amount
+INSERT INTO transactions (transaction_type, transaction_date, total_amount, payment_method, notes, payment_status) VALUES
+('SALE', '2024-01-05', 950000, 'BANK_TRANSFER', 'Penjualan 10 Kaos Polos ke PT Maju Jaya', 'PAID'),
+('SALE', '2024-01-08', 780000, 'CASH', 'Penjualan 4 Jaket Hoodie', 'PAID'),
+('EXPENSE', '2024-01-10', 500000, 'CASH', 'Pembelian bahan baku kain', 'PAID'),
+('SALE', '2024-01-12', 1170000, 'BANK_TRANSFER', 'Penjualan 6 Jaket Bomber', 'PAID'),
+('EXPENSE', '2024-01-15', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'PAID'),
+('SALE', '2024-01-18', 495000, 'CASH', 'Penjualan 3 Sweater Crewneck', 'PAID'),
+('EXPENSE', '2024-01-20', 2000000, 'BANK_TRANSFER', 'Pembelian stok kain cotton', 'PAID'),
+('SALE', '2024-01-22', 575000, 'OTHER', 'Penjualan 5 Polo Shirt', 'PAID'),
+('SALE', '2024-01-25', 375000, 'CASH', 'Penjualan 5 Kaos Lengan Pendek', 'PAID'),
+('EXPENSE', '2024-01-28', 800000, 'BANK_TRANSFER', 'Biaya Internet dan Telepon', 'PAID'),
+('SALE', '2024-02-01', 1900000, 'BANK_TRANSFER', 'Penjualan 20 Kaos Polos ke CV Berkah Abadi', 'PAID'),
+('SALE', '2024-02-05', 1125000, 'BANK_TRANSFER', 'Penjualan 5 Jaket Bomber', 'PAID'),
+('EXPENSE', '2024-02-08', 350000, 'CASH', 'Biaya Pengiriman', 'PAID'),
+('SALE', '2024-02-10', 585000, 'OTHER', 'Penjualan 3 Jaket Hoodie', 'PAID'),
+('EXPENSE', '2024-02-15', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'PAID'),
+('SALE', '2024-02-20', 2850000, 'BANK_TRANSFER', 'Penjualan 30 Kaos ke Toko Sejahtera', 'PAID'),
+('SALE', '2024-03-01', 1950000, 'BANK_TRANSFER', 'Penjualan 10 Jaket Hoodie', 'PAID'),
+('EXPENSE', '2024-03-05', 3000000, 'BANK_TRANSFER', 'Pembelian mesin jahit baru', 'PAID'),
+('SALE', '2024-03-10', 690000, 'CASH', 'Penjualan 6 Polo Shirt', 'PAID'),
+('SALE', '2024-03-15', 1425000, 'BANK_TRANSFER', 'Penjualan 15 Kaos Lengan Panjang', 'PAID'),
+('EXPENSE', '2024-03-20', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'PAID'),
+('SALE', '2024-04-01', 2250000, 'BANK_TRANSFER', 'Penjualan 10 Jaket Bomber ke PT Global Mandiri', 'PAID'),
+('SALE', '2024-04-10', 825000, 'OTHER', 'Penjualan 5 Sweater Crewneck', 'PAID'),
+('EXPENSE', '2024-04-15', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'PAID'),
+('SALE', '2024-04-20', 1500000, 'CASH', 'Penjualan 20 Kaos Lengan Pendek', 'PAID'),
+('SALE', '2024-05-01', 3900000, 'BANK_TRANSFER', 'Penjualan 20 Jaket Hoodie ke CV Sumber Rezeki', 'PAID'),
+('EXPENSE', '2024-05-05', 2500000, 'BANK_TRANSFER', 'Pembelian bahan fleece', 'PAID'),
+('SALE', '2024-05-10', 1140000, 'BANK_TRANSFER', 'Penjualan 12 Kaos Lengan Panjang', 'PAID'),
+('EXPENSE', '2024-05-15', 1500000, 'BANK_TRANSFER', 'Pembayaran Listrik', 'PAID'),
+('SALE', '2024-05-20', 920000, 'CASH', 'Penjualan 8 Polo Shirt', 'PAID'),
+('SALE', '2024-06-01', 2850000, 'BANK_TRANSFER', 'Penjualan 15 Jaket ke PT Maju Jaya', 'PAID'),
+('SALE', '2024-06-05', 1650000, 'OTHER', 'Penjualan 10 Sweater Crewneck', 'PAID')
+ON DUPLICATE KEY UPDATE total_amount=total_amount;

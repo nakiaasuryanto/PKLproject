@@ -10,27 +10,32 @@ export const ROLE_PERMISSIONS = {
   admin: {
     modules: ['dashboard', 'sales', 'finance', 'crm', 'inventory', 'hr'],
     canViewSummary: true,
-    canManageUsers: true
+    canManageUsers: true,
+    inventoryFullAccess: true
   },
   it: {
     modules: ['dashboard', 'sales', 'finance', 'crm', 'inventory', 'hr'],
     canViewSummary: false,
-    canManageUsers: false
+    canManageUsers: false,
+    inventoryFullAccess: true
   },
   customer_service: {
-    modules: ['crm', 'sales'],
+    modules: ['crm', 'sales', 'inventory'],
     canViewSummary: false,
-    canManageUsers: false
+    canManageUsers: false,
+    inventoryFullAccess: false  // Only view stock, no movements
   },
   operations: {
     modules: ['inventory', 'sales'],
     canViewSummary: false,
-    canManageUsers: false
+    canManageUsers: false,
+    inventoryFullAccess: true
   },
   finance: {
     modules: ['finance', 'sales'],
     canViewSummary: false,
-    canManageUsers: false
+    canManageUsers: false,
+    inventoryFullAccess: false
   }
 };
 

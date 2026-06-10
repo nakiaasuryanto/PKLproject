@@ -32,7 +32,7 @@ const lowStockCount = lowStock.length;
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Manajemen Persediaan</h1>
       <p class="mt-2 text-gray-600">Monitor stok dan pergerakan barang</p>
     </div>
-    <div class="mt-4 sm:mt-0 flex space-x-3">
+    <div id="inventoryActions" class="mt-4 sm:mt-0 flex space-x-3 hidden">
       <Button href="/inventory/input" variant="outline" color="inventory" size="md">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -140,6 +140,66 @@ const lowStockCount = lowStock.length;
     })}
   </div>
 
+  <!-- Available Stock Table (visible to all) -->
+  <Card title="Stok Tersedia" color="inventory" className="mb-8">
+    <div class="mb-4">
+      <input
+        type="text"
+        id="stockSearch"
+        placeholder="Cari produk..."
+        class="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500 focus:border-inventory-500"
+      />
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200" id="stockTable">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warna</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ukuran</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="stockTableBody">
+          {stock.length > 0 ? stock.slice(0, 50).map((item: any) => (
+            <tr class="hover:bg-inventory-50 stock-row" data-product={item.product_name?.toLowerCase() || ''}>
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">{item.product_name}</td>
+              <td class="px-6 py-4 text-sm text-gray-600">
+                <span class="inline-flex items-center">
+                  <span class="w-3 h-3 rounded-full mr-2" style={`background-color: ${item.hex_code || '#ccc'}`}></span>
+                  {item.color_name}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-600">{item.size_name}</td>
+              <td class="px-6 py-4 text-sm text-gray-600">{item.location_name}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">
+                <span class={`px-3 py-1 text-sm font-semibold rounded-full ${
+                  item.quantity > 20 ? 'bg-green-100 text-green-800' :
+                  item.quantity > 10 ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {item.quantity} pcs
+                </span>
+              </td>
+            </tr>
+          )) : (
+            <tr>
+              <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                Belum ada data stok
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+    {stock.length > 50 && (
+      <p class="mt-4 text-sm text-gray-500 text-center">
+        Menampilkan 50 dari {stock.length} item
+      </p>
+    )}
+  </Card>
+
   <!-- Low Stock Table -->
   {lowStockCount > 0 && (
     <div id="low-stock-table" class="mb-8">
@@ -153,7 +213,7 @@ const lowStockCount = lowStock.length;
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ukuran</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider low-stock-action hidden">Aksi</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -168,7 +228,7 @@ const lowStockCount = lowStock.length;
                       {item.quantity} pcs
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm low-stock-action hidden">
                     <button
                       class="text-inventory-600 hover:text-inventory-700 font-medium"
                       onclick="quickAddStock('{item.variant_id}', '{item.product_name} - {item.color_name} - {item.size_name}')"
@@ -185,7 +245,8 @@ const lowStockCount = lowStock.length;
     </div>
   )}
 
-  <!-- Stock Movements -->
+  <!-- Stock Movements (hidden for view-only users) -->
+  <div id="stockMovementsSection" class="hidden">
   <Card title="Pergerakan Stok Terbaru" color="inventory">
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
@@ -237,6 +298,7 @@ const lowStockCount = lowStock.length;
       </a>
     </div>
   </Card>
+  </div>
 
   <!-- Stock Movement Modal -->
   <Modal id="stockMovementModal" title="Pergerakan Stok" color="inventory" size="lg">
@@ -340,9 +402,38 @@ const lowStockCount = lowStock.length;
 
 <script define:vars={{ locationList, API_BASE }}>
   let selectedVariantId = null;
+  let hasFullAccess = true;
+
+  // Check user permissions on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const permissionsStr = localStorage.getItem('permissions');
+      if (permissionsStr) {
+        const permissions = JSON.parse(permissionsStr);
+        hasFullAccess = permissions.inventoryFullAccess !== false;
+      }
+    } catch (e) {
+      console.error('Error parsing permissions:', e);
+    }
+
+    // Show/hide elements based on access level
+    const inventoryActions = document.getElementById('inventoryActions');
+    const stockMovementsSection = document.getElementById('stockMovementsSection');
+    const lowStockActions = document.querySelectorAll('.low-stock-action');
+
+    if (hasFullAccess) {
+      inventoryActions?.classList.remove('hidden');
+      stockMovementsSection?.classList.remove('hidden');
+      lowStockActions.forEach(el => el.classList.remove('hidden'));
+    } else {
+      // Hide action columns in low stock table for view-only users
+      lowStockActions.forEach(el => el.classList.add('hidden'));
+    }
+  });
 
   // Quick add stock function
   function quickAddStock(variantId, variantName) {
+    if (!hasFullAccess) return;
     selectedVariantId = variantId;
     const modal = document.getElementById('stockMovementModal');
     modal.classList.remove('hidden');
@@ -393,6 +484,21 @@ const lowStockCount = lowStock.length;
     } catch (error) {
       showAlert('error', 'Terjadi kesalahan saat menyimpan pergerakan');
     }
+  });
+
+  // Stock search functionality
+  const stockSearch = document.getElementById('stockSearch');
+  stockSearch?.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('.stock-row');
+    rows.forEach(row => {
+      const product = row.getAttribute('data-product') || '';
+      if (product.includes(searchTerm)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
   });
 
   // Show alert

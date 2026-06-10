@@ -5,6 +5,8 @@ import Button from '../components/ui/Button.astro';
 import StatCard from '../components/ui/StatCard.astro';
 import { dashboardApi, api } from '../lib/api';
 
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+
 // Fetch dashboard overview stats (optional)
 let dashboardStats = null;
 try {
@@ -32,113 +34,260 @@ try {
   <!-- Hero Section -->
   <div class="mb-8">
     <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3">
-      Selamat Datang di Dashboard Bisnis
+      Selamat Datang, <span id="userName">User</span>
     </h1>
-    <p class="text-lg sm:text-xl font-medium text-gray-700">
+    <p class="text-lg sm:text-xl font-medium text-gray-700" id="roleDescription">
       Sistem terintegrasi untuk mengelola operasional bisnis Anda
     </p>
   </div>
 
-  <!-- Quick Stats Overview (if API data available) -->
-  {dashboardStats && (
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-      <StatCard
-        title="Total Penjualan"
-        value={`Rp ${(dashboardStats.sales?.total_sales || 0).toLocaleString('id-ID')}`}
-        change={dashboardStats.sales?.sales_growth_label || '0%'}
-        changeType={(dashboardStats.sales?.sales_growth || 0) >= 0 ? 'positive' : 'negative'}
-        color="sales"
-        href="/sales"
-      />
-      <StatCard
-        title="Customer Aktif"
-        value={dashboardStats.crm?.active_customers || 0}
-        change={`dari ${dashboardStats.crm?.total_customers || 0} total`}
-        changeType="neutral"
-        color="crm"
-        href="/crm"
-      />
-      <StatCard
-        title="Stok Tersedia"
-        value={dashboardStats.inventory?.total_stock || 0}
-        change={`${dashboardStats.inventory?.low_stock_items || 0} item rendah`}
-        changeType={(dashboardStats.inventory?.low_stock_items || 0) > 5 ? "negative" : "neutral"}
-        color="inventory"
-        href="/inventory"
-      />
-      <StatCard
-        title="Karyawan Aktif"
-        value={dashboardStats.hr?.active_employees || 0}
-        change={`dari ${dashboardStats.hr?.total_employees || 0} total`}
-        changeType="neutral"
-        color="hr"
-        href="/hr"
-      />
-    </div>
-  )}
-
-  <!-- Quick Actions -->
-  <Card title="Aksi Cepat" color="gray" className="mb-6 sm:mb-8">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-      <Button variant="primary" color="sales" size="lg" href="/sales" className="w-full justify-center">
-        <span class="mr-2">➕</span> Transaksi Baru
-      </Button>
-      <Button variant="primary" color="crm" size="lg" href="/crm" className="w-full justify-center">
-        <span class="mr-2">👤</span> Tambah Customer
-      </Button>
-      <Button variant="primary" color="inventory" size="lg" href="/inventory" className="w-full justify-center">
-        <span class="mr-2">📥</span> Input Stok
-      </Button>
-    </div>
-  </Card>
-
-  <!-- Recent Activity -->
-  <Card title="Aktivitas Terbaru" color="gray">
-    <div class="space-y-3 sm:space-y-4">
-      {recentActivities.length > 0 ? recentActivities.map((activity: any) => {
-        const isSale = activity.transaction_type === 'SALE';
-        const isExpense = activity.transaction_type === 'EXPENSE';
-        const colorClass = isSale ? 'sales' : isExpense ? 'finance' : 'gray';
-
-        return (
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 border-b border-gray-100 gap-1">
-            <div class="flex items-center space-x-3">
-              <div class={`w-2 h-2 bg-${colorClass}-500 rounded-full flex-shrink-0`}></div>
-              <div>
-                <p class="text-base font-semibold text-gray-900">
-                  {isSale ? 'Transaksi penjualan baru' : isExpense ? 'Pengeluaran baru' : 'Transaksi baru'}
-                </p>
-                <p class="text-sm font-medium text-gray-600">
-                  {new Date(activity.transaction_date).toLocaleString('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            </div>
-            <span class={`text-base font-bold text-${colorClass}-700`}>
-              {isSale ? `Rp ${(activity.total_amount || 0).toLocaleString('id-ID')}` : activity.notes || '-'}
-            </span>
-          </div>
-        );
-      }) : (
-        <div class="py-8 text-center text-gray-500">
-          <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <p class="text-sm">Belum ada aktivitas</p>
-        </div>
-      )}
-    </div>
-
-    {recentActivities.length > 0 && (
-      <div class="mt-5 sm:mt-6 text-center">
-        <a href="/sales" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-          Lihat Semua Aktivitas →
-        </a>
+  <!-- Quick Stats Overview (Management only) -->
+  <div id="summarySection" class="hidden">
+    {dashboardStats && (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <StatCard
+          title="Total Penjualan"
+          value={`Rp ${(dashboardStats.sales?.total_sales || 0).toLocaleString('id-ID')}`}
+          change={dashboardStats.sales?.sales_growth_label || '0%'}
+          changeType={(dashboardStats.sales?.sales_growth || 0) >= 0 ? 'positive' : 'negative'}
+          color="sales"
+          href="/sales"
+        />
+        <StatCard
+          title="Customer Aktif"
+          value={dashboardStats.crm?.active_customers || 0}
+          change={`dari ${dashboardStats.crm?.total_customers || 0} total`}
+          changeType="neutral"
+          color="crm"
+          href="/crm"
+        />
+        <StatCard
+          title="Stok Tersedia"
+          value={dashboardStats.inventory?.total_stock || 0}
+          change={`${dashboardStats.inventory?.low_stock_items || 0} item rendah`}
+          changeType={(dashboardStats.inventory?.low_stock_items || 0) > 5 ? "negative" : "neutral"}
+          color="inventory"
+          href="/inventory"
+        />
+        <StatCard
+          title="Karyawan Aktif"
+          value={dashboardStats.hr?.active_employees || 0}
+          change={`dari ${dashboardStats.hr?.total_employees || 0} total`}
+          changeType="neutral"
+          color="hr"
+          href="/hr"
+        />
       </div>
     )}
+  </div>
+
+  <!-- Quick Actions - Role Based -->
+  <Card title="Aksi Cepat" color="gray" className="mb-6 sm:mb-8">
+    <div id="quickActions" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <!-- Will be populated by JavaScript based on role -->
+    </div>
   </Card>
+
+  <!-- Recent Activity (Management only) -->
+  <div id="activitySection" class="hidden">
+    <Card title="Aktivitas Terbaru" color="gray">
+      <div class="space-y-3 sm:space-y-4">
+        {recentActivities.length > 0 ? recentActivities.map((activity: any) => {
+          const isSale = activity.transaction_type === 'SALE';
+          const isExpense = activity.transaction_type === 'EXPENSE';
+          const colorClass = isSale ? 'sales' : isExpense ? 'finance' : 'gray';
+
+          return (
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 border-b border-gray-100 gap-1">
+              <div class="flex items-center space-x-3">
+                <div class={`w-2 h-2 bg-${colorClass}-500 rounded-full flex-shrink-0`}></div>
+                <div>
+                  <p class="text-base font-semibold text-gray-900">
+                    {isSale ? 'Transaksi penjualan baru' : isExpense ? 'Pengeluaran baru' : 'Transaksi baru'}
+                  </p>
+                  <p class="text-sm font-medium text-gray-600">
+                    {new Date(activity.transaction_date).toLocaleString('id-ID', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+              <span class={`text-base font-bold text-${colorClass}-700`}>
+                {isSale ? `Rp ${(activity.total_amount || 0).toLocaleString('id-ID')}` : activity.notes || '-'}
+              </span>
+            </div>
+          );
+        }) : (
+          <div class="py-8 text-center text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p class="text-sm">Belum ada aktivitas</p>
+          </div>
+        )}
+      </div>
+
+      {recentActivities.length > 0 && (
+        <div class="mt-5 sm:mt-6 text-center">
+          <a href="/sales" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+            Lihat Semua Aktivitas →
+          </a>
+        </div>
+      )}
+    </Card>
+  </div>
+
+  <!-- Role-specific info cards -->
+  <div id="roleInfoSection" class="hidden mt-6">
+    <!-- Will be populated by JavaScript based on role -->
+  </div>
 </MainLayout>
+
+<script>
+  // Role-based quick actions configuration
+  const ROLE_ACTIONS = {
+    admin: [
+      { label: 'Transaksi Baru', icon: '➕', href: '/sales/invoice/new', color: 'sales' },
+      { label: 'Tambah Customer', icon: '👤', href: '/crm/customers/new', color: 'crm' },
+      { label: 'Input Stok', icon: '📥', href: '/inventory/input', color: 'inventory' },
+      { label: 'Tambah Karyawan', icon: '👥', href: '/hr/new-employee', color: 'hr' },
+      { label: 'Transaksi Keuangan', icon: '💰', href: '/finance/transactions/new', color: 'finance' },
+      { label: 'Lihat Laporan', icon: '📊', href: '/finance', color: 'finance' }
+    ],
+    it: [
+      { label: 'Kelola Data', icon: '🔧', href: '/crm', color: 'crm' },
+      { label: 'Lihat Inventory', icon: '📦', href: '/inventory', color: 'inventory' },
+      { label: 'Lihat HR', icon: '👥', href: '/hr', color: 'hr' }
+    ],
+    customer_service: [
+      { label: 'Tambah Customer', icon: '👤', href: '/crm/customers/new', color: 'crm' },
+      { label: 'Lihat Customer', icon: '📋', href: '/crm', color: 'crm' },
+      { label: 'Buat Invoice', icon: '🧾', href: '/sales/invoice/new', color: 'sales' },
+      { label: 'Cek Stok', icon: '📦', href: '/inventory', color: 'inventory' }
+    ],
+    operations: [
+      { label: 'Input Stok Masuk', icon: '📥', href: '/inventory/input', color: 'inventory' },
+      { label: 'Pergerakan Stok', icon: '🔄', href: '/inventory', color: 'inventory' },
+      { label: 'Buat Invoice', icon: '🧾', href: '/sales/invoice/new', color: 'sales' }
+    ],
+    finance: [
+      { label: 'Catat Pengeluaran', icon: '💸', href: '/finance/transactions/new', color: 'finance' },
+      { label: 'Lihat Keuangan', icon: '📊', href: '/finance', color: 'finance' },
+      { label: 'Lihat Penjualan', icon: '🧾', href: '/sales', color: 'sales' }
+    ]
+  };
+
+  const ROLE_DESCRIPTIONS = {
+    admin: 'Anda memiliki akses penuh ke semua modul sistem',
+    it: 'Anda dapat mengakses dan mengelola semua data sistem',
+    customer_service: 'Kelola customer dan buat pesanan baru',
+    operations: 'Kelola stok dan proses pesanan',
+    finance: 'Kelola transaksi keuangan dan laporan'
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    let userRole = 'operations';
+    let userName = 'User';
+    let canViewSummary = false;
+
+    // Get user info from localStorage
+    try {
+      const userStr = localStorage.getItem('user');
+      const permissionsStr = localStorage.getItem('permissions');
+
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        userName = user.name || user.username || 'User';
+        userRole = user.role || 'operations';
+      }
+
+      if (permissionsStr) {
+        const permissions = JSON.parse(permissionsStr);
+        canViewSummary = permissions.canViewSummary === true;
+      }
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+    }
+
+    // Update user name
+    const userNameEl = document.getElementById('userName');
+    if (userNameEl) {
+      userNameEl.textContent = userName;
+    }
+
+    // Update role description
+    const roleDescEl = document.getElementById('roleDescription');
+    if (roleDescEl) {
+      roleDescEl.textContent = ROLE_DESCRIPTIONS[userRole] || ROLE_DESCRIPTIONS.operations;
+    }
+
+    // Show summary section only for management (canViewSummary)
+    if (canViewSummary) {
+      document.getElementById('summarySection')?.classList.remove('hidden');
+      document.getElementById('activitySection')?.classList.remove('hidden');
+    }
+
+    // Render quick actions based on role
+    const quickActionsEl = document.getElementById('quickActions');
+    const actions = ROLE_ACTIONS[userRole] || ROLE_ACTIONS.operations;
+
+    if (quickActionsEl) {
+      quickActionsEl.innerHTML = actions.map(action => `
+        <a href="${action.href}"
+           class="inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 px-6 py-3 text-base bg-${action.color}-500 text-white hover:bg-${action.color}-600 focus:ring-${action.color}-500 shadow-sm hover:shadow">
+          <span class="mr-2">${action.icon}</span> ${action.label}
+        </a>
+      `).join('');
+    }
+
+    // Show role-specific info for non-admin roles
+    if (!canViewSummary) {
+      const roleInfoSection = document.getElementById('roleInfoSection');
+      if (roleInfoSection) {
+        roleInfoSection.classList.remove('hidden');
+
+        let infoContent = '';
+
+        if (userRole === 'customer_service') {
+          infoContent = `
+            <div class="bg-crm-50 border border-crm-200 rounded-xl p-6">
+              <h3 class="text-lg font-semibold text-crm-800 mb-2">Tips Customer Service</h3>
+              <ul class="text-sm text-crm-700 space-y-2">
+                <li>• Pastikan data customer lengkap sebelum membuat pesanan</li>
+                <li>• Cek ketersediaan stok sebelum konfirmasi ke customer</li>
+                <li>• Update status pesanan secara berkala</li>
+              </ul>
+            </div>
+          `;
+        } else if (userRole === 'operations') {
+          infoContent = `
+            <div class="bg-inventory-50 border border-inventory-200 rounded-xl p-6">
+              <h3 class="text-lg font-semibold text-inventory-800 mb-2">Tips Operations</h3>
+              <ul class="text-sm text-inventory-700 space-y-2">
+                <li>• Periksa stok rendah secara rutin</li>
+                <li>• Catat setiap pergerakan stok dengan akurat</li>
+                <li>• Pastikan lokasi penyimpanan tercatat dengan benar</li>
+              </ul>
+            </div>
+          `;
+        } else if (userRole === 'finance') {
+          infoContent = `
+            <div class="bg-finance-50 border border-finance-200 rounded-xl p-6">
+              <h3 class="text-lg font-semibold text-finance-800 mb-2">Tips Finance</h3>
+              <ul class="text-sm text-finance-700 space-y-2">
+                <li>• Catat semua pengeluaran dengan bukti yang valid</li>
+                <li>• Verifikasi pembayaran masuk dari penjualan</li>
+                <li>• Rekonsiliasi transaksi secara berkala</li>
+              </ul>
+            </div>
+          `;
+        }
+
+        roleInfoSection.innerHTML = infoContent;
+      }
+    }
+  });
+</script>
