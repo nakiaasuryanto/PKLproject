@@ -174,6 +174,170 @@ router.post('/', async (req, res) => {
   }
 });
 
+// POST /api/transactions/create - Create transaction from frontend form
+router.post('/create', async (req, res) => {
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const {
+      type,
+      date,
+      payment_method,
+      promo_type,
+      pic_sales,
+      customer_name,
+      customer_phone,
+      manual_price,
+      items,
+      total,
+      // For expense transactions
+      expense_category,
+      description,
+      amount,
+      pic
+    } = req.body;
+
+    // Determine transaction type
+    const transaction_type = type === 'penjualan' ? 'SALE' : type === 'pengeluaran' ? 'EXPENSE' : 'SALE';
+    const transaction_date = date || new Date().toISOString().split('T')[0];
+
+    // For sales: find or use customer
+    let customer_id = null;
+    if (transaction_type === 'SALE' && customer_phone) {
+      // Try to find customer by phone
+      const [customers] = await connection.query(
+        'SELECT id FROM customers WHERE phone = ? LIMIT 1',
+        [customer_phone]
+      );
+      if (customers.length > 0) {
+        customer_id = customers[0].id;
+      }
+    }
+
+    // Calculate total amount
+    let total_amount = 0;
+    if (transaction_type === 'EXPENSE') {
+      total_amount = amount || 0;
+    } else if (manual_price && manual_price > 0) {
+      total_amount = manual_price;
+    } else if (total) {
+      total_amount = total;
+    } else if (items && items.length > 0) {
+      total_amount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    }
+
+    // Build notes
+    let notes = '';
+    if (transaction_type === 'EXPENSE') {
+      notes = `${expense_category || ''}: ${description || ''}`;
+    } else {
+      notes = promo_type ? `Promo: ${promo_type}` : '';
+    }
+
+    // Insert transaction
+    const [result] = await connection.query(
+      `INSERT INTO transactions
+       (transaction_type, transaction_date, customer_id, total_amount, payment_method, pic, notes, items, payment_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        transaction_type,
+        transaction_date,
+        customer_id,
+        total_amount,
+        payment_method || 'CASH',
+        pic_sales || pic || null,
+        notes,
+        JSON.stringify(items || []),
+        'COMPLETED'
+      ]
+    );
+
+    const transactionId = result.insertId;
+
+    // For SALE: process stock movements if items have product_color_size_id
+    if (transaction_type === 'SALE' && items && items.length > 0) {
+      for (const item of items) {
+        let pcsId = item.product_color_size_id;
+
+        // If no direct ID, try to find by product name, color, size
+        if (!pcsId && (item.name || item.product_id)) {
+          const [found] = await connection.query(`
+            SELECT pcs.id
+            FROM product_color_sizes pcs
+            JOIN product_colors pc ON pcs.product_color_id = pc.id
+            JOIN products p ON pc.product_id = p.id
+            JOIN colors c ON pc.color_id = c.id
+            JOIN sizes s ON pcs.size_id = s.id
+            WHERE (p.name LIKE ? OR p.id = ?)
+              AND (c.name LIKE ? OR ? IS NULL OR ? = '')
+              AND (s.name LIKE ? OR ? IS NULL OR ? = '')
+            LIMIT 1
+          `, [
+            `%${item.name || item.product_id}%`,
+            item.product_id,
+            `%${item.color || ''}%`,
+            item.color,
+            item.color,
+            `%${item.size || ''}%`,
+            item.size,
+            item.size
+          ]);
+
+          if (found.length > 0) {
+            pcsId = found[0].id;
+          }
+        }
+
+        // If we found a product_color_size_id, update stock
+        if (pcsId && item.quantity > 0) {
+          // Create stock movement
+          await connection.query(
+            `INSERT INTO stock_movements
+             (product_color_size_id, location_id, movement_type, quantity, reason_code, reference_type, reference_id, movement_date, created_by)
+             VALUES (?, 1, 'OUT', ?, 'SALES_OUT', 'TRANSACTION', ?, ?, ?)`,
+            [pcsId, item.quantity, transactionId, transaction_date, pic_sales || 'System']
+          );
+
+          // Update stock balance
+          await connection.query(
+            `UPDATE stock_balances
+             SET quantity = quantity - ?
+             WHERE product_color_size_id = ? AND location_id = 1`,
+            [item.quantity, pcsId]
+          );
+        }
+      }
+
+      // Update customer stats if customer found
+      if (customer_id) {
+        await connection.query(
+          `UPDATE customers
+           SET total_purchases = total_purchases + 1,
+               total_spent = total_spent + ?,
+               last_purchase_date = ?
+           WHERE id = ?`,
+          [total_amount, transaction_date, customer_id]
+        );
+      }
+    }
+
+    await connection.commit();
+
+    res.status(201).json({
+      success: true,
+      data: { id: transactionId }
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error creating transaction:', error);
+    res.status(500).json({ success: false, error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
 // GET /api/transactions/stats - Transaction statistics
 router.get('/stats/summary', async (req, res) => {
   try {
