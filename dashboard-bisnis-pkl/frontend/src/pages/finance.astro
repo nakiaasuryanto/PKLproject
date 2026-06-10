@@ -15,9 +15,9 @@ const dashboardStats = (dashboardResponse.success && dashboardResponse.data) ? d
 const expenseList = (expensesResponse.success && Array.isArray(expensesResponse.data)) ? expensesResponse.data : [];
 const trend = (salesTrendResponse.success && Array.isArray(salesTrendResponse.data)) ? salesTrendResponse.data : [];
 
-// Calculate metrics from API data
-const totalRevenue = dashboardStats.sales?.total_sales || 0;
-const totalExpenses = dashboardStats.expenses?.total || 0;
+// Calculate metrics from API data (convert to integer to remove decimals)
+const totalRevenue = Math.round(Number(dashboardStats.sales?.total_sales) || 0);
+const totalExpenses = Math.round(Number(dashboardStats.expenses?.total) || 0);
 const netProfit = totalRevenue - totalExpenses;
 const profitMargin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
 
@@ -30,13 +30,14 @@ const expenseGrowthType = (dashboardStats.expenses?.growth || 0) >= 0 ? 'negativ
 // Calculate payment method totals from transactions
 const paymentStatsResponse = await api.get('/transactions/stats/summary?start_date=2025-01-01');
 const stats = (paymentStatsResponse.success && Array.isArray(paymentStatsResponse.data)) ? paymentStatsResponse.data : [];
-const cashTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'CASH' ? sum + (s.total || 0) : sum, 0) : 0;
-const transferTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'BANK_TRANSFER' ? sum + (s.total || 0) : sum, 0) : 0;
-const otherTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'OTHER' ? sum + (s.total || 0) : sum, 0) : 0;
+const cashTotal = Math.round(Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'CASH' ? sum + (Number(s.total) || 0) : sum, 0) : 0);
+const transferTotal = Math.round(Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'BANK_TRANSFER' ? sum + (Number(s.total) || 0) : sum, 0) : 0);
+const otherTotal = Math.round(Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'OTHER' ? sum + (Number(s.total) || 0) : sum, 0) : 0);
 
 // Format currency with Indonesian thousand separators
-function formatCurrency(amount: number): string {
-  return `Rp ${amount.toLocaleString('id-ID')}`;
+function formatCurrency(amount: number | string): string {
+  const num = Math.round(Number(amount) || 0);
+  return `Rp ${num.toLocaleString('id-ID')}`;
 }
 ---
 

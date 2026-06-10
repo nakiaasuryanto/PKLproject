@@ -17,15 +17,16 @@ const trend = (salesTrendResponse.success && Array.isArray(salesTrendResponse.da
 const transactions = (recentTransactionsResponse.success && Array.isArray(recentTransactionsResponse.data)) ? recentTransactionsResponse.data : [];
 const paymentMethods = (paymentMethodsResponse.success && Array.isArray(paymentMethodsResponse.data)) ? paymentMethodsResponse.data : [];
 
-// Calculate metrics from API data
+// Calculate metrics from API data (convert to integer to remove decimals)
 const saleStats = Array.isArray(stats) ? stats.find((s: any) => s.transaction_type === 'SALE') || { total: 0, count: 0 } : { total: 0, count: 0 };
-const totalSales = saleStats.total || 0;
-const salesCount = saleStats.count || 0;
+const totalSales = Math.round(Number(saleStats.total) || 0);
+const salesCount = Number(saleStats.count) || 0;
 const avgPerTransaction = salesCount > 0 ? Math.round(totalSales / salesCount) : 0;
 
 // Format currency with Indonesian thousand separators
-function formatCurrency(amount: number): string {
-  return `Rp ${amount.toLocaleString('id-ID')}`;
+function formatCurrency(amount: number | string): string {
+  const num = Math.round(Number(amount) || 0);
+  return `Rp ${num.toLocaleString('id-ID')}`;
 }
 ---
 

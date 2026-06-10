@@ -193,8 +193,8 @@ const { id } = Astro.params;
 
     // Render stats cards
     const avgOrder = customer.total_purchases > 0
-      ? (customer.total_spent / customer.total_purchases / 1000000).toFixed(1)
-      : '0.0';
+      ? Math.round(customer.total_spent / customer.total_purchases)
+      : 0;
 
     const lastOrder = customer.last_order_date
       ? new Date(customer.last_order_date).toLocaleDateString('id-ID')
@@ -205,7 +205,7 @@ const { id } = Astro.params;
         <div class="flex items-center justify-between">
           <div class="flex-1">
             <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Pembelanjaan</p>
-            <p class="mt-2 text-2xl font-bold text-gray-900">Rp ${((customer.total_spent || 0) / 1000000).toFixed(1)}M</p>
+            <p class="mt-2 text-2xl font-bold text-gray-900">Rp ${Math.round(Number(customer.total_spent) || 0).toLocaleString('id-ID')}</p>
           </div>
           <div class="p-3 rounded-xl bg-crm-500 text-white">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +233,7 @@ const { id } = Astro.params;
         <div class="flex items-center justify-between">
           <div class="flex-1">
             <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Rata-rata Order</p>
-            <p class="mt-2 text-2xl font-bold text-gray-900">Rp ${avgOrder}M</p>
+            <p class="mt-2 text-2xl font-bold text-gray-900">Rp ${avgOrder.toLocaleString('id-ID')}</p>
           </div>
           <div class="p-3 rounded-xl bg-crm-500 text-white">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -326,7 +326,7 @@ const { id } = Astro.params;
           <div>
             <p class="text-xs text-gray-500 uppercase tracking-wider">Limit Kredit</p>
             <p class="text-sm font-medium text-gray-900 mt-1">
-              ${customer.credit_limit ? `Rp ${customer.credit_limit.toLocaleString('id-ID')}` : 'Tidak ada limit'}
+              ${customer.credit_limit ? `Rp ${Math.round(Number(customer.credit_limit)).toLocaleString('id-ID')}` : 'Tidak ada limit'}
             </p>
           </div>
           <div>
@@ -360,7 +360,7 @@ const { id } = Astro.params;
                 ${new Date(p.invoice_date).toLocaleDateString('id-ID')}
               </td>
               <td class="px-6 py-4 text-sm font-semibold text-gray-900">
-                Rp ${(p.total_amount / 1000000).toFixed(1)}M
+                Rp ${Math.round(Number(p.total_amount) || 0).toLocaleString('id-ID')}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">

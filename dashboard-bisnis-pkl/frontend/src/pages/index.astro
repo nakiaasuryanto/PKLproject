@@ -47,7 +47,7 @@ try {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
         <StatCard
           title="Total Penjualan"
-          value={`Rp ${(dashboardStats.sales?.total_sales || 0).toLocaleString('id-ID')}`}
+          value={`Rp ${Math.round(Number(dashboardStats.sales?.total_sales) || 0).toLocaleString('id-ID')}`}
           change={dashboardStats.sales?.sales_growth_label || '0%'}
           changeType={(dashboardStats.sales?.sales_growth || 0) >= 0 ? 'positive' : 'negative'}
           color="sales"
@@ -116,7 +116,7 @@ try {
                 </div>
               </div>
               <span class={`text-base font-bold text-${colorClass}-700`}>
-                {isSale ? `Rp ${(activity.total_amount || 0).toLocaleString('id-ID')}` : activity.notes || '-'}
+                {isSale ? `Rp ${Math.round(Number(activity.total_amount) || 0).toLocaleString('id-ID')}` : activity.notes || '-'}
               </span>
             </div>
           );

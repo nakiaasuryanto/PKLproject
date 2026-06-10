@@ -397,7 +397,7 @@ T-Shirt Premium,Putih,XXL,Lemari,8,75000</pre>
         <td class="px-4 py-3 text-sm text-gray-600">${row.size_name}</td>
         <td class="px-4 py-3 text-sm text-gray-600">${row.location_name}</td>
         <td class="px-4 py-3 text-sm font-medium text-gray-900">${row.quantity}</td>
-        <td class="px-4 py-3 text-sm text-gray-600">${row.unit_cost ? 'Rp ' + row.unit_cost.toLocaleString('id-ID') : '-'}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${row.unit_cost ? 'Rp ' + Math.round(Number(row.unit_cost)).toLocaleString('id-ID') : '-'}</td>
         <td class="px-4 py-3">
           <span class="px-2 py-1 text-xs font-semibold rounded-full ${row.valid === false ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
             ${row.valid === false ? '❌ Invalid' : '✅ Valid'}

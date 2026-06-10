@@ -18,10 +18,6 @@ const customersByType = customers.reduce((acc: Record<string, number>, c: any) =
   return acc;
 }, {});
 
-// Top customers
-const topCustomers = [...customers]
-  .sort((a: any, b: any) => (b.total_spent || 0) - (a.total_spent || 0))
-  .slice(0, 5);
 ---
 
 <MainLayout title="CRM - Dashboard Bisnis" activeModule="crm">
@@ -69,7 +65,7 @@ const topCustomers = [...customers]
     />
     <StatCard
       title="Total Revenue"
-      value={`Rp ${((stats.total_revenue || 0) / 1000000).toFixed(1)}M`}
+      value={`Rp ${Math.round(Number(stats.total_revenue) || 0).toLocaleString('id-ID')}`}
       change="Dari semua customer"
       changeType="positive"
       color="crm"
@@ -98,36 +94,6 @@ const topCustomers = [...customers]
       </div>
     </Card>
   </div>
-
-  <!-- Top Customers -->
-  <Card title="Top 5 Customer" color="crm" className="mb-8">
-    <div class="space-y-4">
-      {topCustomers.map((customer: any, index: number) => (
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-lg hover:bg-crm-50 transition-colors">
-          <div class="flex items-center space-x-4 mb-3 sm:mb-0">
-            <div class="w-10 h-10 bg-crm-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span class="text-lg font-bold text-crm-600">#{index + 1}</span>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-900">{customer.name}</p>
-              <p class="text-sm text-gray-600">
-                {customer.customer_type} • {customer.city}
-              </p>
-            </div>
-          </div>
-          <div class="text-right sm:ml-4">
-            <p class="font-bold text-crm-600">
-              Rp {(customer.total_spent / 1000000).toFixed(1)}M
-            </p>
-            <p class="text-sm text-gray-600">{customer.total_purchases} pesanan</p>
-          </div>
-        </div>
-      ))}
-      {topCustomers.length === 0 && (
-        <p class="text-center text-gray-500 py-8">Belum ada data customer</p>
-      )}
-    </div>
-  </Card>
 
   <!-- Customer List -->
   <Card title="Daftar Customer" color="crm">
@@ -198,7 +164,7 @@ const topCustomers = [...customers]
                 </div>
               </td>
               <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-semibold text-crm-600">
-                Rp {(customer.total_spent / 1000000).toFixed(1)}M
+                Rp {Math.round(Number(customer.total_spent) || 0).toLocaleString('id-ID')}
               </td>
               <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
                 <span class={`px-2 py-1 text-xs font-semibold rounded-full ${
