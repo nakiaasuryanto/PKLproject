@@ -7,7 +7,7 @@ import ChartWrapper from '../components/charts/ChartWrapper.astro';
 import { api } from '../lib/api';
 
 // Fetch sales data from backend API
-const salesStatsResponse = await api.get('/transactions/stats?start_date=2025-01-01');
+const salesStatsResponse = await api.get('/transactions/stats/summary?start_date=2025-01-01');
 const salesTrendResponse = await api.get('/dashboard/sales-trend?period=daily&limit=30');
 const recentTransactionsResponse = await api.get('/transactions?type=SALE&limit=10');
 const paymentMethodsResponse = await api.get('/dashboard/payment-methods');
@@ -25,10 +25,12 @@ const avgPerTransaction = salesCount > 0 ? Math.round(totalSales / salesCount) :
 
 // Format currency
 function formatCurrency(amount: number): string {
-  if (amount >= 1000000) {
-    return `Rp ${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000000000) {
+    return `Rp ${(amount / 1000000000).toFixed(1)} miliar`;
+  } else if (amount >= 1000000) {
+    return `Rp ${(amount / 1000000).toFixed(1)} juta`;
   } else if (amount >= 1000) {
-    return `Rp ${(amount / 1000).toFixed(0)}K`;
+    return `Rp ${(amount / 1000).toFixed(0)} ribu`;
   }
   return `Rp ${amount.toLocaleString('id-ID')}`;
 }

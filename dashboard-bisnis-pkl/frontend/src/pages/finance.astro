@@ -28,7 +28,7 @@ const expenseGrowth = dashboardStats.expenses?.growth_label || '0%';
 const expenseGrowthType = (dashboardStats.expenses?.growth || 0) >= 0 ? 'negative' : 'positive';
 
 // Calculate payment method totals from transactions
-const paymentStatsResponse = await api.get('/transactions/stats?start_date=2025-01-01');
+const paymentStatsResponse = await api.get('/transactions/stats/summary?start_date=2025-01-01');
 const stats = (paymentStatsResponse.success && Array.isArray(paymentStatsResponse.data)) ? paymentStatsResponse.data : [];
 const cashTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'CASH' ? sum + (s.total || 0) : sum, 0) : 0;
 const transferTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'BANK_TRANSFER' ? sum + (s.total || 0) : sum, 0) : 0;
@@ -36,10 +36,12 @@ const otherTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => 
 
 // Format currency
 function formatCurrency(amount: number): string {
-  if (amount >= 1000000) {
-    return `Rp ${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000000000) {
+    return `Rp ${(amount / 1000000000).toFixed(1)} miliar`;
+  } else if (amount >= 1000000) {
+    return `Rp ${(amount / 1000000).toFixed(1)} juta`;
   } else if (amount >= 1000) {
-    return `Rp ${(amount / 1000).toFixed(0)}K`;
+    return `Rp ${(amount / 1000).toFixed(0)} ribu`;
   }
   return `Rp ${amount.toLocaleString('id-ID')}`;
 }
