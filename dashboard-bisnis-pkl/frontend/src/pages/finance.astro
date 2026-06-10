@@ -27,12 +27,15 @@ const revenueGrowthType = (dashboardStats.sales?.sales_growth || 0) >= 0 ? 'posi
 const expenseGrowth = dashboardStats.expenses?.growth_label || '0%';
 const expenseGrowthType = (dashboardStats.expenses?.growth || 0) >= 0 ? 'negative' : 'positive';
 
-// Calculate payment method totals from transactions
-const paymentStatsResponse = await api.get('/transactions/stats/summary?start_date=2025-01-01');
-const stats = (paymentStatsResponse.success && Array.isArray(paymentStatsResponse.data)) ? paymentStatsResponse.data : [];
-const cashTotal = Math.round(Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'CASH' ? sum + (Number(s.total) || 0) : sum, 0) : 0);
-const transferTotal = Math.round(Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'BANK_TRANSFER' ? sum + (Number(s.total) || 0) : sum, 0) : 0);
-const otherTotal = Math.round(Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'OTHER' ? sum + (Number(s.total) || 0) : sum, 0) : 0);
+// Get payment method breakdown from dashboard API
+const paymentMethodsResponse = await api.get('/dashboard/payment-methods');
+const paymentMethods = (paymentMethodsResponse.success && Array.isArray(paymentMethodsResponse.data)) ? paymentMethodsResponse.data : [];
+const cashData = paymentMethods.find((p: any) => p.payment_method === 'CASH') || { count: 0, total: 0 };
+const transferData = paymentMethods.find((p: any) => p.payment_method === 'BANK_TRANSFER') || { count: 0, total: 0 };
+const otherData = paymentMethods.find((p: any) => p.payment_method === 'OTHER') || { count: 0, total: 0 };
+const cashTotal = Math.round(Number(cashData.total) || 0);
+const transferTotal = Math.round(Number(transferData.total) || 0);
+const otherTotal = Math.round(Number(otherData.total) || 0);
 
 // Format currency with Indonesian thousand separators
 function formatCurrency(amount: number | string): string {
@@ -143,7 +146,7 @@ function formatCurrency(amount: number | string): string {
             </div>
             <div>
               <p class="font-medium text-gray-900">Cash</p>
-              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'CASH').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
+              <p class="text-sm text-gray-500">{cashData.count || 0} transaksi</p>
             </div>
           </div>
           <span class="font-semibold text-gray-900">{formatCurrency(cashTotal)}</span>
@@ -155,7 +158,7 @@ function formatCurrency(amount: number | string): string {
             </div>
             <div>
               <p class="font-medium text-gray-900">Bank Transfer</p>
-              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'BANK_TRANSFER').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
+              <p class="text-sm text-gray-500">{transferData.count || 0} transaksi</p>
             </div>
           </div>
           <span class="font-semibold text-gray-900">{formatCurrency(transferTotal)}</span>
@@ -167,7 +170,7 @@ function formatCurrency(amount: number | string): string {
             </div>
             <div>
               <p class="font-medium text-gray-900">Lainnya</p>
-              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'OTHER').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
+              <p class="text-sm text-gray-500">{otherData.count || 0} transaksi</p>
             </div>
           </div>
           <span class="font-semibold text-gray-900">{formatCurrency(otherTotal)}</span>
@@ -286,5 +289,6 @@ function formatCurrency(amount: number | string): string {
   });
 </script>
 
-<style define:vars={{ financeTrendData: JSON.stringify(trend) }}>
-</style>
+<script define:vars={{ trendData: trend }}>
+  window.financeTrendData = trendData;
+</script>
