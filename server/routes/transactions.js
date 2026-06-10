@@ -259,10 +259,10 @@ router.post('/create', async (req, res) => {
     // For SALE: process stock movements if items have product_color_size_id
     if (transaction_type === 'SALE' && items && items.length > 0) {
       for (const item of items) {
-        let pcsId = item.product_color_size_id;
+        let pcsId = item.product_color_size_id ? parseInt(item.product_color_size_id) : null;
 
         // If no direct ID, try to find by product name, color, size
-        if (!pcsId && (item.name || item.product_id)) {
+        if (!pcsId && item.name) {
           const [found] = await connection.query(`
             SELECT pcs.id
             FROM product_color_sizes pcs
@@ -270,13 +270,12 @@ router.post('/create', async (req, res) => {
             JOIN products p ON pc.product_id = p.id
             JOIN colors c ON pc.color_id = c.id
             JOIN sizes s ON pcs.size_id = s.id
-            WHERE (p.name LIKE ? OR p.id = ?)
+            WHERE p.name LIKE ?
               AND (c.name LIKE ? OR ? IS NULL OR ? = '')
               AND (s.name LIKE ? OR ? IS NULL OR ? = '')
             LIMIT 1
           `, [
-            `%${item.name || item.product_id}%`,
-            item.product_id,
+            `%${item.name}%`,
             `%${item.color || ''}%`,
             item.color,
             item.color,

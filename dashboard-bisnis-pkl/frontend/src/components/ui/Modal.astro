@@ -130,16 +130,16 @@ const headerColorClass: Record<string, string> = {
   });
 
   // Export openModal function
-  (window as any).openModal = (modalId: string) => {
-    const modal = document.getElementById(modalId);
+  window.openModal = function(id) {
+    const modal = document.getElementById(id);
     if (modal) {
       modal.classList.remove('hidden');
     }
   };
 
   // Export closeModal function
-  (window as any).closeModal = (modalId: string) => {
-    const modal = document.getElementById(modalId);
+  window.closeModal = function(id) {
+    const modal = document.getElementById(id);
     if (modal) {
       modal.classList.add('hidden');
     }

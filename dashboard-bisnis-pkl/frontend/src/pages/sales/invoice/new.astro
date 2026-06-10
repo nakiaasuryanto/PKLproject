@@ -224,6 +224,43 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   </div>
 </MainLayout>
 
+<!-- Product Search Modal -->
+<div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900">Pilih Produk dari Inventory</h3>
+        <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="px-6 py-4 border-b border-gray-200">
+        <input
+          type="text"
+          id="productSearchInput"
+          placeholder="Cari nama produk, warna, atau ukuran..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+        />
+      </div>
+
+      <!-- Product List -->
+      <div id="productList" class="overflow-y-auto max-h-96">
+        <div class="p-6 text-center text-gray-500">
+          <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          <p>Ketik untuk mencari produk...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Customer Search Modal -->
 <div id="customerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
   <div class="flex items-center justify-center min-h-screen p-4">
@@ -265,6 +302,8 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   let items = [];
   let itemIdCounter = 0;
   let customersCache = [];
+  let productsCache = [];
+  let currentItemId = null;
 
   // Number formatting functions
   window.formatNumber = function(input) {
@@ -404,6 +443,111 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     window.closeCustomerModal();
   };
 
+  // Product Modal Functions
+  window.openProductModalForItem = async function(itemId) {
+    currentItemId = itemId;
+    const modal = document.getElementById('productModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      await loadProducts();
+    }
+  };
+
+  window.closeProductModal = function() {
+    const modal = document.getElementById('productModal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    currentItemId = null;
+  };
+
+  // Close product modal when clicking outside
+  document.getElementById('productModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'productModal') {
+      window.closeProductModal();
+    }
+  });
+
+  async function loadProducts() {
+    try {
+      const response = await fetch(`${API_BASE}/inventory/stock`);
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        productsCache = result.data;
+        displayProducts(productsCache);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
+  }
+
+  document.getElementById('productSearchInput')?.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const filtered = productsCache.filter(p =>
+      p.product_name?.toLowerCase().includes(searchTerm) ||
+      p.color_name?.toLowerCase().includes(searchTerm) ||
+      p.size_name?.toLowerCase().includes(searchTerm) ||
+      p.sku?.toLowerCase().includes(searchTerm)
+    );
+    displayProducts(filtered);
+  });
+
+  function displayProducts(products) {
+    const listContainer = document.getElementById('productList');
+    if (!listContainer) return;
+
+    if (products.length === 0) {
+      listContainer.innerHTML = `
+        <div class="p-6 text-center text-gray-500">
+          <p>Tidak ada produk ditemukan</p>
+        </div>
+      `;
+      return;
+    }
+
+    listContainer.innerHTML = products.map(product => `
+      <div
+        onclick="selectProduct('${product.product_color_size_id || ''}', '${product.product_name || ''}', '${product.color_name || ''}', '${product.size_name || ''}', ${product.quantity || 0})"
+        class="px-6 py-4 border-b border-gray-100 hover:bg-sales-50 cursor-pointer flex items-center justify-between"
+      >
+        <div>
+          <p class="font-medium text-gray-900">${product.product_name || '-'}</p>
+          <p class="text-sm text-gray-500">
+            ${product.color_name || '-'} • ${product.size_name || '-'} • ${product.location_name || '-'}
+          </p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm font-semibold ${product.quantity > 10 ? 'text-green-600' : product.quantity > 0 ? 'text-yellow-600' : 'text-red-600'}">
+            Stok: ${product.quantity || 0}
+          </p>
+          <p class="text-xs text-gray-500">${product.sku || '-'}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.selectProduct = function(pcsId, name, color, size, stock) {
+    if (!currentItemId) return;
+
+    const row = document.querySelector(`[data-item-id="${currentItemId}"]`);
+    if (row) {
+      const nameInput = row.querySelector('input[name*="[name]"]');
+      const colorInput = row.querySelector('input[name*="[color]"]');
+      const sizeInput = row.querySelector('input[name*="[size]"]');
+      const stockInput = row.querySelector('input[name*="[stock]"]');
+      const pcsIdInput = row.querySelector('input[name*="[product_color_size_id]"]');
+
+      if (nameInput) nameInput.value = name;
+      if (colorInput) colorInput.value = color;
+      if (sizeInput) sizeInput.value = size;
+      if (stockInput) stockInput.value = stock;
+      if (pcsIdInput) pcsIdInput.value = pcsId;
+    }
+
+    window.closeProductModal();
+  };
+
   function addNewItem() {
     const container = document.getElementById('itemsContainer');
     if (!container) return;
@@ -414,21 +558,27 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       <div class="item-row bg-gray-50 rounded-lg p-4" data-item-id="${itemId}">
         <div class="flex justify-between items-center mb-3">
           <span class="text-sm font-medium text-gray-700">Item #${itemId}</span>
-          <button type="button" onclick="removeItem(${itemId})" class="text-red-500 hover:text-red-700">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="openProductModalForItem(${itemId})" class="text-sales-600 hover:text-sales-700 text-sm font-medium">
+              🔍 Cari Produk
+            </button>
+            <button type="button" onclick="removeItem(${itemId})" class="text-red-500 hover:text-red-700">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-gray-600 mb-1">Product ID</label>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Nama Produk</label>
             <input
               type="text"
-              name="items[${itemId}][product_id]"
-              placeholder="Product ID"
+              name="items[${itemId}][name]"
+              placeholder="Nama produk"
               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
             />
+            <input type="hidden" name="items[${itemId}][product_color_size_id]" />
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Jumlah</label>
@@ -454,13 +604,13 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
             />
           </div>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+        <div class="grid grid-cols-3 gap-3 mt-3">
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Warna</label>
             <input
               type="text"
               name="items[${itemId}][color]"
-              placeholder="Nama warna"
+              placeholder="Warna"
               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
             />
           </div>
@@ -473,13 +623,14 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
             />
           </div>
-          <div class="col-span-2">
-            <label class="block text-xs font-medium text-gray-600 mb-1">Nama Produk</label>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Stok</label>
             <input
               type="text"
-              name="items[${itemId}][name]"
-              placeholder="Nama produk"
-              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+              name="items[${itemId}][stock]"
+              placeholder="-"
+              readonly
+              class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 text-gray-600"
             />
           </div>
         </div>
@@ -531,16 +682,16 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 
     itemRows.forEach(row => {
       const itemId = row.getAttribute('data-item-id');
-      const productId = form.querySelector(`input[name="items[${itemId}][product_id]"]`)?.value;
+      const pcsId = form.querySelector(`input[name="items[${itemId}][product_color_size_id]"]`)?.value;
       const quantity = parseInt(form.querySelector(`input[name="items[${itemId}][quantity]"]`)?.value || '1');
       const price = window.parseNumber(form.querySelector(`input[name="items[${itemId}][price]"]`)?.value || '0');
       const color = form.querySelector(`input[name="items[${itemId}][color]"]`)?.value;
       const size = form.querySelector(`input[name="items[${itemId}][size]"]`)?.value;
       const name = form.querySelector(`input[name="items[${itemId}][name]"]`)?.value;
 
-      if (productId) {
+      if (name || pcsId) {
         items.push({
-          product_id: productId,
+          product_color_size_id: pcsId || null,
           quantity,
           price,
           ...(color && { color }),

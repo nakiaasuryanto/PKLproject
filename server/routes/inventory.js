@@ -10,6 +10,7 @@ router.get('/stock', async (req, res) => {
 
     let query = `
       SELECT
+        pcs.id as product_color_size_id,
         p.name as product_name,
         c.name as color_name,
         s.name as size_name,
