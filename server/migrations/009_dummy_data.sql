@@ -90,32 +90,40 @@ INSERT INTO employees (employee_code, name, email, phone, position, department, 
 ('EMP008', 'Rina Marlina', 'rina.marlina@company.com', '08188889999', 'Staff', 'Customer Service', '2023-05-01', 'ACTIVE')
 ON DUPLICATE KEY UPDATE name=name;
 
-INSERT INTO attendance (employee_id, attendance_date, check_in, check_out, status, work_hours)
-SELECT e.id, d.date,
-  CASE WHEN DAYOFWEEK(d.date) IN (1,7) THEN NULL
-       WHEN RAND() < 0.1 THEN NULL
-       ELSE ADDTIME('08:00:00', SEC_TO_TIME(FLOOR(RAND() * 1800))) END,
-  CASE WHEN DAYOFWEEK(d.date) IN (1,7) THEN NULL
-       WHEN RAND() < 0.1 THEN NULL
-       ELSE ADDTIME('17:00:00', SEC_TO_TIME(FLOOR(RAND() * 3600))) END,
-  CASE WHEN DAYOFWEEK(d.date) IN (1,7) THEN 'HOLIDAY'
-       WHEN RAND() < 0.05 THEN 'SICK'
-       WHEN RAND() < 0.05 THEN 'LEAVE'
-       WHEN RAND() < 0.1 THEN 'LATE'
-       ELSE 'PRESENT' END,
-  CASE WHEN DAYOFWEEK(d.date) IN (1,7) THEN 0 ELSE 8 + RAND() * 2 END
-FROM employees e
-CROSS JOIN (
-  SELECT DATE('2024-01-01') + INTERVAL n DAY as date
-  FROM (
-    SELECT a.N + b.N * 10 + c.N * 100 as n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) b,
-         (SELECT 0 AS N UNION SELECT 1) c
-  ) numbers
-  WHERE DATE('2024-01-01') + INTERVAL n DAY <= DATE('2024-06-10')
-) d
-ON DUPLICATE KEY UPDATE status=status;
+INSERT INTO attendance (employee_id, attendance_date, check_in, check_out, status, work_hours) VALUES
+(1, '2024-01-02', '08:05:00', '17:10:00', 'PRESENT', 9.1),
+(1, '2024-01-03', '08:12:00', '17:05:00', 'PRESENT', 8.9),
+(1, '2024-01-04', '08:00:00', '17:15:00', 'PRESENT', 9.3),
+(1, '2024-01-05', '08:35:00', '17:00:00', 'LATE', 8.4),
+(2, '2024-01-02', '08:00:00', '17:20:00', 'PRESENT', 9.3),
+(2, '2024-01-03', '08:08:00', '17:00:00', 'PRESENT', 8.9),
+(2, '2024-01-04', NULL, NULL, 'SICK', 0),
+(2, '2024-01-05', '08:02:00', '17:10:00', 'PRESENT', 9.1),
+(3, '2024-01-02', '08:10:00', '17:00:00', 'PRESENT', 8.8),
+(3, '2024-01-03', '08:00:00', '17:30:00', 'PRESENT', 9.5),
+(3, '2024-01-04', '08:05:00', '17:00:00', 'PRESENT', 8.9),
+(3, '2024-01-05', '08:00:00', '17:15:00', 'PRESENT', 9.3),
+(4, '2024-01-02', '08:15:00', '17:00:00', 'PRESENT', 8.8),
+(4, '2024-01-03', '08:40:00', '17:00:00', 'LATE', 8.3),
+(4, '2024-01-04', '08:00:00', '17:20:00', 'PRESENT', 9.3),
+(4, '2024-01-05', '08:05:00', '17:00:00', 'PRESENT', 8.9),
+(5, '2024-01-02', '08:00:00', '17:10:00', 'PRESENT', 9.2),
+(5, '2024-01-03', '08:00:00', '17:00:00', 'PRESENT', 9.0),
+(5, '2024-01-04', NULL, NULL, 'LEAVE', 0),
+(5, '2024-01-05', '08:00:00', '17:25:00', 'PRESENT', 9.4),
+(6, '2024-01-02', '08:00:00', '17:00:00', 'PRESENT', 9.0),
+(6, '2024-01-03', '08:10:00', '17:15:00', 'PRESENT', 9.1),
+(6, '2024-01-04', '08:00:00', '17:00:00', 'PRESENT', 9.0),
+(6, '2024-01-05', '08:05:00', '17:30:00', 'PRESENT', 9.4),
+(7, '2024-01-02', '08:45:00', '17:00:00', 'LATE', 8.3),
+(7, '2024-01-03', '08:00:00', '17:10:00', 'PRESENT', 9.2),
+(7, '2024-01-04', '08:00:00', '17:00:00', 'PRESENT', 9.0),
+(7, '2024-01-05', '08:00:00', '17:20:00', 'PRESENT', 9.3),
+(8, '2024-01-02', '08:00:00', '17:00:00', 'PRESENT', 9.0),
+(8, '2024-01-03', '08:00:00', '17:15:00', 'PRESENT', 9.3),
+(8, '2024-01-04', '08:10:00', '17:00:00', 'PRESENT', 8.8),
+(8, '2024-01-05', '08:00:00', '17:00:00', 'PRESENT', 9.0)
+ON DUPLICATE KEY UPDATE status=status
 
 INSERT INTO transactions (transaction_type, transaction_date, total_amount, payment_method, notes, payment_status) VALUES
 ('SALE', '2024-01-05', 950000, 'BANK_TRANSFER', 'Penjualan 10 Kaos Polos ke PT Maju Jaya', 'PAID'),
