@@ -104,13 +104,12 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
           <div class="relative">
             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Rp</span>
             <input
-              type="number"
+              type="text"
               id="amount"
               name="amount"
               required
-              min="0"
               placeholder="0"
-              oninput="updateAmountDisplay()"
+              oninput="formatNumber(this); updateAmountDisplay()"
               class="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500 focus:border-finance-500"
             />
           </div>
@@ -168,6 +167,25 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 </MainLayout>
 
 <script define:vars={{ API_BASE }}>
+  // Number formatting functions
+  window.formatNumber = function(input) {
+    const cursorPos = input.selectionStart;
+    const oldLength = input.value.length;
+    let value = input.value.replace(/\D/g, '');
+    if (value) {
+      value = parseInt(value, 10).toLocaleString('id-ID');
+    }
+    input.value = value;
+    const newLength = input.value.length;
+    const newPos = cursorPos + (newLength - oldLength);
+    input.setSelectionRange(newPos, newPos);
+  };
+
+  window.parseNumber = function(value) {
+    if (!value) return 0;
+    return parseInt(value.replace(/\./g, '').replace(/,/g, ''), 10) || 0;
+  };
+
   // Set default date to today
   document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('date');
@@ -185,7 +203,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     const amountDisplay = document.getElementById('amountDisplay');
 
     if (amountInput && amountDisplay) {
-      const amount = parseInt(amountInput.value) || 0;
+      const amount = window.parseNumber(amountInput.value);
       amountDisplay.textContent = `Rp ${amount.toLocaleString('id-ID')}`;
     }
   };
@@ -196,7 +214,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     const form = e.target;
     const formData = new FormData(form);
 
-    const amount = parseInt(formData.get('amount')) || 0;
+    const amount = window.parseNumber(formData.get('amount'));
 
     if (amount <= 0) {
       alert('Mohon masukkan jumlah pengeluaran yang valid');

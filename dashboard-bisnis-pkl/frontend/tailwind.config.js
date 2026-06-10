@@ -1,6 +1,24 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+  safelist: [
+    // Dynamic color classes for quick actions and other components
+    {
+      pattern: /bg-(sales|finance|crm|hr|inventory)-(50|100|200|300|400|500|600|700|800|900)/,
+    },
+    {
+      pattern: /text-(sales|finance|crm|hr|inventory)-(50|100|200|300|400|500|600|700|800|900)/,
+    },
+    {
+      pattern: /hover:bg-(sales|finance|crm|hr|inventory)-(50|100|200|300|400|500|600|700|800|900)/,
+    },
+    {
+      pattern: /focus:ring-(sales|finance|crm|hr|inventory)-(50|100|200|300|400|500|600|700|800|900)/,
+    },
+    {
+      pattern: /border-(sales|finance|crm|hr|inventory)-(50|100|200|300|400|500|600|700|800|900)/,
+    },
+  ],
   theme: {
     extend: {
       fontFamily: {

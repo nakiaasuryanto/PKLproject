@@ -177,12 +177,12 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
             Harga Manual (Opsional)
           </label>
           <input
-            type="number"
+            type="text"
             id="manual_price"
             name="manual_price"
             placeholder="0"
-            min="0"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+            oninput="formatNumber(this)"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500 price-input"
           />
           <p class="mt-1 text-sm text-gray-500">Kosongkan untuk menggunakan harga standar</p>
         </div>
@@ -265,6 +265,34 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
   let items = [];
   let itemIdCounter = 0;
   let customersCache = [];
+
+  // Number formatting functions
+  window.formatNumber = function(input) {
+    // Get cursor position
+    const cursorPos = input.selectionStart;
+    const oldLength = input.value.length;
+
+    // Remove all non-digit characters
+    let value = input.value.replace(/\D/g, '');
+
+    // Format with thousand separators
+    if (value) {
+      value = parseInt(value, 10).toLocaleString('id-ID');
+    }
+
+    input.value = value;
+
+    // Restore cursor position
+    const newLength = input.value.length;
+    const newPos = cursorPos + (newLength - oldLength);
+    input.setSelectionRange(newPos, newPos);
+  };
+
+  window.parseNumber = function(value) {
+    if (!value) return 0;
+    // Remove thousand separators (dots in Indonesian format)
+    return parseInt(value.replace(/\./g, '').replace(/,/g, ''), 10) || 0;
+  };
 
   // Set default date to today
   document.addEventListener('DOMContentLoaded', () => {
@@ -417,12 +445,12 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Harga</label>
             <input
-              type="number"
+              type="text"
               name="items[${itemId}][price]"
               placeholder="0"
-              min="0"
+              oninput="formatNumber(this)"
               onchange="updateTotal()"
-              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+              class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500 price-input"
             />
           </div>
         </div>
@@ -479,7 +507,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       const priceInput = row.querySelector('input[name*="[price]"]');
 
       const qty = parseInt(qtyInput?.value || '0') || 0;
-      const price = parseInt(priceInput?.value || '0') || 0;
+      const price = window.parseNumber(priceInput?.value || '0');
       total += qty * price;
     });
 
@@ -505,7 +533,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       const itemId = row.getAttribute('data-item-id');
       const productId = form.querySelector(`input[name="items[${itemId}][product_id]"]`)?.value;
       const quantity = parseInt(form.querySelector(`input[name="items[${itemId}][quantity]"]`)?.value || '1');
-      const price = parseInt(form.querySelector(`input[name="items[${itemId}][price]"]`)?.value || '0');
+      const price = window.parseNumber(form.querySelector(`input[name="items[${itemId}][price]"]`)?.value || '0');
       const color = form.querySelector(`input[name="items[${itemId}][color]"]`)?.value;
       const size = form.querySelector(`input[name="items[${itemId}][size]"]`)?.value;
       const name = form.querySelector(`input[name="items[${itemId}][name]"]`)?.value;
@@ -536,7 +564,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       pic_sales: formData.get('pic_sales'),
       customer_name: formData.get('customer_name'),
       customer_phone: formData.get('customer_phone'),
-      manual_price: parseInt(formData.get('manual_price')) || 0,
+      manual_price: window.parseNumber(formData.get('manual_price')) || 0,
       items,
       total: window.updateTotal()
     };

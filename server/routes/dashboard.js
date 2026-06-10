@@ -132,6 +132,27 @@ router.get('/sales-trend', async (req, res) => {
   }
 });
 
+// GET /api/dashboard/payment-methods - Payment method breakdown for sales
+router.get('/payment-methods', async (req, res) => {
+  try {
+    const [methods] = await db.query(`
+      SELECT
+        payment_method,
+        COUNT(*) as count,
+        SUM(total_amount) as total
+      FROM transactions
+      WHERE transaction_type = 'SALE'
+      GROUP BY payment_method
+      ORDER BY count DESC
+    `);
+
+    res.json({ success: true, data: methods });
+  } catch (error) {
+    console.error('Error fetching payment methods:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/dashboard/top-products - Top selling products
 router.get('/top-products', async (req, res) => {
   try {

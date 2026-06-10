@@ -10,10 +10,12 @@ import { api } from '../lib/api';
 const salesStatsResponse = await api.get('/transactions/stats?start_date=2025-01-01');
 const salesTrendResponse = await api.get('/dashboard/sales-trend?period=daily&limit=30');
 const recentTransactionsResponse = await api.get('/transactions?type=SALE&limit=10');
+const paymentMethodsResponse = await api.get('/dashboard/payment-methods');
 
 const stats = (salesStatsResponse.success && Array.isArray(salesStatsResponse.data)) ? salesStatsResponse.data : [];
 const trend = (salesTrendResponse.success && Array.isArray(salesTrendResponse.data)) ? salesTrendResponse.data : [];
 const transactions = (recentTransactionsResponse.success && Array.isArray(recentTransactionsResponse.data)) ? recentTransactionsResponse.data : [];
+const paymentMethods = (paymentMethodsResponse.success && Array.isArray(paymentMethodsResponse.data)) ? paymentMethodsResponse.data : [];
 
 // Calculate metrics from API data
 const saleStats = Array.isArray(stats) ? stats.find((s: any) => s.transaction_type === 'SALE') || { total: 0, count: 0 } : { total: 0, count: 0 };
@@ -161,13 +163,16 @@ function formatCurrency(amount: number): string {
   </Card>
 </MainLayout>
 
-<script>
+<script define:vars={{ trendData: trend, paymentMethodsData: paymentMethods }}>
   import { createLineChart, createDoughnutChart } from '../lib/chartUtils';
 
-  document.addEventListener('DOMContentLoaded', () => {
-    // Get trend data from server (passed via global)
-    const trendData = window.salesTrendData || [];
+  const PAYMENT_METHOD_LABELS = {
+    'CASH': 'Tunai',
+    'BANK_TRANSFER': 'Transfer Bank',
+    'OTHER': 'Lainnya'
+  };
 
+  document.addEventListener('DOMContentLoaded', () => {
     // Sales Trend Chart
     if (trendData.length > 0) {
       const labels = trendData.map(d => {
@@ -187,7 +192,6 @@ function formatCurrency(amount: number): string {
         }
       ]);
     } else {
-      // Show empty state when no data available
       createLineChart('salesTrendChart',
         ['Belum Ada Data'],
         [{
@@ -201,34 +205,17 @@ function formatCurrency(amount: number): string {
       );
     }
 
-    // Payment Method Chart - show empty when no data
-    if (trendData.length > 0) {
-      // Calculate payment methods from API data
-      const paymentMethods = {};
-      trendData.forEach(d => {
-        if (d.payment_method) {
-          paymentMethods[d.payment_method] = (paymentMethods[d.payment_method] || 0) + 1;
-        }
-      });
+    // Payment Method Chart
+    if (paymentMethodsData.length > 0) {
+      const labels = paymentMethodsData.map(d => PAYMENT_METHOD_LABELS[d.payment_method] || d.payment_method);
+      const data = paymentMethodsData.map(d => d.count);
 
-      const labels = Object.keys(paymentMethods);
-      const data = Object.values(paymentMethods);
-
-      if (labels.length > 0) {
-        createDoughnutChart(
-          'paymentMethodChart',
-          labels,
-          data,
-          ['#EF4444', '#F87171', '#FCA5A5', '#FECACA']
-        );
-      } else {
-        createDoughnutChart(
-          'paymentMethodChart',
-          ['Belum Ada Data'],
-          [1],
-          ['#E5E7EB']
-        );
-      }
+      createDoughnutChart(
+        'paymentMethodChart',
+        labels,
+        data,
+        ['#EF4444', '#F87171', '#FCA5A5', '#FECACA']
+      );
     } else {
       createDoughnutChart(
         'paymentMethodChart',
@@ -239,6 +226,3 @@ function formatCurrency(amount: number): string {
     }
   });
 </script>
-
-<style define:vars={{ salesTrendData: JSON.stringify(trend) }}>
-</style>
