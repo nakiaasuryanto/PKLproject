@@ -20,7 +20,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 <html lang="id">
   <BaseHead title={title} description={description} />
   <body>
-    <div class="min-h-screen">
+    <div class="h-screen overflow-hidden">
       <!-- Fixed Navbar -->
       <Navbar activeModule={activeModule} />
 
@@ -28,7 +28,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       <Sidebar activeModule={activeModule} />
 
       <!-- Main Content Area with Footer inside -->
-      <main class="xl:ml-64 pt-16 min-h-[calc(100vh-4rem)] flex flex-col">
+      <main class="xl:ml-64 pt-16 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
         <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <slot />
         </div>
