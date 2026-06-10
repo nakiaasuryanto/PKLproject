@@ -32,42 +32,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/employees/:id - Get employee with attendance
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { month } = req.query; // YYYY-MM format
-
-    const [employees] = await db.query('SELECT * FROM employees WHERE id = ?', [id]);
-    if (employees.length === 0) {
-      return res.status(404).json({ success: false, error: 'Employee not found' });
-    }
-
-    let attendanceQuery = 'SELECT * FROM attendance WHERE employee_id = ?';
-    const params = [id];
-
-    if (month) {
-      attendanceQuery += ' AND DATE_FORMAT(attendance_date, "%Y-%m") = ?';
-      params.push(month);
-    }
-
-    attendanceQuery += ' ORDER BY attendance_date DESC';
-
-    const [attendance] = await db.query(attendanceQuery, params);
-
-    res.json({
-      success: true,
-      data: {
-        ...employees[0],
-        attendance
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching employee:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 // POST /api/employees - Create employee
 router.post('/', async (req, res) => {
   try {
@@ -85,26 +49,6 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating employee:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// PUT /api/employees/:id - Update employee
-router.put('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, email, phone, position, department, salary, status } = req.body;
-
-    await db.query(
-      `UPDATE employees
-       SET name = ?, email = ?, phone = ?, position = ?, department = ?, salary = ?, status = ?
-       WHERE id = ?`,
-      [name, email, phone, position, department, salary, status, id]
-    );
-
-    res.json({ success: true, data: { id, ...req.body } });
-  } catch (error) {
-    console.error('Error updating employee:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -248,6 +192,96 @@ router.get('/attendance/summary', async (req, res) => {
     res.json({ success: true, data: summary });
   } catch (error) {
     console.error('Error fetching attendance summary:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/employees/attendance/today - Get today's attendance for an employee
+router.get('/attendance/today', async (req, res) => {
+  try {
+    const { employee_id } = req.query;
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!employee_id) {
+      return res.json({ success: true, data: null });
+    }
+
+    const [attendance] = await db.query(
+      'SELECT * FROM attendance WHERE employee_id = ? AND attendance_date = ?',
+      [employee_id, today]
+    );
+
+    if (attendance.length === 0) {
+      return res.json({ success: true, data: null });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        check_in_time: attendance[0].check_in,
+        check_out_time: attendance[0].check_out,
+        status: attendance[0].status,
+        work_hours: attendance[0].work_hours
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching today attendance:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/employees/:id - Get employee with attendance (MUST BE LAST - catches all)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { month } = req.query; // YYYY-MM format
+
+    const [employees] = await db.query('SELECT * FROM employees WHERE id = ?', [id]);
+    if (employees.length === 0) {
+      return res.status(404).json({ success: false, error: 'Employee not found' });
+    }
+
+    let attendanceQuery = 'SELECT * FROM attendance WHERE employee_id = ?';
+    const params = [id];
+
+    if (month) {
+      attendanceQuery += ' AND DATE_FORMAT(attendance_date, "%Y-%m") = ?';
+      params.push(month);
+    }
+
+    attendanceQuery += ' ORDER BY attendance_date DESC';
+
+    const [attendance] = await db.query(attendanceQuery, params);
+
+    res.json({
+      success: true,
+      data: {
+        ...employees[0],
+        attendance
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching employee:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// PUT /api/employees/:id - Update employee (MUST BE LAST - catches all)
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, position, department, salary, status } = req.body;
+
+    await db.query(
+      `UPDATE employees
+       SET name = ?, email = ?, phone = ?, position = ?, department = ?, salary = ?, status = ?
+       WHERE id = ?`,
+      [name, email, phone, position, department, salary, status, id]
+    );
+
+    res.json({ success: true, data: { id, ...req.body } });
+  } catch (error) {
+    console.error('Error updating employee:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

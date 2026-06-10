@@ -384,10 +384,25 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
   // Update clock every second
   setInterval(updateClock, 1000);
 
+  // Get employee_id from user data
+  function getEmployeeId() {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.employee_id || user.id || 1; // fallback to 1 for testing
+      }
+    } catch (e) {
+      console.error('Error getting employee_id:', e);
+    }
+    return 1; // default fallback
+  }
+
   // Check today's attendance
   async function checkTodayAttendance() {
     try {
-      const response = await fetch(`${API_BASE}/employees/attendance/today`, {
+      const employee_id = getEmployeeId();
+      const response = await fetch(`${API_BASE}/employees/attendance/today?employee_id=${employee_id}`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -421,15 +436,12 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
   // Check In
   checkInBtn?.addEventListener('click', async () => {
     try {
-      const now = new Date();
+      const employee_id = getEmployeeId();
       const response = await fetch(`${API_BASE}/employees/attendance/check-in`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          check_in_time: now.toTimeString().slice(0, 5),
-          date: now.toISOString().split('T')[0]
-        })
+        body: JSON.stringify({ employee_id })
       });
 
       const data = await response.json();
@@ -449,15 +461,12 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
   // Check Out
   checkOutBtn?.addEventListener('click', async () => {
     try {
-      const now = new Date();
+      const employee_id = getEmployeeId();
       const response = await fetch(`${API_BASE}/employees/attendance/check-out`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          check_out_time: now.toTimeString().slice(0, 5),
-          date: now.toISOString().split('T')[0]
-        })
+        body: JSON.stringify({ employee_id })
       });
 
       const data = await response.json();

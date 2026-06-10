@@ -32,7 +32,7 @@ const paymentStatsResponse = await api.get('/transactions/stats?start_date=2025-
 const stats = (paymentStatsResponse.success && Array.isArray(paymentStatsResponse.data)) ? paymentStatsResponse.data : [];
 const cashTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'CASH' ? sum + (s.total || 0) : sum, 0) : 0;
 const transferTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'BANK_TRANSFER' ? sum + (s.total || 0) : sum, 0) : 0;
-const ewalletTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'OTHER' || s.payment_method === 'EWALLET' ? sum + (s.total || 0) : sum, 0) : 0;
+const otherTotal = Array.isArray(stats) ? stats.reduce((sum: number, s: any) => s.payment_method === 'OTHER' ? sum + (s.total || 0) : sum, 0) : 0;
 
 // Format currency
 function formatCurrency(amount: number): string {
@@ -159,7 +159,7 @@ function formatCurrency(amount: number): string {
             </div>
             <div>
               <p class="font-medium text-gray-900">Bank Transfer</p>
-              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'TRANSFER').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
+              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'BANK_TRANSFER').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
             </div>
           </div>
           <span class="font-semibold text-gray-900">{formatCurrency(transferTotal)}</span>
@@ -170,11 +170,11 @@ function formatCurrency(amount: number): string {
               📱
             </div>
             <div>
-              <p class="font-medium text-gray-900">E-Wallet / QRIS</p>
-              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'EWALLET' || s.payment_method === 'QRIS').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
+              <p class="font-medium text-gray-900">Lainnya</p>
+              <p class="text-sm text-gray-500">{Array.isArray(stats) ? stats.filter((s: any) => s.payment_method === 'OTHER').reduce((sum: number, s: any) => sum + (s.count || 0), 0) : 0} transaksi</p>
             </div>
           </div>
-          <span class="font-semibold text-gray-900">{formatCurrency(ewalletTotal)}</span>
+          <span class="font-semibold text-gray-900">{formatCurrency(otherTotal)}</span>
         </div>
       </div>
     </Card>
