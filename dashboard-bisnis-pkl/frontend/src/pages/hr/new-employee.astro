@@ -302,18 +302,12 @@ const currentYear = new Date().getFullYear();
 
     const formData = new FormData(employeeForm);
     const data = {
-      initial_code: formData.get('initial_code')?.toUpperCase(),
+      employee_code: formData.get('initial_code')?.toUpperCase(),
       name: formData.get('full_name'),
-      nickname: formData.get('nickname'),
-      gender: formData.get('gender'),
-      birth_place: formData.get('birth_place'),
-      birth_date: formData.get('birth_date'),
       email: formData.get('email'),
       phone: formData.get('phone'),
-      address: formData.get('address'),
       department: formData.get('department'),
       position: formData.get('position'),
-      status: formData.get('employee_status'),
       hire_date: formData.get('hire_date')
     };
 
