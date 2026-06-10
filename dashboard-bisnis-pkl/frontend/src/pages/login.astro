@@ -102,41 +102,6 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
     .error.show {
       display: block;
     }
-    .role-info {
-      margin-top: 2rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid #e5e7eb;
-    }
-    .role-info h3 {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.75rem;
-    }
-    .role-list {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      font-size: 0.75rem;
-      color: #6b7280;
-    }
-    .role-item {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-    .role-badge {
-      padding: 0.125rem 0.375rem;
-      border-radius: 0.25rem;
-      font-weight: 500;
-    }
-    .role-admin { background: #dbeafe; color: #1d4ed8; }
-    .role-it { background: #f3e8ff; color: #7c3aed; }
-    .role-cs { background: #d1fae5; color: #059669; }
-    .role-ops { background: #fef3c7; color: #d97706; }
-    .role-finance { background: #e5e7eb; color: #4b5563; }
   </style>
 </head>
 <body>
@@ -161,17 +126,6 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 
       <button type="submit" id="submitBtn">Login</button>
     </form>
-
-    <div class="role-info">
-      <h3>Akun Default</h3>
-      <div class="role-list">
-        <div class="role-item"><span class="role-badge role-admin">admin</span> admin123</div>
-        <div class="role-item"><span class="role-badge role-it">it_staff</span> it123</div>
-        <div class="role-item"><span class="role-badge role-cs">cs_staff</span> cs123</div>
-        <div class="role-item"><span class="role-badge role-ops">ops_staff</span> ops123</div>
-        <div class="role-item"><span class="role-badge role-finance">finance_staff</span> finance123</div>
-      </div>
-    </div>
   </div>
 
   <script define:vars={{ API_BASE }}>
