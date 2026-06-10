@@ -136,6 +136,82 @@ router.post('/attendance', async (req, res) => {
   }
 });
 
+// POST /api/employees/attendance/check-in - Check in for today
+router.post('/attendance/check-in', async (req, res) => {
+  try {
+    const { employee_id } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    const checkInTime = new Date().toTimeString().split(' ')[0];
+
+    // Determine status based on check-in time (late if after 08:30)
+    const hour = new Date().getHours();
+    const minute = new Date().getMinutes();
+    const status = (hour > 8 || (hour === 8 && minute > 30)) ? 'LATE' : 'PRESENT';
+
+    const [result] = await db.query(
+      `INSERT INTO attendance (employee_id, attendance_date, check_in, status)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         check_in = VALUES(check_in),
+         status = VALUES(status)`,
+      [employee_id, today, checkInTime, status]
+    );
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: result.insertId,
+        check_in: checkInTime,
+        status
+      }
+    });
+  } catch (error) {
+    console.error('Error checking in:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/employees/attendance/check-out - Check out for today
+router.post('/attendance/check-out', async (req, res) => {
+  try {
+    const { employee_id } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    const checkOutTime = new Date().toTimeString().split(' ')[0];
+
+    // Get check-in time to calculate work hours
+    const [attendance] = await db.query(
+      'SELECT check_in FROM attendance WHERE employee_id = ? AND attendance_date = ?',
+      [employee_id, today]
+    );
+
+    if (attendance.length === 0) {
+      return res.status(400).json({ success: false, error: 'Belum check-in hari ini' });
+    }
+
+    const checkIn = attendance[0].check_in;
+    const checkInDate = new Date(`${today}T${checkIn}`);
+    const checkOutDate = new Date(`${today}T${checkOutTime}`);
+    const workHours = ((checkOutDate - checkInDate) / (1000 * 60 * 60)).toFixed(1);
+
+    const [result] = await db.query(
+      `UPDATE attendance SET check_out = ?, work_hours = ?
+       WHERE employee_id = ? AND attendance_date = ?`,
+      [checkOutTime, workHours, employee_id, today]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        check_out: checkOutTime,
+        work_hours: parseFloat(workHours)
+      }
+    });
+  } catch (error) {
+    console.error('Error checking out:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/employees/attendance/summary - Attendance summary
 router.get('/attendance/summary', async (req, res) => {
   try {

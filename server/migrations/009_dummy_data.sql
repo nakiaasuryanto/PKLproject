@@ -1,4 +1,4 @@
--- Dummy data untuk customers (diperlukan untuk foreign key di transactions)
+-- Dummy data untuk customers
 INSERT INTO customers (customer_code, name, email, phone, city, address, customer_type, status) VALUES
 ('CUST001', 'PT Maju Jaya', 'contact@majujaya.com', '021-5551234', 'Jakarta', 'Jl. Sudirman No. 100', 'COMPANY', 'active'),
 ('CUST002', 'CV Berkah Abadi', 'info@berkahabadi.com', '022-5552345', 'Bandung', 'Jl. Asia Afrika No. 50', 'COMPANY', 'active'),
@@ -9,42 +9,6 @@ INSERT INTO customers (customer_code, name, email, phone, city, address, custome
 ('CUST007', 'Ahmad Hidayat', 'ahmad.h@gmail.com', '08177777777', 'Medan', 'Jl. Diponegoro No. 30', 'INDIVIDUAL', 'active'),
 ('CUST008', 'CV Sumber Rezeki', 'cv.sumberrezeki@yahoo.com', '031-5558901', 'Surabaya', 'Jl. Tunjungan No. 45', 'COMPANY', 'active')
 ON DUPLICATE KEY UPDATE name=name;
-
--- Dummy data untuk transactions (penjualan dan pengeluaran)
-INSERT INTO transactions (transaction_type, transaction_date, customer_id, total_amount, payment_method, notes, payment_status, items) VALUES
-('SALE', '2024-01-05', 1, 950000, 'BANK_TRANSFER', 'Penjualan 10 Kaos Polos Lengan Panjang', 'PAID', '[{"product_id":1,"product_code":"KLP001","product_name":"Kaos Polos Lengan Panjang","quantity":10,"price":95000,"subtotal":950000}]'),
-('SALE', '2024-01-08', 4, 780000, 'CASH', 'Penjualan 4 Jaket Hoodie Polos', 'PAID', '[{"product_id":3,"product_code":"JKT001","product_name":"Jaket Hoodie Polos","quantity":4,"price":195000,"subtotal":780000}]'),
-('EXPENSE', '2024-01-10', NULL, 500000, 'CASH', 'Pembelian bahan baku kain cotton 30s', 'PAID', NULL),
-('SALE', '2024-01-12', 5, 1170000, 'BANK_TRANSFER', 'Penjualan 6 Jaket Hoodie Polos', 'PAID', '[{"product_id":3,"product_code":"JKT001","product_name":"Jaket Hoodie Polos","quantity":6,"price":195000,"subtotal":1170000}]'),
-('EXPENSE', '2024-01-15', NULL, 1500000, 'BANK_TRANSFER', 'Pembayaran tagihan listrik bulan Januari', 'PAID', NULL),
-('SALE', '2024-01-18', 7, 495000, 'CASH', 'Penjualan 3 Sweater Crewneck', 'PAID', '[{"product_id":5,"product_code":"SWT001","product_name":"Sweater Crewneck","quantity":3,"price":165000,"subtotal":495000}]'),
-('EXPENSE', '2024-01-20', NULL, 2000000, 'BANK_TRANSFER', 'Pembelian stok kain cotton combed 30s (50kg)', 'PAID', NULL),
-('SALE', '2024-01-22', 4, 575000, 'OTHER', 'Penjualan 5 Polo Shirt', 'PAID', '[{"product_id":6,"product_code":"PLO001","product_name":"Polo Shirt","quantity":5,"price":115000,"subtotal":575000}]'),
-('SALE', '2024-01-25', 5, 375000, 'CASH', 'Penjualan 5 Kaos Polos Lengan Pendek', 'PAID', '[{"product_id":2,"product_code":"KLP002","product_name":"Kaos Polos Lengan Pendek","quantity":5,"price":75000,"subtotal":375000}]'),
-('EXPENSE', '2024-01-28', NULL, 800000, 'BANK_TRANSFER', 'Biaya internet dan telepon bulan Januari', 'PAID', NULL),
-('SALE', '2024-02-01', 2, 1900000, 'BANK_TRANSFER', 'Penjualan 20 Kaos Polos Lengan Panjang', 'PAID', '[{"product_id":1,"product_code":"KLP001","product_name":"Kaos Polos Lengan Panjang","quantity":20,"price":95000,"subtotal":1900000}]'),
-('SALE', '2024-02-05', 6, 1125000, 'BANK_TRANSFER', 'Penjualan 5 Jaket Bomber', 'PAID', '[{"product_id":4,"product_code":"JKT002","product_name":"Jaket Bomber","quantity":5,"price":225000,"subtotal":1125000}]'),
-('EXPENSE', '2024-02-08', NULL, 350000, 'CASH', 'Biaya pengiriman ekspedisi JNE', 'PAID', NULL),
-('SALE', '2024-02-10', 7, 585000, 'OTHER', 'Penjualan 3 Jaket Hoodie Polos', 'PAID', '[{"product_id":3,"product_code":"JKT001","product_name":"Jaket Hoodie Polos","quantity":3,"price":195000,"subtotal":585000}]'),
-('EXPENSE', '2024-02-15', NULL, 1500000, 'BANK_TRANSFER', 'Pembayaran tagihan listrik bulan Februari', 'PAID', NULL),
-('SALE', '2024-02-20', 3, 2850000, 'BANK_TRANSFER', 'Penjualan 30 Kaos Polos Lengan Panjang', 'PAID', '[{"product_id":1,"product_code":"KLP001","product_name":"Kaos Polos Lengan Panjang","quantity":30,"price":95000,"subtotal":2850000}]'),
-('SALE', '2024-03-01', 2, 1950000, 'BANK_TRANSFER', 'Penjualan 10 Jaket Hoodie Polos', 'PAID', '[{"product_id":3,"product_code":"JKT001","product_name":"Jaket Hoodie Polos","quantity":10,"price":195000,"subtotal":1950000}]'),
-('EXPENSE', '2024-03-05', NULL, 3000000, 'BANK_TRANSFER', 'Pembelian mesin jahit baru merk Singer', 'PAID', NULL),
-('SALE', '2024-03-10', 4, 690000, 'CASH', 'Penjualan 6 Polo Shirt', 'PAID', '[{"product_id":6,"product_code":"PLO001","product_name":"Polo Shirt","quantity":6,"price":115000,"subtotal":690000}]'),
-('SALE', '2024-03-15', 5, 1425000, 'BANK_TRANSFER', 'Penjualan 15 Kaos Polos Lengan Panjang', 'PAID', '[{"product_id":1,"product_code":"KLP001","product_name":"Kaos Polos Lengan Panjang","quantity":15,"price":95000,"subtotal":1425000}]'),
-('EXPENSE', '2024-03-20', NULL, 1500000, 'BANK_TRANSFER', 'Pembayaran tagihan listrik bulan Maret', 'PAID', NULL),
-('SALE', '2024-04-01', 6, 2250000, 'BANK_TRANSFER', 'Penjualan 10 Jaket Bomber', 'PAID', '[{"product_id":4,"product_code":"JKT002","product_name":"Jaket Bomber","quantity":10,"price":225000,"subtotal":2250000}]'),
-('SALE', '2024-04-10', 7, 825000, 'OTHER', 'Penjualan 5 Sweater Crewneck', 'PAID', '[{"product_id":5,"product_code":"SWT001","product_name":"Sweater Crewneck","quantity":5,"price":165000,"subtotal":825000}]'),
-('EXPENSE', '2024-04-15', NULL, 1500000, 'BANK_TRANSFER', 'Pembayaran tagihan listrik bulan April', 'PAID', NULL),
-('SALE', '2024-04-20', 4, 1500000, 'CASH', 'Penjualan 20 Kaos Polos Lengan Pendek', 'PAID', '[{"product_id":2,"product_code":"KLP002","product_name":"Kaos Polos Lengan Pendek","quantity":20,"price":75000,"subtotal":1500000}]'),
-('SALE', '2024-05-01', 8, 3900000, 'BANK_TRANSFER', 'Penjualan 20 Jaket Hoodie Polos', 'PAID', '[{"product_id":3,"product_code":"JKT001","product_name":"Jaket Hoodie Polos","quantity":20,"price":195000,"subtotal":3900000}]'),
-('EXPENSE', '2024-05-05', NULL, 2500000, 'BANK_TRANSFER', 'Pembelian bahan fleece tebal (30kg)', 'PAID', NULL),
-('SALE', '2024-05-10', 3, 1140000, 'BANK_TRANSFER', 'Penjualan 12 Kaos Polos Lengan Panjang', 'PAID', '[{"product_id":1,"product_code":"KLP001","product_name":"Kaos Polos Lengan Panjang","quantity":12,"price":95000,"subtotal":1140000}]'),
-('EXPENSE', '2024-05-15', NULL, 1500000, 'BANK_TRANSFER', 'Pembayaran tagihan listrik bulan Mei', 'PAID', NULL),
-('SALE', '2024-05-20', 5, 920000, 'CASH', 'Penjualan 8 Polo Shirt', 'PAID', '[{"product_id":6,"product_code":"PLO001","product_name":"Polo Shirt","quantity":8,"price":115000,"subtotal":920000}]'),
-('SALE', '2024-06-01', 1, 2925000, 'BANK_TRANSFER', 'Penjualan 15 Jaket Hoodie Polos', 'PAID', '[{"product_id":3,"product_code":"JKT001","product_name":"Jaket Hoodie Polos","quantity":15,"price":195000,"subtotal":2925000}]'),
-('SALE', '2024-06-05', 2, 1650000, 'OTHER', 'Penjualan 10 Sweater Crewneck', 'PAID', '[{"product_id":5,"product_code":"SWT001","product_name":"Sweater Crewneck","quantity":10,"price":165000,"subtotal":1650000}]')
-ON DUPLICATE KEY UPDATE total_amount=total_amount;
 
 -- Dummy data untuk attendance
 INSERT INTO attendance (employee_id, attendance_date, check_in, check_out, status, work_hours) VALUES

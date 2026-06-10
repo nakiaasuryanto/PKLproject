@@ -163,7 +163,12 @@ function formatCurrency(amount: number): string {
   </Card>
 </MainLayout>
 
-<script define:vars={{ trendData: trend, paymentMethodsData: paymentMethods }}>
+<script is:inline define:vars={{ trendData: trend, paymentMethodsData: paymentMethods }}>
+  window.salesTrendData = trendData;
+  window.paymentMethodsData = paymentMethodsData;
+</script>
+
+<script>
   import { createLineChart, createDoughnutChart } from '../lib/chartUtils';
 
   const PAYMENT_METHOD_LABELS = {
@@ -173,6 +178,9 @@ function formatCurrency(amount: number): string {
   };
 
   document.addEventListener('DOMContentLoaded', () => {
+    const trendData = window.salesTrendData || [];
+    const paymentMethodsData = window.paymentMethodsData || [];
+
     // Sales Trend Chart
     if (trendData.length > 0) {
       const labels = trendData.map(d => {

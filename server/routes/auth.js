@@ -20,19 +20,19 @@ export const ROLE_PERMISSIONS = {
     inventoryFullAccess: true
   },
   customer_service: {
-    modules: ['crm', 'sales', 'inventory'],
+    modules: ['dashboard', 'crm', 'sales', 'inventory'],
     canViewSummary: false,
     canManageUsers: false,
     inventoryFullAccess: false  // Only view stock, no movements
   },
   operations: {
-    modules: ['inventory', 'sales'],
+    modules: ['dashboard', 'inventory', 'sales'],
     canViewSummary: false,
     canManageUsers: false,
     inventoryFullAccess: true
   },
   finance: {
-    modules: ['finance', 'sales'],
+    modules: ['dashboard', 'finance', 'sales'],
     canViewSummary: false,
     canManageUsers: false,
     inventoryFullAccess: false
