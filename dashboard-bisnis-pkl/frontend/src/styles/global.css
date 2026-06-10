@@ -15,15 +15,19 @@ html {
 }
 
 body {
-  @apply bg-gray-50 font-sans text-gray-900 font-semibold;
+  @apply bg-gray-50 font-sans text-gray-900;
 }
 
-/* Make all text semibold */
-p, span, div, td, th, li, label, a {
-  @apply font-semibold;
+/* Minimum font-weight 600 (semibold) for all elements */
+* {
+  font-weight: 600;
 }
 
-/* Headings stay stronger */
-h1, h2, h3, h4, h5, h6 {
-  @apply font-bold;
+/* Headings and strong elements stay bolder */
+h1, h2, h3, h4, h5, h6, strong, b, .font-bold, .font-extrabold {
+  font-weight: 700 !important;
+}
+
+.font-extrabold {
+  font-weight: 800 !important;
 }
