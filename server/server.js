@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-// Import routes
 import productRoutes from './routes/products.js';
 import inventoryRoutes from './routes/inventory.js';
 import transactionRoutes from './routes/transactions.js';
@@ -16,7 +15,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS Configuration
 const allowedOrigins = [
   'http://localhost:4321',
   'http://localhost:3000',
@@ -27,7 +25,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc)
     if (!origin) return callback(null, true);
 
     const isAllowed = allowedOrigins.some(allowed => {
@@ -40,7 +37,7 @@ app.use(cors({
     if (isAllowed) {
       callback(null, true);
     } else {
-      callback(null, true); // Allow all for now, log for debugging
+      callback(null, true);
       console.log('CORS request from:', origin);
     }
   },
@@ -51,13 +48,11 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging (simple)
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -66,7 +61,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/inventory', inventoryRoutes);
@@ -75,7 +69,6 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',
@@ -83,7 +76,6 @@ app.use((req, res) => {
   });
 });
 
-// Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(err.status || 500).json({
@@ -92,7 +84,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Dashboard API ready`);

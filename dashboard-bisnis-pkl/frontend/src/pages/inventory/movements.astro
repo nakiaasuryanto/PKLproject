@@ -1,0 +1,180 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import Card from '../../components/ui/Card.astro';
+import Button from '../../components/ui/Button.astro';
+import { api } from '../../lib/api';
+
+const movementsResponse = await api.get('/inventory/movements?limit=500');
+const movements = (movementsResponse.success && Array.isArray(movementsResponse.data)) ? movementsResponse.data : [];
+---
+
+<MainLayout title="Pergerakan Stok - Dashboard Bisnis" activeModule="inventory">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Pergerakan Stok</h1>
+      <p class="mt-2 text-gray-600">Riwayat semua pergerakan stok masuk dan keluar</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex gap-3">
+      <Button variant="outline" color="inventory" size="md" href="/inventory">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Kembali
+      </Button>
+      <Button variant="primary" color="inventory" size="md" href="/inventory/input">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        Input Stok
+      </Button>
+    </div>
+  </div>
+
+  <Card title={`Total ${movements.length} Pergerakan`} color="inventory">
+    <div class="mb-6 flex flex-col md:flex-row gap-4">
+      <div class="flex-1">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Cari produk..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500 focus:border-inventory-500"
+        />
+      </div>
+      <select id="typeFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500 focus:border-inventory-500">
+        <option value="">Semua Tipe</option>
+        <option value="IN">Masuk (IN)</option>
+        <option value="OUT">Keluar (OUT)</option>
+      </select>
+      <select id="reasonFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500 focus:border-inventory-500">
+        <option value="">Semua Alasan</option>
+        <option value="PURCHASE">Pembelian</option>
+        <option value="SALES_OUT">Penjualan</option>
+        <option value="RETURN">Retur</option>
+        <option value="DAMAGE">Rusak</option>
+        <option value="ADJUSTMENT_IN">Penyesuaian (+)</option>
+        <option value="ADJUSTMENT_OUT">Penyesuaian (-)</option>
+      </select>
+    </div>
+
+    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+      <table class="min-w-full divide-y divide-gray-200" id="movementsTable">
+        <thead class="bg-inventory-50 sticky top-0">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-inventory-700 uppercase tracking-wider">No</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-inventory-700 uppercase tracking-wider">Tanggal</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-inventory-700 uppercase tracking-wider">Produk</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-inventory-700 uppercase tracking-wider">Tipe</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-inventory-700 uppercase tracking-wider">Jumlah</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-inventory-700 uppercase tracking-wider">Alasan</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-inventory-700 uppercase tracking-wider">Lokasi</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="tableBody">
+          {movements.length > 0 ? movements.map((mov: any, index: number) => (
+            <tr class="hover:bg-inventory-50 movement-row"
+                data-product={`${mov.product_name || ''} ${mov.color_name || ''} ${mov.size_name || ''}`.toLowerCase()}
+                data-type={mov.movement_type || ''}
+                data-reason={mov.reason_code || ''}>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {new Date(mov.movement_date).toLocaleString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-900">
+                <div>
+                  <p class="font-medium">{mov.product_name}</p>
+                  <p class="text-gray-500 text-xs">{mov.color_name} - {mov.size_name}</p>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class={`px-2 py-1 text-xs font-medium rounded-full ${
+                  mov.movement_type === 'IN' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {mov.movement_type === 'IN' ? 'MASUK' : 'KELUAR'}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold">
+                <span class={mov.movement_type === 'IN' ? 'text-green-600' : 'text-red-600'}>
+                  {mov.movement_type === 'IN' ? '+' : '-'}{mov.quantity}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {mov.reason_code === 'PURCHASE' ? 'Pembelian' :
+                 mov.reason_code === 'SALES_OUT' ? 'Penjualan' :
+                 mov.reason_code === 'RETURN' ? 'Retur' :
+                 mov.reason_code === 'DAMAGE' ? 'Rusak' :
+                 mov.reason_code === 'ADJUSTMENT_IN' ? 'Penyesuaian (+)' :
+                 mov.reason_code === 'ADJUSTMENT_OUT' ? 'Penyesuaian (-)' :
+                 mov.reason_code || '-'}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {mov.location_name || '-'}
+              </td>
+            </tr>
+          )) : (
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <p>Belum ada data pergerakan stok</p>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 text-sm text-gray-500">
+      <span id="resultCount">Menampilkan {movements.length} pergerakan</span>
+    </div>
+  </Card>
+</MainLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const typeFilter = document.getElementById('typeFilter') as HTMLSelectElement;
+    const reasonFilter = document.getElementById('reasonFilter') as HTMLSelectElement;
+    const rows = document.querySelectorAll('.movement-row');
+    const resultCount = document.getElementById('resultCount');
+
+    function filterRows() {
+      const searchTerm = searchInput?.value.toLowerCase() || '';
+      const typeValue = typeFilter?.value || '';
+      const reasonValue = reasonFilter?.value || '';
+
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const product = row.getAttribute('data-product') || '';
+        const type = row.getAttribute('data-type') || '';
+        const reason = row.getAttribute('data-reason') || '';
+
+        const matchesSearch = product.includes(searchTerm);
+        const matchesType = !typeValue || type === typeValue;
+        const matchesReason = !reasonValue || reason === reasonValue;
+
+        if (matchesSearch && matchesType && matchesReason) {
+          (row as HTMLElement).style.display = '';
+          visibleCount++;
+        } else {
+          (row as HTMLElement).style.display = 'none';
+        }
+      });
+
+      if (resultCount) {
+        resultCount.textContent = `Menampilkan ${visibleCount} pergerakan`;
+      }
+    }
+
+    searchInput?.addEventListener('input', filterRows);
+    typeFilter?.addEventListener('change', filterRows);
+    reasonFilter?.addEventListener('change', filterRows);
+  });
+</script>

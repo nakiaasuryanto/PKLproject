@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Support both Railway MySQL variables and custom variables
 const dbConfig = {
   host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
@@ -15,13 +14,10 @@ const dbConfig = {
   queueLimit: 0
 };
 
-// Create connection pool
 const pool = mysql.createPool(dbConfig);
 
-// Promisify for async/await
 const promisePool = pool.promise();
 
-// Test connection
 pool.getConnection((err, connection) => {
   if (err) {
     console.error('Database connection failed:', err.message);

@@ -4,6 +4,57 @@ Sistem dashboard bisnis terintegrasi untuk mengelola operasional bisnis. Menggab
 
 ---
 
+## Fitur Utama
+
+### Sistem Login & Role-Based Access
+- **5 Role:** Admin, IT, Customer Service, Operations, Finance
+- Setiap role punya akses modul berbeda
+- Admin & IT bisa lihat semua data summary
+- Role lain hanya akses modul yang relevan
+
+| Role | Akses Modul |
+|------|-------------|
+| Admin | Semua modul + summary |
+| IT | Semua modul + summary |
+| Customer Service | Dashboard, CRM, Sales, Inventory |
+| Operations | Dashboard, Inventory, Sales |
+| Finance | Dashboard, Finance, Sales |
+
+### Penjualan & Invoice
+- Buat invoice dengan pilih customer dan produk
+- **Integrasi otomatis dengan inventory** - stok berkurang saat transaksi
+- Metode pembayaran: Cash, Bank Transfer, Lainnya (E-Wallet/QRIS)
+- Status pembayaran: Pending, Paid, Cancelled
+- Tracking transaksi real-time
+
+### Inventory Management
+- Tracking stok per lokasi gudang
+- Alert stok rendah (< 10 unit)
+- Pergerakan stok (IN/OUT) dengan reason code
+- Import data via CSV
+- Integrasi dengan penjualan (auto reduce)
+
+### Keuangan
+- Dashboard pendapatan vs pengeluaran
+- Laporan laba rugi
+- Breakdown pembayaran per metode
+- Chart trend bulanan
+- Format mata uang Indonesia (Rp 1.000.000)
+
+### CRM (Customer Relationship Management)
+- Database customer (Perusahaan, Individual, Reseller)
+- Tracking total pembelian per customer
+- Riwayat interaksi customer
+- Status aktif/tidak aktif
+
+### HR & Kehadiran
+- Database karyawan dengan department
+- **Sistem Check-in/Check-out** real-time
+- Tracking jam kerja & kehadiran
+- Ringkasan kehadiran bulanan
+
+---
+
 ## Cara Jalanin (Local Development)
 
 ```bash
@@ -82,15 +133,39 @@ PKLproject/
 ```
 Base URL: http://localhost:3001 (dev) atau https://xxx.railway.app (prod)
 
-GET  /health                  - Health check
-GET  /api/dashboard/overview  - Stats dashboard
+Auth:
+POST /api/auth/login          - Login user
+POST /api/auth/logout         - Logout user
+
+Dashboard:
+GET  /api/dashboard/overview  - Stats semua modul
+GET  /api/dashboard/sales-trend - Trend penjualan
+GET  /api/dashboard/payment-methods - Breakdown metode pembayaran
+
+Transactions:
+GET  /api/transactions        - List transaksi
+POST /api/transactions/create - Buat transaksi (dengan integrasi stok)
+GET  /api/transactions/stats/summary - Statistik transaksi
+
+Inventory:
+GET  /api/inventory/stock     - Cek stok
+POST /api/inventory/movements - Pergerakan stok
+GET  /api/inventory/locations - List lokasi gudang
+
+Products:
 GET  /api/products            - List produk
 POST /api/products            - Tambah produk
-GET  /api/inventory/stock     - Cek stok
-GET  /api/transactions        - List transaksi
-POST /api/transactions        - Buat transaksi
+
+Customers:
 GET  /api/customers           - List customer
+POST /api/customers           - Tambah customer
+GET  /api/customers/stats/summary - Statistik CRM
+
+Employees:
 GET  /api/employees           - List karyawan
+POST /api/employees/attendance/check-in  - Check-in
+POST /api/employees/attendance/check-out - Check-out
+GET  /api/employees/attendance/today     - Status kehadiran hari ini
 ```
 
 ---
@@ -177,14 +252,22 @@ PUBLIC_API_URL=https://your-backend.railway.app/api
 
 | Modul | Warna | Hex |
 |-------|-------|-----|
-| Penjualan | Merah | `#EF4444` |
-| Inventory | Biru | `#3B82F6` |
-| Keuangan | Hijau | `#10B981` |
-| CRM | Ungu | `#8B5CF6` |
-| HR | Orange | `#F97316` |
+| Penjualan (Sales) | Merah | `#EF4444` |
+| Inventory | Kuning | `#F59E0B` |
+| Keuangan (Finance) | Abu-abu | `#6B7280` |
+| CRM | Hijau | `#10B981` |
+| HR | Biru | `#3B82F6` |
+
+---
+
+## Default Login
+
+| Username | Password | Role |
+|----------|----------|------|
+| admin | admin123 | Administrator |
 
 ---
 
 ## Author
 
-**Nakia Suryanto** - PKL Project 2025
+**Nakia Suryanto** - PKL Project 2026

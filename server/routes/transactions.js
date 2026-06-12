@@ -3,7 +3,6 @@ import db from '../db.js';
 
 const router = express.Router();
 
-// GET /api/transactions - Get all transactions
 router.get('/', async (req, res) => {
   try {
     const { start_date, end_date, type, customer_id, limit = 100 } = req.query;
@@ -44,7 +43,6 @@ router.get('/', async (req, res) => {
 
     const [transactions] = await db.query(query, params);
 
-    // Parse JSON items
     transactions.forEach(t => {
       if (t.items) {
         try {
@@ -62,7 +60,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/transactions/:id - Get transaction details
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -94,7 +91,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/transactions - Create transaction
 router.post('/', async (req, res) => {
   const connection = await db.getConnection();
 
@@ -109,10 +105,9 @@ router.post('/', async (req, res) => {
       payment_method,
       pic,
       notes,
-      items // [{product_color_size_id, quantity, price, free}]
+      items
     } = req.body;
 
-    // Insert transaction
     const [result] = await connection.query(
       `INSERT INTO transactions
        (transaction_type, transaction_date, customer_id, total_amount, payment_method, pic, notes, items)
@@ -122,13 +117,11 @@ router.post('/', async (req, res) => {
 
     const transactionId = result.insertId;
 
-    // If SALE or GIFT, create stock movements
     if ((transaction_type === 'SALE' || transaction_type === 'GIFT') && items) {
       const reason_code = transaction_type === 'SALE' ? 'SALES_OUT' : 'GIFT_OUT';
 
       for (const item of items) {
         if (item.quantity > 0) {
-          // Create stock movement (assuming default location)
           await connection.query(
             `INSERT INTO stock_movements
              (product_color_size_id, location_id, movement_type, quantity, reason_code, reference_type, reference_id, movement_date, created_by)
@@ -136,7 +129,6 @@ router.post('/', async (req, res) => {
             [item.product_color_size_id, item.quantity, reason_code, transactionId, transaction_date, pic]
           );
 
-          // Update stock balance
           await connection.query(
             `UPDATE stock_balances
              SET quantity = quantity - ?
@@ -147,7 +139,6 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Update customer stats if customer_id provided
     if (customer_id && transaction_type === 'SALE') {
       await connection.query(
         `UPDATE customers
@@ -174,7 +165,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// POST /api/transactions/create - Create transaction from frontend form
 router.post('/create', async (req, res) => {
   const connection = await db.getConnection();
 
@@ -192,21 +182,17 @@ router.post('/create', async (req, res) => {
       manual_price,
       items,
       total,
-      // For expense transactions
       expense_category,
       description,
       amount,
       pic
     } = req.body;
 
-    // Determine transaction type
     const transaction_type = type === 'penjualan' ? 'SALE' : type === 'pengeluaran' ? 'EXPENSE' : 'SALE';
     const transaction_date = date || new Date().toISOString().split('T')[0];
 
-    // For sales: find or use customer
     let customer_id = null;
     if (transaction_type === 'SALE' && customer_phone) {
-      // Try to find customer by phone
       const [customers] = await connection.query(
         'SELECT id FROM customers WHERE phone = ? LIMIT 1',
         [customer_phone]
@@ -216,7 +202,6 @@ router.post('/create', async (req, res) => {
       }
     }
 
-    // Calculate total amount
     let total_amount = 0;
     if (transaction_type === 'EXPENSE') {
       total_amount = amount || 0;
@@ -228,7 +213,6 @@ router.post('/create', async (req, res) => {
       total_amount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     }
 
-    // Build notes
     let notes = '';
     if (transaction_type === 'EXPENSE') {
       notes = `${expense_category || ''}: ${description || ''}`;
@@ -236,7 +220,6 @@ router.post('/create', async (req, res) => {
       notes = promo_type ? `Promo: ${promo_type}` : '';
     }
 
-    // Insert transaction
     const [result] = await connection.query(
       `INSERT INTO transactions
        (transaction_type, transaction_date, customer_id, total_amount, payment_method, pic, notes, items, payment_status)
@@ -256,12 +239,10 @@ router.post('/create', async (req, res) => {
 
     const transactionId = result.insertId;
 
-    // For SALE: process stock movements if items have product_color_size_id
     if (transaction_type === 'SALE' && items && items.length > 0) {
       for (const item of items) {
         let pcsId = item.product_color_size_id ? parseInt(item.product_color_size_id) : null;
 
-        // If no direct ID, try to find by product name, color, size
         if (!pcsId && item.name) {
           const [found] = await connection.query(`
             SELECT pcs.id
@@ -289,9 +270,7 @@ router.post('/create', async (req, res) => {
           }
         }
 
-        // If we found a product_color_size_id, update stock
         if (pcsId && item.quantity > 0) {
-          // Create stock movement
           await connection.query(
             `INSERT INTO stock_movements
              (product_color_size_id, location_id, movement_type, quantity, reason_code, reference_type, reference_id, movement_date, created_by)
@@ -299,7 +278,6 @@ router.post('/create', async (req, res) => {
             [pcsId, item.quantity, transactionId, transaction_date, pic_sales || 'System']
           );
 
-          // Update stock balance
           await connection.query(
             `UPDATE stock_balances
              SET quantity = quantity - ?
@@ -309,7 +287,6 @@ router.post('/create', async (req, res) => {
         }
       }
 
-      // Update customer stats if customer found
       if (customer_id) {
         await connection.query(
           `UPDATE customers
@@ -337,7 +314,6 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// GET /api/transactions/stats - Transaction statistics
 router.get('/stats/summary', async (req, res) => {
   try {
     const { start_date, end_date } = req.query;

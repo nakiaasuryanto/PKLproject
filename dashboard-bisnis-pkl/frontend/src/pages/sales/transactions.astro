@@ -1,0 +1,190 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import Card from '../../components/ui/Card.astro';
+import Button from '../../components/ui/Button.astro';
+import { api } from '../../lib/api';
+
+const transactionsResponse = await api.get('/transactions?type=SALE&limit=500');
+const transactions = (transactionsResponse.success && Array.isArray(transactionsResponse.data)) ? transactionsResponse.data : [];
+
+function formatCurrency(amount: number | string): string {
+  const num = Math.round(Number(amount) || 0);
+  return `Rp ${num.toLocaleString('id-ID')}`;
+}
+---
+
+<MainLayout title="Semua Transaksi - Dashboard Bisnis" activeModule="sales">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Semua Transaksi</h1>
+      <p class="mt-2 text-gray-600">Daftar lengkap transaksi penjualan</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex gap-3">
+      <Button variant="outline" color="sales" size="md" href="/sales">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Kembali
+      </Button>
+      <Button variant="primary" color="sales" size="md" href="/sales/invoice/new">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        Buat Invoice
+      </Button>
+    </div>
+  </div>
+
+  <Card title={`Total ${transactions.length} Transaksi`} color="sales">
+    <div class="mb-6 flex flex-col md:flex-row gap-4">
+      <div class="flex-1">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Cari transaksi (customer, tanggal, jumlah)..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500"
+        />
+      </div>
+      <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500">
+        <option value="">Semua Status</option>
+        <option value="PAID">Lunas</option>
+        <option value="PENDING">Pending</option>
+        <option value="CANCELLED">Dibatalkan</option>
+      </select>
+      <select id="paymentFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sales-500 focus:border-sales-500">
+        <option value="">Semua Pembayaran</option>
+        <option value="CASH">Cash</option>
+        <option value="BANK_TRANSFER">Transfer Bank</option>
+        <option value="OTHER">Lainnya</option>
+      </select>
+    </div>
+
+    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+      <table class="min-w-full divide-y divide-gray-200" id="transactionsTable">
+        <thead class="bg-sales-50 sticky top-0">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-sales-700 uppercase tracking-wider">No</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-sales-700 uppercase tracking-wider">Tanggal</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-sales-700 uppercase tracking-wider">Customer</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-sales-700 uppercase tracking-wider">Total</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-sales-700 uppercase tracking-wider">Pembayaran</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-sales-700 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-sales-700 uppercase tracking-wider">Catatan</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="tableBody">
+          {transactions.length > 0 ? transactions.map((tx: any, index: number) => (
+            <tr class="hover:bg-sales-50 transaction-row"
+                data-customer={(tx.customer_name || 'Walk-in').toLowerCase()}
+                data-status={tx.payment_status || ''}
+                data-payment={tx.payment_method || ''}
+                data-amount={tx.total_amount || 0}
+                data-date={tx.transaction_date || ''}>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {new Date(tx.transaction_date).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {tx.customer_name || 'Walk-in Customer'}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-sales-600">
+                {formatCurrency(tx.total_amount)}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                {tx.payment_method === 'CASH' ? 'Cash' :
+                 tx.payment_method === 'BANK_TRANSFER' ? 'Transfer Bank' :
+                 tx.payment_method === 'OTHER' ? 'Lainnya' : '-'}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class={`px-2 py-1 text-xs font-medium rounded-full ${
+                  tx.payment_status === 'PAID' ? 'bg-green-100 text-green-800' :
+                  tx.payment_status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                  tx.payment_status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {tx.payment_status === 'PAID' ? 'Lunas' :
+                   tx.payment_status === 'PENDING' ? 'Pending' :
+                   tx.payment_status === 'CANCELLED' ? 'Dibatalkan' : '-'}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                {tx.notes || '-'}
+              </td>
+            </tr>
+          )) : (
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p>Belum ada data transaksi</p>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex justify-between items-center text-sm text-gray-500">
+      <span id="resultCount">Menampilkan {transactions.length} transaksi</span>
+      <span id="totalAmount">Total: {formatCurrency(transactions.reduce((sum: number, tx: any) => sum + (Number(tx.total_amount) || 0), 0))}</span>
+    </div>
+  </Card>
+</MainLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const statusFilter = document.getElementById('statusFilter') as HTMLSelectElement;
+    const paymentFilter = document.getElementById('paymentFilter') as HTMLSelectElement;
+    const rows = document.querySelectorAll('.transaction-row');
+    const resultCount = document.getElementById('resultCount');
+    const totalAmount = document.getElementById('totalAmount');
+
+    function filterRows() {
+      const searchTerm = searchInput?.value.toLowerCase() || '';
+      const statusValue = statusFilter?.value || '';
+      const paymentValue = paymentFilter?.value || '';
+
+      let visibleCount = 0;
+      let visibleTotal = 0;
+
+      rows.forEach(row => {
+        const customer = row.getAttribute('data-customer') || '';
+        const status = row.getAttribute('data-status') || '';
+        const payment = row.getAttribute('data-payment') || '';
+        const amount = parseFloat(row.getAttribute('data-amount') || '0');
+        const date = row.getAttribute('data-date') || '';
+
+        const matchesSearch = customer.includes(searchTerm) ||
+                              date.includes(searchTerm) ||
+                              amount.toString().includes(searchTerm);
+        const matchesStatus = !statusValue || status === statusValue;
+        const matchesPayment = !paymentValue || payment === paymentValue;
+
+        if (matchesSearch && matchesStatus && matchesPayment) {
+          (row as HTMLElement).style.display = '';
+          visibleCount++;
+          visibleTotal += amount;
+        } else {
+          (row as HTMLElement).style.display = 'none';
+        }
+      });
+
+      if (resultCount) {
+        resultCount.textContent = `Menampilkan ${visibleCount} transaksi`;
+      }
+      if (totalAmount) {
+        totalAmount.textContent = `Total: Rp ${Math.round(visibleTotal).toLocaleString('id-ID')}`;
+      }
+    }
+
+    searchInput?.addEventListener('input', filterRows);
+    statusFilter?.addEventListener('change', filterRows);
+    paymentFilter?.addEventListener('change', filterRows);
+  });
+</script>

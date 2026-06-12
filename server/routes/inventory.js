@@ -3,7 +3,6 @@ import db from '../db.js';
 
 const router = express.Router();
 
-// GET /api/inventory/stock - Get stock levels
 router.get('/stock', async (req, res) => {
   try {
     const { location_id, low_stock } = req.query;
@@ -50,7 +49,6 @@ router.get('/stock', async (req, res) => {
   }
 });
 
-// GET /api/inventory/movements - Get stock movements
 router.get('/movements', async (req, res) => {
   try {
     const { start_date, end_date, product_id, location_id, limit = 100 } = req.query;
@@ -101,7 +99,6 @@ router.get('/movements', async (req, res) => {
   }
 });
 
-// POST /api/inventory/movements - Create stock movement
 router.post('/movements', async (req, res) => {
   const connection = await db.getConnection();
 
@@ -127,7 +124,6 @@ router.post('/movements', async (req, res) => {
       [product_color_size_id, location_id, movement_type, quantity, reason_code, notes, movement_date, created_by]
     );
 
-    // Update stock balance
     const quantityChange = movement_type === 'IN' ? quantity : -quantity;
 
     await connection.query(
@@ -152,7 +148,6 @@ router.post('/movements', async (req, res) => {
   }
 });
 
-// GET /api/inventory/locations - Get all locations
 router.get('/locations', async (req, res) => {
   try {
     const [locations] = await db.query('SELECT * FROM locations ORDER BY name');

@@ -3,7 +3,6 @@ import db from '../db.js';
 
 const router = express.Router();
 
-// GET /api/products - Get all products with variants
 router.get('/', async (req, res) => {
   try {
     const [products] = await db.query(`
@@ -22,18 +21,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/products/:id - Get product with full variant tree
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Get product
     const [products] = await db.query('SELECT * FROM products WHERE id = ?', [id]);
     if (products.length === 0) {
       return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
-    // Get colors for this product
     const [colors] = await db.query(`
       SELECT pc.*, c.name as color_name, c.hex_code
       FROM product_colors pc
@@ -41,7 +37,6 @@ router.get('/:id', async (req, res) => {
       WHERE pc.product_id = ?
     `, [id]);
 
-    // Get sizes for each color
     for (let color of colors) {
       const [sizes] = await db.query(`
         SELECT pcs.*, s.name as size_name, s.sort_order
@@ -66,7 +61,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/products - Create new product
 router.post('/', async (req, res) => {
   try {
     const { name, code, category, description, base_price, retail_price } = req.body;
@@ -86,7 +80,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/products/:id - Update product
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -106,7 +99,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/products/:id - Delete product (soft delete)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

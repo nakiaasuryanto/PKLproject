@@ -3,7 +3,6 @@ import db from '../db.js';
 
 const router = express.Router();
 
-// GET /api/dashboard/overview - Complete dashboard overview
 router.get('/overview', async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
@@ -11,13 +10,11 @@ router.get('/overview', async (req, res) => {
     const endDate = end_date || new Date().toISOString().split('T')[0];
     const startDate = start_date || new Date(new Date(endDate).getFullYear(), new Date(endDate).getMonth(), 1).toISOString().split('T')[0];
 
-    // Calculate previous period dates (previous month)
     const currentEndDate = new Date(endDate);
     const currentStartDate = new Date(startDate);
     const prevEndDate = new Date(currentEndDate.getFullYear(), currentEndDate.getMonth(), 0);
     const prevStartDate = new Date(currentStartDate.getFullYear(), currentStartDate.getMonth() - 1, 1);
 
-    // Sales stats - current period
     const [salesStats] = await db.query(`
       SELECT
         COUNT(*) as total_transactions,
@@ -27,7 +24,6 @@ router.get('/overview', async (req, res) => {
       WHERE transaction_date BETWEEN ? AND ?
     `, [startDate, endDate]);
 
-    // Sales stats - previous period (for growth calculation)
     const [prevSalesStats] = await db.query(`
       SELECT
         COALESCE(SUM(CASE WHEN transaction_type = 'SALE' THEN total_amount ELSE 0 END), 0) as total_sales,
@@ -36,7 +32,6 @@ router.get('/overview', async (req, res) => {
       WHERE transaction_date BETWEEN ? AND ?
     `, [prevStartDate.toISOString().split('T')[0], prevEndDate.toISOString().split('T')[0]]);
 
-    // Calculate growth percentages
     const currentSales = salesStats[0].total_sales || 0;
     const prevSales = prevSalesStats[0].total_sales || 0;
     const salesGrowth = prevSales > 0 ? ((currentSales - prevSales) / prevSales * 100).toFixed(1) : '0.0';
@@ -47,7 +42,6 @@ router.get('/overview', async (req, res) => {
     const expenseGrowth = prevExpenses > 0 ? ((currentExpenses - prevExpenses) / prevExpenses * 100).toFixed(1) : '0.0';
     const expenseGrowthValue = parseFloat(expenseGrowth);
 
-    // CRM stats
     const [crmStats] = await db.query(`
       SELECT
         COUNT(*) as total_customers,
@@ -55,7 +49,6 @@ router.get('/overview', async (req, res) => {
       FROM customers
     `);
 
-    // HR stats
     const [hrStats] = await db.query(`
       SELECT
         COUNT(*) as total_employees,
@@ -63,7 +56,6 @@ router.get('/overview', async (req, res) => {
       FROM employees
     `);
 
-    // Inventory stats
     const [inventoryStats] = await db.query(`
       SELECT
         COUNT(*) as total_skus,
@@ -96,7 +88,6 @@ router.get('/overview', async (req, res) => {
   }
 });
 
-// GET /api/dashboard/sales-trend - Sales trend data
 router.get('/sales-trend', async (req, res) => {
   try {
     const { period = 'daily', limit = 30 } = req.query;
@@ -132,7 +123,6 @@ router.get('/sales-trend', async (req, res) => {
   }
 });
 
-// GET /api/dashboard/payment-methods - Payment method breakdown for sales
 router.get('/payment-methods', async (req, res) => {
   try {
     const [methods] = await db.query(`
@@ -153,7 +143,6 @@ router.get('/payment-methods', async (req, res) => {
   }
 });
 
-// GET /api/dashboard/top-products - Top selling products
 router.get('/top-products', async (req, res) => {
   try {
     const { limit = 10 } = req.query;
@@ -182,12 +171,10 @@ router.get('/top-products', async (req, res) => {
   }
 });
 
-// GET /api/dashboard/recent-activities - Recent activities across modules
 router.get('/recent-activities', async (req, res) => {
   try {
     const { limit = 20 } = req.query;
 
-    // Recent transactions
     const [transactions] = await db.query(`
       SELECT
         'transaction' as type,
@@ -201,7 +188,6 @@ router.get('/recent-activities', async (req, res) => {
       LIMIT ?
     `, [parseInt(limit)]);
 
-    // Recent interactions
     const [interactions] = await db.query(`
       SELECT
         'interaction' as type,
@@ -215,7 +201,6 @@ router.get('/recent-activities', async (req, res) => {
       LIMIT ?
     `, [parseInt(limit)]);
 
-    // Recent stock movements
     const [movements] = await db.query(`
       SELECT
         'stock_movement' as type,
@@ -229,7 +214,6 @@ router.get('/recent-activities', async (req, res) => {
       LIMIT ?
     `, [parseInt(limit)]);
 
-    // Combine and sort by date
     const allActivities = [
       ...transactions.map(t => ({ ...t, date: t.date || t.created_at })),
       ...interactions.map(i => ({ ...i, date: i.date || i.created_at })),

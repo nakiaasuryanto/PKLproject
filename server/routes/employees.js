@@ -3,7 +3,6 @@ import db from '../db.js';
 
 const router = express.Router();
 
-// GET /api/employees - Get all employees
 router.get('/', async (req, res) => {
   try {
     const { status, department } = req.query;
@@ -32,7 +31,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/employees - Create employee
 router.post('/', async (req, res) => {
   try {
     const { employee_code, name, email, phone, position, department, hire_date, salary } = req.body;
@@ -53,7 +51,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// POST /api/employees/attendance - Mark attendance
 router.post('/attendance', async (req, res) => {
   try {
     const { employee_id, attendance_date, check_in, check_out, status, work_hours, notes } = req.body;
@@ -80,14 +77,12 @@ router.post('/attendance', async (req, res) => {
   }
 });
 
-// POST /api/employees/attendance/check-in - Check in for today
 router.post('/attendance/check-in', async (req, res) => {
   try {
     const { employee_id } = req.body;
     const today = new Date().toISOString().split('T')[0];
     const checkInTime = new Date().toTimeString().split(' ')[0];
 
-    // Determine status based on check-in time (late if after 08:30)
     const hour = new Date().getHours();
     const minute = new Date().getMinutes();
     const status = (hour > 8 || (hour === 8 && minute > 30)) ? 'LATE' : 'PRESENT';
@@ -115,14 +110,12 @@ router.post('/attendance/check-in', async (req, res) => {
   }
 });
 
-// POST /api/employees/attendance/check-out - Check out for today
 router.post('/attendance/check-out', async (req, res) => {
   try {
     const { employee_id } = req.body;
     const today = new Date().toISOString().split('T')[0];
     const checkOutTime = new Date().toTimeString().split(' ')[0];
 
-    // Get check-in time to calculate work hours
     const [attendance] = await db.query(
       'SELECT check_in FROM attendance WHERE employee_id = ? AND attendance_date = ?',
       [employee_id, today]
@@ -156,10 +149,9 @@ router.post('/attendance/check-out', async (req, res) => {
   }
 });
 
-// GET /api/employees/attendance/summary - Attendance summary
 router.get('/attendance/summary', async (req, res) => {
   try {
-    const { month } = req.query; // YYYY-MM format
+    const { month } = req.query;
 
     let query = `
       SELECT
@@ -196,7 +188,6 @@ router.get('/attendance/summary', async (req, res) => {
   }
 });
 
-// GET /api/employees/attendance/today - Get today's attendance for an employee
 router.get('/attendance/today', async (req, res) => {
   try {
     const { employee_id } = req.query;
@@ -230,11 +221,10 @@ router.get('/attendance/today', async (req, res) => {
   }
 });
 
-// GET /api/employees/:id - Get employee with attendance (MUST BE LAST - catches all)
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { month } = req.query; // YYYY-MM format
+    const { month } = req.query;
 
     const [employees] = await db.query('SELECT * FROM employees WHERE id = ?', [id]);
     if (employees.length === 0) {
@@ -266,7 +256,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/employees/:id - Update employee (MUST BE LAST - catches all)
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;

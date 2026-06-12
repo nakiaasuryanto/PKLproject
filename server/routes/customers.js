@@ -3,7 +3,6 @@ import db from '../db.js';
 
 const router = express.Router();
 
-// GET /api/customers - Get all customers
 router.get('/', async (req, res) => {
   try {
     const { status, city, type, search } = req.query;
@@ -43,7 +42,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/customers/:id - Get customer with interactions
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -71,15 +69,12 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/customers - Create customer
 router.post('/', async (req, res) => {
   try {
     const { customer_code, name, company_name, email, phone, address, city, customer_type } = req.body;
 
-    // Auto-generate customer_code if not provided
     let finalCustomerCode = customer_code;
     if (!finalCustomerCode) {
-      // Get last customer code
       const [lastCustomer] = await db.query(
         'SELECT customer_code FROM customers ORDER BY id DESC LIMIT 1'
       );
@@ -109,7 +104,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/customers/:id - Update customer
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -129,7 +123,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// POST /api/customers/:id/interactions - Add interaction
 router.post('/:id/interactions', async (req, res) => {
   try {
     const { id } = req.params;
@@ -152,7 +145,6 @@ router.post('/:id/interactions', async (req, res) => {
   }
 });
 
-// GET /api/customers/stats/summary - CRM statistics
 router.get('/stats/summary', async (req, res) => {
   try {
     const [stats] = await db.query(`

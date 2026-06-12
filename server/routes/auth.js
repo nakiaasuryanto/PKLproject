@@ -5,7 +5,6 @@ import db from '../db.js';
 
 const router = express.Router();
 
-// Role permissions mapping
 export const ROLE_PERMISSIONS = {
   admin: {
     modules: ['dashboard', 'sales', 'finance', 'crm', 'inventory', 'hr'],
@@ -23,7 +22,7 @@ export const ROLE_PERMISSIONS = {
     modules: ['dashboard', 'crm', 'sales', 'inventory'],
     canViewSummary: false,
     canManageUsers: false,
-    inventoryFullAccess: false  // Only view stock, no movements
+    inventoryFullAccess: false
   },
   operations: {
     modules: ['dashboard', 'inventory', 'sales'],
@@ -39,7 +38,6 @@ export const ROLE_PERMISSIONS = {
   }
 };
 
-// POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -48,7 +46,6 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Username dan password harus diisi' });
     }
 
-    // Find user
     const [users] = await db.query(
       'SELECT * FROM users WHERE username = ? AND is_active = TRUE',
       [username]
@@ -60,25 +57,21 @@ router.post('/login', async (req, res) => {
 
     const user = users[0];
 
-    // Check password
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
       return res.status(401).json({ success: false, error: 'Username atau password salah' });
     }
 
-    // Create session
     const sessionId = uuidv4();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await db.query(
       'INSERT INTO user_sessions (id, user_id, expires_at) VALUES (?, ?, ?)',
       [sessionId, user.id, expiresAt]
     );
 
-    // Update last login
     await db.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
 
-    // Get permissions
     const permissions = ROLE_PERMISSIONS[user.role] || ROLE_PERMISSIONS.operations;
 
     res.json({
@@ -102,7 +95,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// POST /api/auth/logout
 router.post('/logout', async (req, res) => {
   try {
     const sessionId = req.headers['x-session-id'];
@@ -118,7 +110,6 @@ router.post('/logout', async (req, res) => {
   }
 });
 
-// GET /api/auth/me - Get current user
 router.get('/me', async (req, res) => {
   try {
     const sessionId = req.headers['x-session-id'];
@@ -127,7 +118,6 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Tidak terautentikasi' });
     }
 
-    // Find valid session
     const [sessions] = await db.query(
       `SELECT s.*, u.id as user_id, u.username, u.name, u.email, u.role
        FROM user_sessions s
@@ -162,7 +152,6 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// POST /api/auth/register - Create new user (admin only)
 router.post('/register', async (req, res) => {
   try {
     const { username, password, name, email, role } = req.body;
@@ -171,17 +160,14 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Data tidak lengkap' });
     }
 
-    // Check if username exists
     const [existing] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
     if (existing.length > 0) {
       return res.status(400).json({ success: false, error: 'Username sudah digunakan' });
     }
 
-    // Hash password
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Insert user
     const [result] = await db.query(
       'INSERT INTO users (username, password_hash, name, email, role) VALUES (?, ?, ?, ?, ?)',
       [username, passwordHash, name, email || null, role]
@@ -203,7 +189,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// GET /api/auth/users - Get all users (admin only)
 router.get('/users', async (req, res) => {
   try {
     const [users] = await db.query(
@@ -217,10 +202,8 @@ router.get('/users', async (req, res) => {
   }
 });
 
-// POST /api/auth/setup - Create default users (run once)
 router.post('/setup', async (req, res) => {
   try {
-    // Check if users already exist
     const [existing] = await db.query('SELECT COUNT(*) as count FROM users');
     if (existing[0].count > 0) {
       return res.json({ success: true, message: 'Users already exist', skipped: true });
