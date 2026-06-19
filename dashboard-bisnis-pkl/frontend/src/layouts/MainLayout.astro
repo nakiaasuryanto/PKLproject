@@ -73,7 +73,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
         const initial = user.name.charAt(0).toUpperCase();
         const roleName = roleNames[user.role] || user.role;
 
-        // Sidebar
+        // Desktop Sidebar
         const userInitial = document.getElementById('userInitial');
         const userName = document.getElementById('userName');
         const userRole = document.getElementById('userRole');
@@ -86,6 +86,14 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
         const navUserName = document.getElementById('navUserName');
         if (navUserInitial) navUserInitial.textContent = initial;
         if (navUserName) navUserName.textContent = user.name;
+
+        // Mobile Sidebar
+        const mobileUserInitial = document.getElementById('mobileUserInitial');
+        const mobileUserName = document.getElementById('mobileUserName');
+        const mobileUserRole = document.getElementById('mobileUserRole');
+        if (mobileUserInitial) mobileUserInitial.textContent = initial;
+        if (mobileUserName) mobileUserName.textContent = user.name;
+        if (mobileUserRole) mobileUserRole.textContent = roleName;
       }
 
       // Hide modules user doesn't have access to
@@ -135,7 +143,7 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 
       // Logout handler
       function setupLogout() {
-        const logoutBtns = document.querySelectorAll('#logoutBtn, #navLogoutBtn');
+        const logoutBtns = document.querySelectorAll('#logoutBtn, #navLogoutBtn, #mobileLogoutBtn');
         logoutBtns.forEach(btn => {
           btn?.addEventListener('click', async () => {
             const sessionId = localStorage.getItem('sessionId');

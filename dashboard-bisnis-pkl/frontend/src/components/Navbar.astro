@@ -50,40 +50,43 @@ const getMobileLinkColor = (id: string) => {
     <div class="flex justify-between items-center h-16">
       <!-- Logo -->
       <div class="flex items-center">
-        <a href="/" class="flex items-center space-x-3">
-          <img src="/logo.png" alt="Logo" class="w-10 h-10 rounded-lg" />
+        <a href="/" class="flex items-center space-x-2 sm:space-x-3">
+          <img src="/logo.png" alt="Logo" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
           <div>
-            <span class="text-xl font-bold text-gray-900 block leading-tight">Dashboard Bisnis</span>
-            <span class="text-xs text-gray-500">Nakia Suryanto's PKL Project</span>
+            <span class="text-base sm:text-xl font-bold text-gray-900 block leading-tight">Dashboard Bisnis</span>
+            <span class="text-xs text-gray-500 hidden sm:block">Nakia Suryanto's PKL Project</span>
           </div>
         </a>
       </div>
 
       <!-- User Menu -->
-      <div class="flex items-center space-x-3">
-        <div id="navUserInfo" class="hidden sm:flex items-center space-x-2 px-3 py-2 rounded-lg">
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <div id="navUserInfo" class="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg">
           <div class="w-8 h-8 border-2 border-gray-800 rounded-full flex items-center justify-center">
             <span id="navUserInitial" class="text-gray-800 text-sm font-medium">?</span>
           </div>
           <span id="navUserName" class="text-sm font-medium text-gray-700">Loading...</span>
         </div>
-        <button id="navLogoutBtn" class="hidden sm:flex p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
+        <button id="navLogoutBtn" class="hidden md:flex p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
         </button>
-        <button class="xl:hidden p-2 rounded-lg hover:bg-gray-100">
-          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="mobileMenuBtn" class="xl:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
+          <svg id="menuIconOpen" class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="menuIconClose" class="w-6 h-6 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Mobile Navigation -->
-  <div class="lg:hidden border-t border-gray-200">
-    <div class="px-2 pt-2 pb-3 space-y-1 overflow-x-auto">
+  <!-- Mobile Navigation Tabs (visible on tablet) -->
+  <div class="hidden sm:block xl:hidden border-t border-gray-200">
+    <div class="px-2 pt-2 pb-3 overflow-x-auto">
       <div class="flex space-x-1">
         {modules.map(mod => (
           <a
@@ -101,3 +104,119 @@ const getMobileLinkColor = (id: string) => {
     </div>
   </div>
 </nav>
+
+<!-- Mobile Sidebar Overlay -->
+<div id="mobileSidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden xl:hidden transition-opacity duration-300 opacity-0"></div>
+
+<!-- Mobile Sidebar Drawer -->
+<aside id="mobileSidebar" class="fixed top-0 left-0 w-72 h-full bg-white shadow-xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out xl:hidden">
+  <div class="h-full flex flex-col">
+    <!-- Sidebar Header -->
+    <div class="h-16 flex items-center justify-between px-4 border-b border-gray-200">
+      <span class="text-lg font-bold text-gray-900">Menu</span>
+      <button id="closeSidebarBtn" class="p-2 rounded-lg hover:bg-gray-100">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Links -->
+    <nav class="flex-1 px-3 py-4 overflow-y-auto">
+      <ul class="space-y-1">
+        {modules.map(mod => (
+          <li data-module={mod.module} class="nav-item">
+            <a
+              href={mod.href}
+              class:list={[
+                "flex items-center px-4 py-3 rounded-lg text-base font-medium transition-colors",
+                activeModule === mod.id
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-700 hover:bg-gray-50"
+              ]}
+            >
+              {mod.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <!-- User Info & Logout (Mobile) -->
+    <div class="p-4 border-t border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 border-2 border-gray-800 rounded-full flex items-center justify-center">
+            <span id="mobileUserInitial" class="text-gray-800 font-medium">?</span>
+          </div>
+          <div>
+            <p id="mobileUserName" class="font-medium text-gray-900">Loading...</p>
+            <p id="mobileUserRole" class="text-sm text-gray-500">-</p>
+          </div>
+        </div>
+        <button id="mobileLogoutBtn" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<script>
+  // Mobile menu toggle
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const mobileSidebar = document.getElementById('mobileSidebar');
+  const mobileSidebarOverlay = document.getElementById('mobileSidebarOverlay');
+  const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+  const menuIconOpen = document.getElementById('menuIconOpen');
+  const menuIconClose = document.getElementById('menuIconClose');
+
+  function openMobileSidebar() {
+    mobileSidebar?.classList.remove('-translate-x-full');
+    mobileSidebarOverlay?.classList.remove('hidden');
+    setTimeout(() => {
+      mobileSidebarOverlay?.classList.remove('opacity-0');
+      mobileSidebarOverlay?.classList.add('opacity-100');
+    }, 10);
+    menuIconOpen?.classList.add('hidden');
+    menuIconClose?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobileSidebar() {
+    mobileSidebar?.classList.add('-translate-x-full');
+    mobileSidebarOverlay?.classList.remove('opacity-100');
+    mobileSidebarOverlay?.classList.add('opacity-0');
+    setTimeout(() => {
+      mobileSidebarOverlay?.classList.add('hidden');
+    }, 300);
+    menuIconOpen?.classList.remove('hidden');
+    menuIconClose?.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  mobileMenuBtn?.addEventListener('click', () => {
+    if (mobileSidebar?.classList.contains('-translate-x-full')) {
+      openMobileSidebar();
+    } else {
+      closeMobileSidebar();
+    }
+  });
+
+  closeSidebarBtn?.addEventListener('click', closeMobileSidebar);
+  mobileSidebarOverlay?.addEventListener('click', closeMobileSidebar);
+
+  // Close on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMobileSidebar();
+  });
+
+  // Close on window resize to desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 1280) {
+      closeMobileSidebar();
+    }
+  });
+</script>

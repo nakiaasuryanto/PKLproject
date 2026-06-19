@@ -60,3 +60,70 @@ h1, h2, h3, h4, h5, h6, strong, b {
   font-size: 0.9375rem !important;
   line-height: 1.375rem !important;
 }
+
+/* Responsive improvements */
+@media (max-width: 640px) {
+  /* Slightly smaller fonts on mobile */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Better touch targets */
+  button, a.btn, [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Improve table readability on mobile */
+  table {
+    font-size: 0.875rem;
+  }
+
+  td, th {
+    padding: 0.5rem 0.75rem !important;
+  }
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, select, textarea {
+  transition: all 0.2s ease;
+}
+
+/* Better focus states for accessibility */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
