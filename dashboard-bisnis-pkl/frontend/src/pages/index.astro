@@ -188,7 +188,8 @@ try {
     finance: 'Kelola transaksi keuangan dan laporan'
   };
 
-  document.addEventListener('DOMContentLoaded', () => {
+  // Function to initialize user data
+  function initUserData() {
     let userRole = 'operations';
     let userName = 'User';
     let canViewSummary = false;
@@ -215,7 +216,7 @@ try {
 
     // Update user name
     const userNameEl = document.getElementById('userName');
-    if (userNameEl) {
+    if (userNameEl && userName !== 'User') {
       userNameEl.textContent = userName;
     }
 
@@ -225,8 +226,18 @@ try {
       roleDescEl.textContent = ROLE_DESCRIPTIONS[userRole] || ROLE_DESCRIPTIONS.operations;
     }
 
+    return { userRole, userName, canViewSummary };
+  }
+
+  // Run immediately
+  const { userRole, canViewSummary } = initUserData();
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Run again after DOM ready to ensure elements are available
+    const result = initUserData();
+
     // Show summary section only for management (canViewSummary)
-    if (canViewSummary) {
+    if (result.canViewSummary) {
       document.getElementById('summarySection')?.classList.remove('hidden');
       document.getElementById('activitySection')?.classList.remove('hidden');
     }
