@@ -148,6 +148,85 @@ router.post('/movements', async (req, res) => {
   }
 });
 
+router.post('/transfer', async (req, res) => {
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const {
+      product_color_size_id,
+      from_location_id,
+      to_location_id,
+      quantity,
+      notes,
+      created_by
+    } = req.body;
+
+    if (from_location_id === to_location_id) {
+      return res.status(400).json({ success: false, error: 'Lokasi asal dan tujuan tidak boleh sama' });
+    }
+
+    // Check stock availability at source location
+    const [[currentStock]] = await connection.query(
+      'SELECT quantity FROM stock_balances WHERE product_color_size_id = ? AND location_id = ?',
+      [product_color_size_id, from_location_id]
+    );
+
+    if (!currentStock || currentStock.quantity < quantity) {
+      return res.status(400).json({
+        success: false,
+        error: `Stok tidak cukup. Tersedia: ${currentStock?.quantity || 0}`
+      });
+    }
+
+    const movement_date = new Date();
+
+    // Create OUT movement from source
+    await connection.query(
+      `INSERT INTO stock_movements
+       (product_color_size_id, location_id, movement_type, quantity, reason_code, notes, movement_date, created_by)
+       VALUES (?, ?, 'OUT', ?, 'TRANSFER_OUT', ?, ?, ?)`,
+      [product_color_size_id, from_location_id, quantity, notes, movement_date, created_by]
+    );
+
+    // Create IN movement to destination
+    await connection.query(
+      `INSERT INTO stock_movements
+       (product_color_size_id, location_id, movement_type, quantity, reason_code, notes, movement_date, created_by)
+       VALUES (?, ?, 'IN', ?, 'TRANSFER_IN', ?, ?, ?)`,
+      [product_color_size_id, to_location_id, quantity, notes, movement_date, created_by]
+    );
+
+    // Update source location stock (decrease)
+    await connection.query(
+      'UPDATE stock_balances SET quantity = quantity - ? WHERE product_color_size_id = ? AND location_id = ?',
+      [quantity, product_color_size_id, from_location_id]
+    );
+
+    // Update destination location stock (increase or insert)
+    await connection.query(
+      `INSERT INTO stock_balances (product_color_size_id, location_id, quantity)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE quantity = quantity + ?`,
+      [product_color_size_id, to_location_id, quantity, quantity]
+    );
+
+    await connection.commit();
+
+    res.status(201).json({
+      success: true,
+      data: { message: `Berhasil transfer ${quantity} unit` }
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error transferring stock:', error);
+    res.status(500).json({ success: false, error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
 router.get('/locations', async (req, res) => {
   try {
     const [locations] = await db.query('SELECT * FROM locations ORDER BY name');

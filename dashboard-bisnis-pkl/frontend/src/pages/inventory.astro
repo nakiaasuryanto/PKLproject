@@ -364,9 +364,10 @@ const lowStockCount = lowStock.length;
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+        <label id="locationLabel" class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
         <select
           name="location_id"
+          id="locationSelect"
           required
           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
         >
@@ -381,6 +382,7 @@ const lowStockCount = lowStock.length;
         <label class="block text-sm font-medium text-gray-700 mb-1">Alasan</label>
         <select
           name="reason_code"
+          id="reasonCodeSelect"
           required
           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
         >
@@ -389,10 +391,25 @@ const lowStockCount = lowStock.length;
           <option value="SALES">Penjualan</option>
           <option value="RETURN">Retur</option>
           <option value="DAMAGE">Rusak</option>
-          <option value="TRANSFER">Transfer</option>
+          <option value="TRANSFER">Transfer Antar Lokasi</option>
           <option value="ADJUSTMENT_IN">Penyesuaian (Tambah)</option>
           <option value="ADJUSTMENT_OUT">Penyesuaian (Kurang)</option>
           <option value="OTHER">Lainnya</option>
+        </select>
+      </div>
+
+      <!-- From Location (for transfers) -->
+      <div id="fromLocationDiv" class="hidden">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi Asal</label>
+        <select
+          name="from_location_id"
+          id="fromLocationSelect"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
+        >
+          <option value="">Pilih Lokasi Asal</option>
+          {locationList.map((location: any) => (
+            <option value={location.id}>{location.name}</option>
+          ))}
         </select>
       </div>
 
@@ -438,6 +455,7 @@ const lowStockCount = lowStock.length;
 <script define:vars={{ locationList, API_BASE, totalStock: stock.length }}>
   let selectedVariantId = null;
   let hasFullAccess = true;
+  let isTransferMode = false;
 
   // Pagination setup
   const ITEMS_PER_PAGE = 10;
@@ -487,45 +505,116 @@ const lowStockCount = lowStock.length;
   // Make it available globally
   window.quickAddStock = quickAddStock;
 
+  // Handle reason code change for transfer mode
+  const reasonCodeSelect = document.getElementById('reasonCodeSelect');
+  const fromLocationDiv = document.getElementById('fromLocationDiv');
+  const fromLocationSelect = document.getElementById('fromLocationSelect');
+  const locationLabel = document.getElementById('locationLabel');
+  const movementTypeSelect = document.querySelector('select[name="movement_type"]');
+
+  reasonCodeSelect?.addEventListener('change', () => {
+    isTransferMode = reasonCodeSelect.value === 'TRANSFER';
+    if (isTransferMode) {
+      fromLocationDiv?.classList.remove('hidden');
+      if (fromLocationSelect) fromLocationSelect.required = true;
+      if (locationLabel) locationLabel.textContent = 'Lokasi Tujuan';
+      // Hide movement type for transfers (it's always OUT from source, IN to destination)
+      if (movementTypeSelect) movementTypeSelect.closest('div').classList.add('hidden');
+    } else {
+      fromLocationDiv?.classList.add('hidden');
+      if (fromLocationSelect) fromLocationSelect.required = false;
+      if (locationLabel) locationLabel.textContent = 'Lokasi';
+      if (movementTypeSelect) movementTypeSelect.closest('div').classList.remove('hidden');
+    }
+  });
+
   // Quick movement form handler
   document.getElementById('quickMovementForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const formData = new FormData(e.target);
     const variantFromSelect = formData.get('variant_id');
-    const data = {
-      product_color_size_id: selectedVariantId || variantFromSelect,
-      location_id: formData.get('location_id'),
-      movement_type: formData.get('movement_type'),
-      quantity: parseInt(formData.get('quantity')),
-      reason_code: formData.get('reason_code'),
-      notes: formData.get('notes'),
-      created_by: 'current_user'
-    };
+    const product_color_size_id = selectedVariantId || variantFromSelect;
+    const quantity = parseInt(formData.get('quantity'));
 
-    if (!data.product_color_size_id) {
+    if (!product_color_size_id) {
       showAlert('error', 'Silakan pilih varian produk');
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE}/inventory/movements`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      let response;
+      let successMessage;
+
+      if (isTransferMode) {
+        // Transfer mode: move stock from one location to another
+        const from_location_id = formData.get('from_location_id');
+        const to_location_id = formData.get('location_id');
+
+        if (!from_location_id) {
+          showAlert('error', 'Silakan pilih lokasi asal');
+          return;
+        }
+
+        if (from_location_id === to_location_id) {
+          showAlert('error', 'Lokasi asal dan tujuan tidak boleh sama');
+          return;
+        }
+
+        const transferData = {
+          product_color_size_id: product_color_size_id,
+          from_location_id: parseInt(from_location_id),
+          to_location_id: parseInt(to_location_id),
+          quantity: quantity,
+          notes: formData.get('notes'),
+          created_by: 'current_user'
+        };
+
+        response = await fetch(`${API_BASE}/inventory/transfer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(transferData)
+        });
+
+        successMessage = `Berhasil transfer ${quantity} unit stok!`;
+      } else {
+        // Normal mode: IN or OUT movement
+        const data = {
+          product_color_size_id: product_color_size_id,
+          location_id: formData.get('location_id'),
+          movement_type: formData.get('movement_type'),
+          quantity: quantity,
+          reason_code: formData.get('reason_code'),
+          notes: formData.get('notes'),
+          created_by: 'current_user'
+        };
+
+        response = await fetch(`${API_BASE}/inventory/movements`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        successMessage = `Berhasil ${data.movement_type === 'IN' ? 'menambahkan' : 'mengurangi'} ${quantity} unit stok!`;
+      }
 
       const result = await response.json();
 
       if (result.success) {
-        showAlert('success', `Berhasil ${data.movement_type === 'IN' ? 'menambahkan' : 'mengurangi'} ${data.quantity} unit stok!`);
+        showAlert('success', successMessage);
         closeModal('stockMovementModal');
         e.target.reset();
         selectedVariantId = null;
+        // Reset transfer mode UI
+        isTransferMode = false;
+        fromLocationDiv?.classList.add('hidden');
+        if (fromLocationSelect) fromLocationSelect.required = false;
+        if (locationLabel) locationLabel.textContent = 'Lokasi';
+        if (movementTypeSelect) movementTypeSelect.closest('div').classList.remove('hidden');
         // Refresh page after 2 seconds
         setTimeout(() => location.reload(), 2000);
       } else {
-        showAlert('error', result.error?.message || 'Gagal menyimpan pergerakan');
+        showAlert('error', result.error || 'Gagal menyimpan pergerakan');
       }
     } catch (error) {
       showAlert('error', 'Terjadi kesalahan saat menyimpan pergerakan');

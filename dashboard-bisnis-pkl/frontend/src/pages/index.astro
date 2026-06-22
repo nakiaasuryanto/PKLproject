@@ -200,7 +200,8 @@ try {
 
       if (userStr) {
         const user = JSON.parse(userStr);
-        userName = user.name || user.username || 'User';
+        // Prioritaskan nickname, lalu username, baru name
+        userName = user.nickname || user.username || user.name || 'User';
         userRole = user.role || 'operations';
       }
 
