@@ -307,4 +307,179 @@ router.get('/variants', async (req, res) => {
   }
 });
 
+router.post('/validate-import', async (req, res) => {
+  try {
+    const { rows } = req.body;
+
+    if (!rows || !Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ success: false, error: 'No data provided' });
+    }
+
+    const validationResults = [];
+    const [products] = await db.query('SELECT id, name FROM products');
+    const [colors] = await db.query('SELECT id, name FROM colors');
+    const [sizes] = await db.query('SELECT id, name FROM sizes');
+    const [locations] = await db.query('SELECT id, name FROM locations');
+
+    const productMap = Object.fromEntries(products.map(p => [p.name.toLowerCase(), p.id]));
+    const colorMap = Object.fromEntries(colors.map(c => [c.name.toLowerCase(), c.id]));
+    const sizeMap = Object.fromEntries(sizes.map(s => [s.name.toLowerCase(), s.id]));
+    const locationMap = Object.fromEntries(locations.map(l => [l.name.toLowerCase(), l.id]));
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const errors = [];
+
+      if (!row.product_name || !productMap[row.product_name.toLowerCase()]) {
+        errors.push(`Produk "${row.product_name}" tidak ditemukan`);
+      }
+      if (!row.color_name || !colorMap[row.color_name.toLowerCase()]) {
+        errors.push(`Warna "${row.color_name}" tidak ditemukan`);
+      }
+      if (!row.size_name || !sizeMap[row.size_name.toLowerCase()]) {
+        errors.push(`Ukuran "${row.size_name}" tidak ditemukan`);
+      }
+      if (!row.location_name || !locationMap[row.location_name.toLowerCase()]) {
+        errors.push(`Lokasi "${row.location_name}" tidak ditemukan`);
+      }
+      if (!row.quantity || isNaN(parseInt(row.quantity)) || parseInt(row.quantity) < 0) {
+        errors.push('Quantity harus berupa angka positif');
+      }
+
+      validationResults.push({
+        row: i + 1,
+        data: row,
+        valid: errors.length === 0,
+        errors
+      });
+    }
+
+    const validCount = validationResults.filter(r => r.valid).length;
+    const invalidCount = validationResults.filter(r => !r.valid).length;
+
+    res.json({
+      success: true,
+      data: {
+        total: rows.length,
+        valid: validCount,
+        invalid: invalidCount,
+        results: validationResults
+      }
+    });
+  } catch (error) {
+    console.error('Error validating import:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/import-csv', async (req, res) => {
+  const connection = await db.getConnection();
+
+  try {
+    const { rows, mode = 'add' } = req.body;
+
+    if (!rows || !Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ success: false, error: 'No data provided' });
+    }
+
+    await connection.beginTransaction();
+
+    const [products] = await connection.query('SELECT id, name FROM products');
+    const [colors] = await connection.query('SELECT id, name FROM colors');
+    const [sizes] = await connection.query('SELECT id, name FROM sizes');
+    const [locations] = await connection.query('SELECT id, name FROM locations');
+
+    const productMap = Object.fromEntries(products.map(p => [p.name.toLowerCase(), p.id]));
+    const colorMap = Object.fromEntries(colors.map(c => [c.name.toLowerCase(), c.id]));
+    const sizeMap = Object.fromEntries(sizes.map(s => [s.name.toLowerCase(), s.id]));
+    const locationMap = Object.fromEntries(locations.map(l => [l.name.toLowerCase(), l.id]));
+
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    for (const row of rows) {
+      try {
+        const productId = productMap[row.product_name.toLowerCase()];
+        const colorId = colorMap[row.color_name.toLowerCase()];
+        const sizeId = sizeMap[row.size_name.toLowerCase()];
+        const locationId = locationMap[row.location_name.toLowerCase()];
+        const quantity = parseInt(row.quantity);
+        const unitCost = parseFloat(row.unit_cost) || 0;
+
+        if (!productId || !colorId || !sizeId || !locationId) {
+          errorCount++;
+          continue;
+        }
+
+        const [[productColor]] = await connection.query(
+          'SELECT id FROM product_colors WHERE product_id = ? AND color_id = ?',
+          [productId, colorId]
+        );
+
+        if (!productColor) {
+          errorCount++;
+          errors.push(`Kombinasi produk-warna tidak ditemukan: ${row.product_name} - ${row.color_name}`);
+          continue;
+        }
+
+        const [[variant]] = await connection.query(
+          'SELECT id FROM product_color_sizes WHERE product_color_id = ? AND size_id = ?',
+          [productColor.id, sizeId]
+        );
+
+        if (!variant) {
+          errorCount++;
+          errors.push(`Varian tidak ditemukan: ${row.product_name} - ${row.color_name} - ${row.size_name}`);
+          continue;
+        }
+
+        if (mode === 'replace') {
+          await connection.query(
+            `INSERT INTO stock_balances (product_color_size_id, location_id, quantity, moving_avg_cost)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE quantity = ?, moving_avg_cost = ?`,
+            [variant.id, locationId, quantity, unitCost, quantity, unitCost]
+          );
+        } else {
+          await connection.query(
+            `INSERT INTO stock_balances (product_color_size_id, location_id, quantity, moving_avg_cost)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE quantity = quantity + ?, moving_avg_cost = ?`,
+            [variant.id, locationId, quantity, unitCost, quantity, unitCost]
+          );
+        }
+
+        await connection.query(
+          `INSERT INTO stock_movements (product_color_size_id, location_id, movement_type, quantity, unit_cost, reason, reference_type, movement_date)
+           VALUES (?, ?, 'IN', ?, ?, 'CSV Import', 'IMPORT', CURDATE())`,
+          [variant.id, locationId, quantity, unitCost]
+        );
+
+        successCount++;
+      } catch (err) {
+        errorCount++;
+        errors.push(err.message);
+      }
+    }
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      data: {
+        imported: successCount,
+        failed: errorCount,
+        errors: errors.slice(0, 10)
+      }
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error importing CSV:', error);
+    res.status(500).json({ success: false, error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
 export default router;

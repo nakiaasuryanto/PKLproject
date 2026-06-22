@@ -105,8 +105,11 @@ router.post('/', async (req, res) => {
       payment_method,
       pic,
       notes,
-      items
+      items,
+      location_id = 1
     } = req.body;
+
+    const locId = parseInt(location_id) || 1;
 
     const [result] = await connection.query(
       `INSERT INTO transactions
@@ -125,15 +128,15 @@ router.post('/', async (req, res) => {
           await connection.query(
             `INSERT INTO stock_movements
              (product_color_size_id, location_id, movement_type, quantity, reason_code, reference_type, reference_id, movement_date, created_by)
-             VALUES (?, 1, 'OUT', ?, ?, 'TRANSACTION', ?, ?, ?)`,
-            [item.product_color_size_id, item.quantity, reason_code, transactionId, transaction_date, pic]
+             VALUES (?, ?, 'OUT', ?, ?, 'TRANSACTION', ?, ?, ?)`,
+            [item.product_color_size_id, locId, item.quantity, reason_code, transactionId, transaction_date, pic]
           );
 
           await connection.query(
             `UPDATE stock_balances
              SET quantity = quantity - ?
-             WHERE product_color_size_id = ? AND location_id = 1`,
-            [item.quantity, item.product_color_size_id]
+             WHERE product_color_size_id = ? AND location_id = ?`,
+            [item.quantity, item.product_color_size_id, locId]
           );
         }
       }
@@ -185,8 +188,11 @@ router.post('/create', async (req, res) => {
       expense_category,
       description,
       amount,
-      pic
+      pic,
+      location_id = 1
     } = req.body;
+
+    const locationId = parseInt(location_id) || 1;
 
     const transaction_type = type === 'penjualan' ? 'SALE' : type === 'pengeluaran' ? 'EXPENSE' : 'SALE';
     const transaction_date = date || new Date().toISOString().split('T')[0];
@@ -290,15 +296,15 @@ router.post('/create', async (req, res) => {
           await connection.query(
             `INSERT INTO stock_movements
              (product_color_size_id, location_id, movement_type, quantity, reason_code, reference_type, reference_id, movement_date, created_by)
-             VALUES (?, 1, 'OUT', ?, 'SALES_OUT', 'TRANSACTION', ?, ?, ?)`,
-            [pcsId, item.quantity, transactionId, transaction_date, pic_sales || 'System']
+             VALUES (?, ?, 'OUT', ?, 'SALES_OUT', 'TRANSACTION', ?, ?, ?)`,
+            [pcsId, locationId, item.quantity, transactionId, transaction_date, pic_sales || 'System']
           );
 
           await connection.query(
             `UPDATE stock_balances
              SET quantity = quantity - ?
-             WHERE product_color_size_id = ? AND location_id = 1`,
-            [item.quantity, pcsId]
+             WHERE product_color_size_id = ? AND location_id = ?`,
+            [item.quantity, pcsId, locationId]
           );
         }
       }

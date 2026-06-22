@@ -69,6 +69,32 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+router.get('/:id/purchases', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 10 } = req.query;
+
+    const [purchases] = await db.query(
+      `SELECT
+        id,
+        reference_number as invoice_number,
+        transaction_date as invoice_date,
+        total_amount,
+        payment_status as status
+       FROM transactions
+       WHERE customer_id = ? AND transaction_type = 'SALE'
+       ORDER BY transaction_date DESC
+       LIMIT ?`,
+      [id, parseInt(limit)]
+    );
+
+    res.json({ success: true, data: purchases });
+  } catch (error) {
+    console.error('Error fetching customer purchases:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const {
