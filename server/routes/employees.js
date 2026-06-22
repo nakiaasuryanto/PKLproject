@@ -46,17 +46,20 @@ router.post('/', async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const { employee_code, name, email, phone, position, department, hire_date, salary } = req.body;
+    const { employee_code, name, nickname, email, phone, position, department, hire_date, salary, gender, birth_place, birth_date, address } = req.body;
 
     const [empResult] = await connection.query(
-      `INSERT INTO employees (employee_code, name, email, phone, position, department, hire_date, salary)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [employee_code, name, email, phone, position, department, hire_date, salary]
+      `INSERT INTO employees (employee_code, name, email, phone, position, department, hire_date, salary, bio, address, birth_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [employee_code, name, email, phone, position, department, hire_date, salary,
+       gender && birth_place ? `${gender === 'L' ? 'Laki-laki' : 'Perempuan'}, ${birth_place}` : null,
+       address, birth_date]
     );
 
     const employeeId = empResult.insertId;
 
-    const username = generateNickname(name);
+    // Use nickname for username if provided, otherwise generate from name
+    const username = nickname ? nickname.toLowerCase().replace(/\s+/g, '') : generateNickname(name);
     const password = phone ? phone.replace(/\D/g, '') : '123456';
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -65,7 +68,8 @@ router.post('/', async (req, res) => {
       'Customer Service': 'customer_service',
       'Operations': 'operations',
       'Finance': 'finance',
-      'HRD': 'admin'
+      'HRD': 'admin',
+      'Management': 'admin'
     };
     const role = roleMapping[department] || 'operations';
 
@@ -80,9 +84,9 @@ router.post('/', async (req, res) => {
     }
 
     await connection.query(
-      `INSERT INTO users (username, password, name, email, role, employee_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [finalUsername, hashedPassword, name, email, role, employeeId]
+      `INSERT INTO users (username, password_hash, name, nickname, email, role, employee_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [finalUsername, hashedPassword, name, nickname || null, email, role, employeeId]
     );
 
     await connection.commit();

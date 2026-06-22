@@ -82,8 +82,10 @@ router.post('/login', async (req, res) => {
           id: user.id,
           username: user.username,
           name: user.name,
+          nickname: user.nickname || null,
           email: user.email,
-          role: user.role
+          role: user.role,
+          employee_id: user.employee_id || null
         },
         permissions,
         expiresAt
@@ -119,7 +121,7 @@ router.get('/me', async (req, res) => {
     }
 
     const [sessions] = await db.query(
-      `SELECT s.*, u.id as user_id, u.username, u.name, u.email, u.role
+      `SELECT s.*, u.id as user_id, u.username, u.name, u.nickname, u.email, u.role, u.employee_id
        FROM user_sessions s
        JOIN users u ON s.user_id = u.id
        WHERE s.id = ? AND s.expires_at > NOW() AND u.is_active = TRUE`,
@@ -140,8 +142,10 @@ router.get('/me', async (req, res) => {
           id: session.user_id,
           username: session.username,
           name: session.name,
+          nickname: session.nickname || null,
           email: session.email,
-          role: session.role
+          role: session.role,
+          employee_id: session.employee_id || null
         },
         permissions
       }

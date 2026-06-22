@@ -28,13 +28,15 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       <Sidebar activeModule={activeModule} />
 
       <!-- Main Content Area with Footer inside -->
-      <main class="xl:ml-64 pt-16 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+      <main class="xl:ml-64 pt-16 h-screen flex flex-col">
         <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <slot />
         </div>
 
         <!-- Footer only under main content, not under sidebar -->
-        <Footer />
+        <div class="flex-shrink-0">
+          <Footer />
+        </div>
       </main>
     </div>
 
@@ -70,7 +72,9 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 
       // Update UI with user info
       function updateUserInfo(user) {
-        const initial = user.name.charAt(0).toUpperCase();
+        // Use nickname if available, otherwise use first part of full name
+        const displayName = user.nickname || user.name.split(' ')[0];
+        const initial = displayName.charAt(0).toUpperCase();
         const roleName = roleNames[user.role] || user.role;
 
         // Desktop Sidebar
@@ -78,21 +82,21 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
         const userName = document.getElementById('userName');
         const userRole = document.getElementById('userRole');
         if (userInitial) userInitial.textContent = initial;
-        if (userName) userName.textContent = user.name;
+        if (userName) userName.textContent = displayName;
         if (userRole) userRole.textContent = roleName;
 
         // Navbar
         const navUserInitial = document.getElementById('navUserInitial');
         const navUserName = document.getElementById('navUserName');
         if (navUserInitial) navUserInitial.textContent = initial;
-        if (navUserName) navUserName.textContent = user.name;
+        if (navUserName) navUserName.textContent = displayName;
 
         // Mobile Sidebar
         const mobileUserInitial = document.getElementById('mobileUserInitial');
         const mobileUserName = document.getElementById('mobileUserName');
         const mobileUserRole = document.getElementById('mobileUserRole');
         if (mobileUserInitial) mobileUserInitial.textContent = initial;
-        if (mobileUserName) mobileUserName.textContent = user.name;
+        if (mobileUserName) mobileUserName.textContent = displayName;
         if (mobileUserRole) mobileUserRole.textContent = roleName;
       }
 
