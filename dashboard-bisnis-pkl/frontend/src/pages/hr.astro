@@ -21,9 +21,12 @@ const departmentCounts = employees.reduce((acc: Record<string, number>, e: any) 
   return acc;
 }, {});
 
-// Calculate attendance rate
+// Calculate attendance rate (avoid division by zero)
 const avgAttendance = summary.length > 0
-  ? summary.reduce((sum: number, s: any) => sum + ((s.present_days / s.total_days) * 100), 0) / summary.length
+  ? summary.reduce((sum: number, s: any) => {
+      const rate = s.total_days > 0 ? (s.present_days / s.total_days) * 100 : 0;
+      return sum + rate;
+    }, 0) / summary.length
   : 0;
 
 // Get present today count
