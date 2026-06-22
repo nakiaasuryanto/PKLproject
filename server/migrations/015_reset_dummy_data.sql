@@ -78,6 +78,9 @@ ALTER TABLE colors AUTO_INCREMENT = 1;
 ALTER TABLE sizes AUTO_INCREMENT = 1;
 ALTER TABLE locations AUTO_INCREMENT = 1;
 
+-- Drop foreign key constraint on leave_requests.approved_by (references users which is cleared)
+ALTER TABLE leave_requests DROP FOREIGN KEY leave_requests_ibfk_2;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =====================
@@ -295,7 +298,7 @@ INSERT INTO attendance (employee_id, attendance_date, check_in, check_out, statu
 -- LEAVE REQUESTS
 -- =====================
 INSERT INTO leave_requests (employee_id, leave_type, start_date, end_date, reason, status, approved_by, approved_at, notes) VALUES
-(5, 'ANNUAL', CURDATE() - INTERVAL 3 DAY, CURDATE() - INTERVAL 3 DAY, 'Acara keluarga', 'APPROVED', 3, CURDATE() - INTERVAL 4 DAY, 'Approved'),
-(2, 'SICK', CURDATE() - INTERVAL 3 DAY, CURDATE() - INTERVAL 3 DAY, 'Sakit demam', 'APPROVED', 3, CURDATE() - INTERVAL 3 DAY, 'Get well soon'),
+(5, 'ANNUAL', CURDATE() - INTERVAL 3 DAY, CURDATE() - INTERVAL 3 DAY, 'Acara keluarga', 'APPROVED', NULL, CURDATE() - INTERVAL 4 DAY, 'Approved'),
+(2, 'SICK', CURDATE() - INTERVAL 3 DAY, CURDATE() - INTERVAL 3 DAY, 'Sakit demam', 'APPROVED', NULL, CURDATE() - INTERVAL 3 DAY, 'Get well soon'),
 (7, 'PERSONAL', CURDATE() + INTERVAL 7 DAY, CURDATE() + INTERVAL 8 DAY, 'Urusan pribadi', 'PENDING', NULL, NULL, NULL),
 (4, 'ANNUAL', CURDATE() + INTERVAL 14 DAY, CURDATE() + INTERVAL 18 DAY, 'Liburan keluarga', 'PENDING', NULL, NULL, NULL);
