@@ -77,7 +77,7 @@ router.get('/:id/purchases', async (req, res) => {
     const [purchases] = await db.query(
       `SELECT
         id,
-        reference_number as invoice_number,
+        CONCAT('INV-', DATE_FORMAT(transaction_date, '%Y%m%d'), '-', LPAD(id, 4, '0')) as invoice_number,
         transaction_date as invoice_date,
         total_amount,
         payment_status as status

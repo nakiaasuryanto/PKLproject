@@ -226,25 +226,10 @@ router.post('/create', async (req, res) => {
       notes = promo_type ? `Promo: ${promo_type}` : '';
     }
 
-    // Generate reference number: INV-YYYYMMDD-XXXX
-    const dateStr = transaction_date.replace(/-/g, '');
-    const [lastRef] = await connection.query(
-      `SELECT reference_number FROM transactions
-       WHERE reference_number LIKE ?
-       ORDER BY id DESC LIMIT 1`,
-      [`INV-${dateStr}-%`]
-    );
-    let refNum = 1;
-    if (lastRef.length > 0 && lastRef[0].reference_number) {
-      const parts = lastRef[0].reference_number.split('-');
-      refNum = parseInt(parts[2] || '0') + 1;
-    }
-    const reference_number = `INV-${dateStr}-${String(refNum).padStart(4, '0')}`;
-
     const [result] = await connection.query(
       `INSERT INTO transactions
-       (transaction_type, transaction_date, customer_id, total_amount, payment_method, pic, notes, items, payment_status, reference_number)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (transaction_type, transaction_date, customer_id, total_amount, payment_method, pic, notes, items, payment_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         transaction_type,
         transaction_date,
@@ -254,8 +239,7 @@ router.post('/create', async (req, res) => {
         pic_sales || pic || null,
         notes,
         JSON.stringify(items || []),
-        'PAID',
-        reference_number
+        'PAID'
       ]
     );
 
