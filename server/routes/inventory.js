@@ -158,4 +158,153 @@ router.get('/locations', async (req, res) => {
   }
 });
 
+router.get('/locations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [locations] = await db.query('SELECT * FROM locations WHERE id = ?', [id]);
+
+    if (locations.length === 0) {
+      return res.status(404).json({ success: false, error: 'Location not found' });
+    }
+
+    const [stock] = await db.query(`
+      SELECT
+        pcs.id as product_color_size_id,
+        p.name as product_name,
+        c.name as color_name,
+        c.hex_code,
+        s.name as size_name,
+        sb.quantity,
+        pcs.sku
+      FROM stock_balances sb
+      JOIN product_color_sizes pcs ON sb.product_color_size_id = pcs.id
+      JOIN product_colors pc ON pcs.product_color_id = pc.id
+      JOIN products p ON pc.product_id = p.id
+      JOIN colors c ON pc.color_id = c.id
+      JOIN sizes s ON pcs.size_id = s.id
+      WHERE sb.location_id = ?
+      ORDER BY p.name, c.name, s.sort_order
+    `, [id]);
+
+    res.json({
+      success: true,
+      data: {
+        location: locations[0],
+        stock: stock
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching location:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/products', async (req, res) => {
+  try {
+    const [products] = await db.query(`
+      SELECT DISTINCT p.id as product_id, p.name as product_name, p.category
+      FROM products p
+      JOIN product_colors pc ON p.id = pc.product_id
+      JOIN product_color_sizes pcs ON pc.id = pcs.product_color_id
+      ORDER BY p.name
+    `);
+    res.json({ success: true, data: products });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/colors', async (req, res) => {
+  try {
+    const [colors] = await db.query('SELECT * FROM colors ORDER BY name');
+    res.json({ success: true, data: colors });
+  } catch (error) {
+    console.error('Error fetching colors:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/colors/:productId', async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const [colors] = await db.query(`
+      SELECT DISTINCT c.id as color_id, c.name as color_name, c.hex_code
+      FROM colors c
+      JOIN product_colors pc ON c.id = pc.color_id
+      WHERE pc.product_id = ?
+      ORDER BY c.name
+    `, [productId]);
+    res.json({ success: true, data: colors });
+  } catch (error) {
+    console.error('Error fetching colors for product:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/sizes', async (req, res) => {
+  try {
+    const [sizes] = await db.query('SELECT * FROM sizes ORDER BY sort_order');
+    res.json({ success: true, data: sizes });
+  } catch (error) {
+    console.error('Error fetching sizes:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/sizes/:productId/:colorId', async (req, res) => {
+  try {
+    const { productId, colorId } = req.params;
+    const [sizes] = await db.query(`
+      SELECT
+        s.id as size_id,
+        s.name as size_name,
+        pcs.id as variant_id,
+        pcs.sku,
+        COALESCE(SUM(sb.quantity), 0) as total_qty
+      FROM sizes s
+      JOIN product_color_sizes pcs ON s.id = pcs.size_id
+      JOIN product_colors pc ON pcs.product_color_id = pc.id
+      LEFT JOIN stock_balances sb ON pcs.id = sb.product_color_size_id
+      WHERE pc.product_id = ? AND pc.color_id = ?
+      GROUP BY s.id, s.name, pcs.id, pcs.sku
+      ORDER BY s.sort_order
+    `, [productId, colorId]);
+    res.json({ success: true, data: sizes });
+  } catch (error) {
+    console.error('Error fetching sizes for product/color:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/variants', async (req, res) => {
+  try {
+    const [variants] = await db.query(`
+      SELECT
+        pcs.id as variant_id,
+        pcs.sku,
+        p.id as product_id,
+        p.name as product_name,
+        c.id as color_id,
+        c.name as color_name,
+        c.hex_code,
+        s.id as size_id,
+        s.name as size_name,
+        COALESCE(SUM(sb.quantity), 0) as total_stock
+      FROM product_color_sizes pcs
+      JOIN product_colors pc ON pcs.product_color_id = pc.id
+      JOIN products p ON pc.product_id = p.id
+      JOIN colors c ON pc.color_id = c.id
+      JOIN sizes s ON pcs.size_id = s.id
+      LEFT JOIN stock_balances sb ON pcs.id = sb.product_color_size_id
+      GROUP BY pcs.id, pcs.sku, p.id, p.name, c.id, c.name, c.hex_code, s.id, s.name
+      ORDER BY p.name, c.name, s.sort_order
+    `);
+    res.json({ success: true, data: variants });
+  } catch (error) {
+    console.error('Error fetching variants:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;

@@ -99,6 +99,7 @@ function formatCurrency(amount: number | string): string {
             <th class="px-6 py-3">Total</th>
             <th class="px-6 py-3">Pembayaran</th>
             <th class="px-6 py-3">Status</th>
+            <th class="px-6 py-3 text-center">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -131,10 +132,22 @@ function formatCurrency(amount: number | string): string {
                   {tx.payment_status || 'N/A'}
                 </span>
               </td>
+              <td class="px-6 py-4 whitespace-nowrap text-center">
+                <a
+                  href={`/sales/invoice/${tx.id}`}
+                  class="inline-flex items-center px-2 py-1 text-xs font-medium text-sales-600 hover:text-sales-800 transition-colors"
+                >
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Lihat
+                </a>
+              </td>
             </tr>
           )) : (
             <tr>
-              <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                 <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -146,10 +159,23 @@ function formatCurrency(amount: number | string): string {
       </table>
     </div>
 
+    <!-- Pagination -->
     {transactions.length > 0 && (
-      <div class="mt-6 text-center">
+      <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+        <p id="paginationInfo" class="text-sm text-gray-600">
+          Menampilkan 1-{Math.min(10, transactions.length)} dari {transactions.length} transaksi
+        </p>
+        <div class="flex items-center gap-2">
+          <button id="prevBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            ← Sebelumnya
+          </button>
+          <span id="pageInfo" class="px-3 py-1.5 text-sm text-gray-600">1 / {Math.ceil(transactions.length / 10)}</span>
+          <button id="nextBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Selanjutnya →
+          </button>
+        </div>
         <a href="/sales/transactions" class="text-sm font-medium text-sales-600 hover:text-sales-700 inline-flex items-center">
-          Lihat Semua Transaksi
+          Lihat Semua
           <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
@@ -159,9 +185,58 @@ function formatCurrency(amount: number | string): string {
   </Card>
 </MainLayout>
 
-<script is:inline define:vars={{ trendData: trend, paymentMethodsData: paymentMethods }}>
+<script is:inline define:vars={{ trendData: trend, paymentMethodsData: paymentMethods, totalTransactions: transactions.length }}>
   window.salesTrendData = trendData;
   window.paymentMethodsData = paymentMethodsData;
+
+  // Pagination
+  const ITEMS_PER_PAGE = 10;
+  let currentPage = 1;
+  const totalPages = Math.ceil(totalTransactions / ITEMS_PER_PAGE);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const tbody = document.querySelector('tbody.divide-y');
+    const rows = tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageInfo = document.getElementById('pageInfo');
+    const paginationInfo = document.getElementById('paginationInfo');
+
+    function showPage(page) {
+      const start = (page - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+
+      rows.forEach((row, index) => {
+        row.style.display = index >= start && index < end ? '' : 'none';
+      });
+
+      if (pageInfo) pageInfo.textContent = `${page} / ${totalPages}`;
+      if (paginationInfo) {
+        const showStart = start + 1;
+        const showEnd = Math.min(end, totalTransactions);
+        paginationInfo.textContent = `Menampilkan ${showStart}-${showEnd} dari ${totalTransactions} transaksi`;
+      }
+      if (prevBtn) prevBtn.disabled = page <= 1;
+      if (nextBtn) nextBtn.disabled = page >= totalPages;
+    }
+
+    prevBtn?.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        showPage(currentPage);
+      }
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        showPage(currentPage);
+      }
+    });
+
+    // Initial display
+    if (rows.length > 0) showPage(1);
+  });
 </script>
 
 <script>

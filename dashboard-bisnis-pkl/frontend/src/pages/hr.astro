@@ -55,19 +55,12 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
   </div>
 
   <!-- Stats Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
     <StatCard
       title="Total Karyawan"
       value={totalEmployees}
       change="Karyawan aktif"
       changeType="neutral"
-      color="hr"
-    />
-    <StatCard
-      title="Tingkat Kehadiran"
-      value={`${avgAttendance.toFixed(1)}%`}
-      change="Bulan ini"
-      changeType={avgAttendance >= 90 ? "positive" : avgAttendance >= 75 ? "neutral" : "negative"}
       color="hr"
     />
     <StatCard
@@ -84,6 +77,33 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
       changeType="neutral"
       color="hr"
     />
+  </div>
+
+  <!-- Jam Kerja Info -->
+  <div class="bg-hr-50 border border-hr-200 rounded-xl p-4 mb-8">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🕐</span>
+        <div>
+          <p class="font-semibold text-hr-800">Jam Kerja</p>
+          <p class="text-sm text-hr-600">Senin - Jumat</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-6">
+        <div class="text-center">
+          <p class="text-sm text-gray-600">Masuk</p>
+          <p class="text-xl font-bold text-hr-700">08:00</p>
+        </div>
+        <div class="text-gray-400">→</div>
+        <div class="text-center">
+          <p class="text-sm text-gray-600">Pulang</p>
+          <p class="text-xl font-bold text-hr-700">17:00</p>
+        </div>
+      </div>
+      <div class="text-sm text-hr-600">
+        <span class="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 rounded">Telat jika &gt; 08:00</span>
+      </div>
+    </div>
   </div>
 
   <!-- Department Breakdown -->
@@ -106,18 +126,15 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
           <tr>
             <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
             <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departemen</th>
-            <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
+            <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Hari</th>
             <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Hadir</th>
             <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Absen</th>
             <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Terlambat</th>
-            <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jam</th>
-            <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Kehadiran</th>
+            <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Jam</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           {summary.length > 0 ? summary.map((emp: any) => {
-            const attendanceRate = emp.total_days > 0 ? (emp.present_days / emp.total_days) * 100 : 0;
-
             return (
               <tr class="hover:bg-hr-50">
                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
@@ -156,22 +173,6 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-gray-900">
                   {emp.total_hours?.toFixed(1) || 0}h
                 </td>
-                <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-center">
-                  <div class="flex items-center justify-center space-x-2">
-                    <div class="w-20 sm:w-24 bg-gray-200 rounded-full h-2 flex-shrink-0">
-                      <div
-                        class={`h-2 rounded-full ${
-                          attendanceRate >= 90 ? 'bg-green-500' :
-                          attendanceRate >= 75 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}
-                        style={`width: ${attendanceRate}%`}
-                      ></div>
-                    </div>
-                    <span class="text-sm font-semibold text-gray-700">
-                      {attendanceRate.toFixed(0)}%
-                    </span>
-                  </div>
-                </td>
               </tr>
             );
           }) : (
@@ -187,6 +188,23 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
         </tbody>
       </table>
     </div>
+    <!-- Attendance Pagination -->
+    {summary.length > 10 && (
+      <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+        <p id="attendancePaginationInfo" class="text-sm text-gray-600">
+          Menampilkan 1-{Math.min(10, summary.length)} dari {summary.length} karyawan
+        </p>
+        <div class="flex items-center gap-2">
+          <button id="attPrevBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            ← Sebelumnya
+          </button>
+          <span id="attPageInfo" class="px-3 py-1.5 text-sm text-gray-600">1 / {Math.ceil(summary.length / 10)}</span>
+          <button id="attNextBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Selanjutnya →
+          </button>
+        </div>
+      </div>
+    )}
   </Card>
 
   <!-- Employee Directory -->
@@ -262,6 +280,29 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
         </tbody>
       </table>
     </div>
+    <!-- Employee Pagination -->
+    {employees.length > 10 && (
+      <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+        <p id="empPaginationInfo" class="text-sm text-gray-600">
+          Menampilkan 1-{Math.min(10, employees.length)} dari {employees.length} karyawan
+        </p>
+        <div class="flex items-center gap-2">
+          <button id="empPrevBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            ← Sebelumnya
+          </button>
+          <span id="empPageInfo" class="px-3 py-1.5 text-sm text-gray-600">1 / {Math.ceil(employees.length / 10)}</span>
+          <button id="empNextBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Selanjutnya →
+          </button>
+        </div>
+        <a href="/hr/employees" class="text-sm font-medium text-hr-600 hover:text-hr-700 inline-flex items-center">
+          Lihat Semua
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+    )}
   </Card>
 
   <!-- Attendance Modal -->
@@ -340,7 +381,118 @@ const currentMonth = new Date().toLocaleString('id-ID', { month: 'long', year: '
   </div>
 </MainLayout>
 
-<script define:vars={{ API_BASE }}>
+<script define:vars={{ API_BASE, totalSummary: summary.length, totalEmployees: employees.length }}>
+  // Pagination setup
+  const ITEMS_PER_PAGE = 10;
+
+  function setupPagination(tableSelector, prefix, total) {
+    const tbody = document.querySelector(tableSelector);
+    const rows = tbody ? Array.from(tbody.querySelectorAll('tr:not(:last-child)')) : [];
+    const prevBtn = document.getElementById(`${prefix}PrevBtn`);
+    const nextBtn = document.getElementById(`${prefix}NextBtn`);
+    const pageInfo = document.getElementById(`${prefix}PageInfo`);
+    const paginationInfo = document.getElementById(`${prefix}PaginationInfo`);
+    let currentPage = 1;
+    const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+
+    function showPage(page) {
+      const start = (page - 1) * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+
+      rows.forEach((row, index) => {
+        row.style.display = index >= start && index < end ? '' : 'none';
+      });
+
+      if (pageInfo) pageInfo.textContent = `${page} / ${totalPages}`;
+      if (paginationInfo) {
+        const showStart = total > 0 ? start + 1 : 0;
+        const showEnd = Math.min(end, total);
+        paginationInfo.textContent = `Menampilkan ${showStart}-${showEnd} dari ${total} karyawan`;
+      }
+      if (prevBtn) prevBtn.disabled = page <= 1;
+      if (nextBtn) nextBtn.disabled = page >= totalPages;
+    }
+
+    prevBtn?.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        showPage(currentPage);
+      }
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        showPage(currentPage);
+      }
+    });
+
+    if (rows.length > 0 && total > ITEMS_PER_PAGE) showPage(1);
+  }
+
+  // Initialize pagination after DOM loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    // Attendance summary pagination
+    if (totalSummary > ITEMS_PER_PAGE) {
+      const attTbody = document.querySelectorAll('tbody.divide-y')[0];
+      const attRows = attTbody ? Array.from(attTbody.querySelectorAll('tr.hover\\:bg-hr-50')) : [];
+      let attCurrentPage = 1;
+      const attTotalPages = Math.ceil(totalSummary / ITEMS_PER_PAGE);
+
+      function showAttPage(page) {
+        const start = (page - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        attRows.forEach((row, i) => row.style.display = i >= start && i < end ? '' : 'none');
+        const attPageInfo = document.getElementById('attPageInfo');
+        const attPaginationInfo = document.getElementById('attendancePaginationInfo');
+        const attPrevBtn = document.getElementById('attPrevBtn');
+        const attNextBtn = document.getElementById('attNextBtn');
+        if (attPageInfo) attPageInfo.textContent = `${page} / ${attTotalPages}`;
+        if (attPaginationInfo) attPaginationInfo.textContent = `Menampilkan ${start + 1}-${Math.min(end, totalSummary)} dari ${totalSummary} karyawan`;
+        if (attPrevBtn) attPrevBtn.disabled = page <= 1;
+        if (attNextBtn) attNextBtn.disabled = page >= attTotalPages;
+      }
+
+      document.getElementById('attPrevBtn')?.addEventListener('click', () => {
+        if (attCurrentPage > 1) { attCurrentPage--; showAttPage(attCurrentPage); }
+      });
+      document.getElementById('attNextBtn')?.addEventListener('click', () => {
+        if (attCurrentPage < attTotalPages) { attCurrentPage++; showAttPage(attCurrentPage); }
+      });
+      showAttPage(1);
+    }
+
+    // Employee directory pagination
+    if (totalEmployees > ITEMS_PER_PAGE) {
+      const empTbody = document.querySelectorAll('tbody.divide-y')[1];
+      const empRows = empTbody ? Array.from(empTbody.querySelectorAll('tr.hover\\:bg-hr-50')) : [];
+      let empCurrentPage = 1;
+      const empTotalPages = Math.ceil(totalEmployees / ITEMS_PER_PAGE);
+
+      function showEmpPage(page) {
+        const start = (page - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        empRows.forEach((row, i) => row.style.display = i >= start && i < end ? '' : 'none');
+        const empPageInfo = document.getElementById('empPageInfo');
+        const empPaginationInfo = document.getElementById('empPaginationInfo');
+        const empPrevBtn = document.getElementById('empPrevBtn');
+        const empNextBtn = document.getElementById('empNextBtn');
+        if (empPageInfo) empPageInfo.textContent = `${page} / ${empTotalPages}`;
+        if (empPaginationInfo) empPaginationInfo.textContent = `Menampilkan ${start + 1}-${Math.min(end, totalEmployees)} dari ${totalEmployees} karyawan`;
+        if (empPrevBtn) empPrevBtn.disabled = page <= 1;
+        if (empNextBtn) empNextBtn.disabled = page >= empTotalPages;
+      }
+
+      document.getElementById('empPrevBtn')?.addEventListener('click', () => {
+        if (empCurrentPage > 1) { empCurrentPage--; showEmpPage(empCurrentPage); }
+      });
+      document.getElementById('empNextBtn')?.addEventListener('click', () => {
+        if (empCurrentPage < empTotalPages) { empCurrentPage++; showEmpPage(empCurrentPage); }
+      });
+      showEmpPage(1);
+    }
+  });
+
   // Modal elements
   const attendanceBtn = document.getElementById('attendanceBtn');
   const attendanceModal = document.getElementById('attendanceModal');

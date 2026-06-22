@@ -61,12 +61,12 @@ const getMobileLinkColor = (id: string) => {
 
       <!-- User Menu -->
       <div class="flex items-center space-x-2 sm:space-x-3">
-        <div id="navUserInfo" class="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg">
+        <a href="/account" id="navUserInfo" class="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors" title="Akun Saya">
           <div class="w-8 h-8 border-2 border-gray-800 rounded-full flex items-center justify-center">
             <span id="navUserInitial" class="text-gray-800 text-sm font-medium">?</span>
           </div>
           <span id="navUserName" class="text-sm font-medium text-gray-700">Loading...</span>
-        </div>
+        </a>
         <button id="navLogoutBtn" class="hidden md:flex p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Logout">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -145,7 +145,7 @@ const getMobileLinkColor = (id: string) => {
     <!-- User Info & Logout (Mobile) -->
     <div class="p-4 border-t border-gray-200">
       <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-3">
+        <a href="/account" class="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-1 -m-1 transition-colors">
           <div class="w-10 h-10 border-2 border-gray-800 rounded-full flex items-center justify-center">
             <span id="mobileUserInitial" class="text-gray-800 font-medium">?</span>
           </div>
@@ -153,7 +153,7 @@ const getMobileLinkColor = (id: string) => {
             <p id="mobileUserName" class="font-medium text-gray-900">Loading...</p>
             <p id="mobileUserRole" class="text-sm text-gray-500">-</p>
           </div>
-        </div>
+        </a>
         <button id="mobileLogoutBtn" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

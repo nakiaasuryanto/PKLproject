@@ -71,7 +71,11 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { customer_code, name, company_name, email, phone, address, city, customer_type } = req.body;
+    const {
+      customer_code, name, company_name, email, phone, whatsapp,
+      address, city, customer_type, credit_limit, payment_terms,
+      needs_plan, notes, pic_user_id, pic_name, npwp, tax_address
+    } = req.body;
 
     let finalCustomerCode = customer_code;
     if (!finalCustomerCode) {
@@ -89,9 +93,12 @@ router.post('/', async (req, res) => {
     }
 
     const [result] = await db.query(
-      `INSERT INTO customers (customer_code, name, company_name, email, phone, address, city, customer_type)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [finalCustomerCode, name, company_name, email, phone, address, city, customer_type]
+      `INSERT INTO customers
+       (customer_code, name, company_name, email, phone, whatsapp, address, city,
+        customer_type, credit_limit, payment_terms, needs_plan, notes, pic_user_id, pic_name, npwp, tax_address)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [finalCustomerCode, name, company_name, email, phone, whatsapp, address, city,
+       customer_type, credit_limit, payment_terms, needs_plan, notes, pic_user_id, pic_name, npwp, tax_address]
     );
 
     res.status(201).json({

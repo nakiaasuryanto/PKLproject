@@ -1,0 +1,152 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import Card from '../../components/ui/Card.astro';
+import Button from '../../components/ui/Button.astro';
+import { api } from '../../lib/api';
+
+const transactionsResponse = await api.get('/transactions?limit=100');
+const transactions = (transactionsResponse.success && Array.isArray(transactionsResponse.data)) ? transactionsResponse.data : [];
+
+function formatCurrency(amount: number | string): string {
+  const num = Math.round(Number(amount) || 0);
+  return num.toLocaleString('id-ID');
+}
+
+function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
+const currentMonth = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+---
+
+<MainLayout title="Jurnal Umum - Keuangan" activeModule="finance">
+  <div class="mb-8">
+    <div class="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+      <a href="/finance" class="hover:text-finance-600">Keuangan</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Jurnal Umum</span>
+    </div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Jurnal Umum</h1>
+        <p class="mt-2 text-gray-600">Catatan semua transaksi keuangan - {currentMonth}</p>
+      </div>
+      <div class="mt-4 sm:mt-0 flex gap-2">
+        <Button href="/finance" variant="outline" color="finance" size="md">
+          ← Kembali
+        </Button>
+        <Button href="/finance/transactions/new" variant="primary" color="finance" size="md">
+          + Transaksi Baru
+        </Button>
+      </div>
+    </div>
+  </div>
+
+  <Card title="Daftar Jurnal" color="finance">
+    <div class="mb-4 flex flex-col sm:flex-row gap-3">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Cari transaksi..."
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500 focus:border-finance-500"
+      />
+      <select id="typeFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-finance-500">
+        <option value="">Semua Tipe</option>
+        <option value="SALE">Penjualan</option>
+        <option value="EXPENSE">Pengeluaran</option>
+        <option value="INVOICE">Invoice</option>
+      </select>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Ref</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Debit</th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Kredit</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="jurnalBody">
+          {transactions.length > 0 ? transactions.map((t: any) => {
+            const isDebit = t.transaction_type === 'SALE' || t.transaction_type === 'INVOICE';
+            const amount = Math.round(Number(t.total_amount) || 0);
+
+            return (
+              <tr class="hover:bg-finance-50 jurnal-row"
+                  data-search={`${t.reference_number || ''} ${t.notes || ''} ${t.transaction_type}`.toLowerCase()}
+                  data-type={t.transaction_type}>
+                <td class="px-4 py-3 text-sm text-gray-900">{formatDate(t.transaction_date)}</td>
+                <td class="px-4 py-3 text-sm font-mono text-gray-600">{t.reference_number || '-'}</td>
+                <td class="px-4 py-3 text-sm text-gray-900">{t.notes || t.transaction_type}</td>
+                <td class="px-4 py-3">
+                  <span class={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    t.transaction_type === 'SALE' ? 'bg-green-100 text-green-800' :
+                    t.transaction_type === 'EXPENSE' ? 'bg-red-100 text-red-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {t.transaction_type}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-right font-mono text-green-600">
+                  {isDebit ? `Rp ${formatCurrency(amount)}` : '-'}
+                </td>
+                <td class="px-4 py-3 text-sm text-right font-mono text-red-600">
+                  {!isDebit ? `Rp ${formatCurrency(amount)}` : '-'}
+                </td>
+              </tr>
+            );
+          }) : (
+            <tr>
+              <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                Belum ada transaksi
+              </td>
+            </tr>
+          )}
+        </tbody>
+        <tfoot class="bg-gray-100">
+          <tr class="font-semibold">
+            <td colspan="4" class="px-4 py-3 text-sm text-gray-900">Total</td>
+            <td class="px-4 py-3 text-sm text-right font-mono text-green-700" id="totalDebit">
+              Rp {formatCurrency(transactions.filter((t: any) => t.transaction_type === 'SALE' || t.transaction_type === 'INVOICE').reduce((sum: number, t: any) => sum + (Number(t.total_amount) || 0), 0))}
+            </td>
+            <td class="px-4 py-3 text-sm text-right font-mono text-red-700" id="totalKredit">
+              Rp {formatCurrency(transactions.filter((t: any) => t.transaction_type === 'EXPENSE').reduce((sum: number, t: any) => sum + (Number(t.total_amount) || 0), 0))}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </Card>
+</MainLayout>
+
+<script>
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const typeFilter = document.getElementById('typeFilter') as HTMLSelectElement;
+  const rows = document.querySelectorAll('.jurnal-row');
+
+  function filterRows() {
+    const searchTerm = searchInput?.value.toLowerCase() || '';
+    const typeValue = typeFilter?.value || '';
+
+    rows.forEach(row => {
+      const searchData = row.getAttribute('data-search') || '';
+      const rowType = row.getAttribute('data-type') || '';
+
+      const matchesSearch = searchData.includes(searchTerm);
+      const matchesType = !typeValue || rowType === typeValue;
+
+      (row as HTMLElement).style.display = matchesSearch && matchesType ? '' : 'none';
+    });
+  }
+
+  searchInput?.addEventListener('input', filterRows);
+  typeFilter?.addEventListener('change', filterRows);
+</script>

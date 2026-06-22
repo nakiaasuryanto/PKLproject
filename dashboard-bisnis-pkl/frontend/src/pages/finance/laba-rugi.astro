@@ -1,0 +1,181 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import Card from '../../components/ui/Card.astro';
+import Button from '../../components/ui/Button.astro';
+import { api } from '../../lib/api';
+
+const dashboardResponse = await api.get('/dashboard/overview');
+const transactionsResponse = await api.get('/transactions?limit=500');
+
+const dashboard = dashboardResponse.success ? dashboardResponse.data : {};
+const transactions = (transactionsResponse.success && Array.isArray(transactionsResponse.data)) ? transactionsResponse.data : [];
+
+const totalSales = Math.round(Number(dashboard.sales?.total_sales) || 0);
+const totalExpenses = Math.round(Number(dashboard.expenses?.total) || 0);
+
+const salesByType = transactions.reduce((acc: any, t: any) => {
+  if (t.transaction_type === 'SALE' || t.transaction_type === 'INVOICE') {
+    acc.push({ notes: t.notes || 'Penjualan', amount: Number(t.total_amount) || 0 });
+  }
+  return acc;
+}, []);
+
+const expensesByCategory: Record<string, number> = {};
+transactions.forEach((t: any) => {
+  if (t.transaction_type === 'EXPENSE') {
+    const category = t.notes || 'Lainnya';
+    expensesByCategory[category] = (expensesByCategory[category] || 0) + (Number(t.total_amount) || 0);
+  }
+});
+
+const hpp = Math.round(totalSales * 0.6);
+const labaKotor = totalSales - hpp;
+const bebanOperasional = totalExpenses;
+const labaOperasional = labaKotor - bebanOperasional;
+const pajak = labaOperasional > 0 ? Math.round(labaOperasional * 0.1) : 0;
+const labaBersih = labaOperasional - pajak;
+
+function formatCurrency(amount: number): string {
+  return `Rp ${Math.round(amount).toLocaleString('id-ID')}`;
+}
+
+const currentMonth = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+---
+
+<MainLayout title="Laba Rugi - Keuangan" activeModule="finance">
+  <div class="mb-8">
+    <div class="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+      <a href="/finance" class="hover:text-finance-600">Keuangan</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Laba Rugi</span>
+    </div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Laporan Laba Rugi</h1>
+        <p class="mt-2 text-gray-600">Periode: {currentMonth}</p>
+      </div>
+      <div class="mt-4 sm:mt-0 flex gap-2">
+        <Button href="/finance" variant="outline" color="finance" size="md">
+          ← Kembali
+        </Button>
+        <button onclick="window.print()" class="px-4 py-2 bg-finance-500 text-white rounded-lg hover:bg-finance-600 transition-colors">
+          🖨️ Cetak
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 print:shadow-none print:border-0">
+    <div class="text-center mb-8 print:mb-4">
+      <h2 class="text-xl font-bold text-gray-900">LAPORAN LABA RUGI</h2>
+      <p class="text-gray-600">Untuk Periode yang Berakhir {currentMonth}</p>
+    </div>
+
+    <div class="max-w-2xl mx-auto space-y-6">
+      <!-- Pendapatan -->
+      <div>
+        <h3 class="font-bold text-gray-900 border-b border-gray-300 pb-2 mb-3">PENDAPATAN</h3>
+        <div class="space-y-2 pl-4">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Penjualan</span>
+            <span class="font-mono">{formatCurrency(totalSales)}</span>
+          </div>
+          <div class="flex justify-between border-t pt-2 font-semibold">
+            <span>Total Pendapatan</span>
+            <span class="font-mono text-green-600">{formatCurrency(totalSales)}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Harga Pokok Penjualan -->
+      <div>
+        <h3 class="font-bold text-gray-900 border-b border-gray-300 pb-2 mb-3">HARGA POKOK PENJUALAN</h3>
+        <div class="space-y-2 pl-4">
+          <div class="flex justify-between">
+            <span class="text-gray-600">HPP (estimasi 60%)</span>
+            <span class="font-mono">({formatCurrency(hpp)})</span>
+          </div>
+          <div class="flex justify-between border-t pt-2 font-semibold">
+            <span>Total HPP</span>
+            <span class="font-mono text-red-600">({formatCurrency(hpp)})</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Laba Kotor -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <div class="flex justify-between text-lg font-bold">
+          <span>LABA KOTOR</span>
+          <span class="font-mono text-finance-600">{formatCurrency(labaKotor)}</span>
+        </div>
+      </div>
+
+      <!-- Beban Operasional -->
+      <div>
+        <h3 class="font-bold text-gray-900 border-b border-gray-300 pb-2 mb-3">BEBAN OPERASIONAL</h3>
+        <div class="space-y-2 pl-4">
+          {Object.entries(expensesByCategory).length > 0 ? (
+            Object.entries(expensesByCategory).map(([category, amount]) => (
+              <div class="flex justify-between">
+                <span class="text-gray-600">{category}</span>
+                <span class="font-mono">({formatCurrency(amount as number)})</span>
+              </div>
+            ))
+          ) : (
+            <div class="flex justify-between">
+              <span class="text-gray-600">Beban Umum</span>
+              <span class="font-mono">({formatCurrency(bebanOperasional)})</span>
+            </div>
+          )}
+          <div class="flex justify-between border-t pt-2 font-semibold">
+            <span>Total Beban Operasional</span>
+            <span class="font-mono text-red-600">({formatCurrency(bebanOperasional)})</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Laba Operasional -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <div class="flex justify-between text-lg font-bold">
+          <span>LABA OPERASIONAL</span>
+          <span class={`font-mono ${labaOperasional >= 0 ? 'text-finance-600' : 'text-red-600'}`}>
+            {labaOperasional >= 0 ? formatCurrency(labaOperasional) : `(${formatCurrency(Math.abs(labaOperasional))})`}
+          </span>
+        </div>
+      </div>
+
+      <!-- Pajak -->
+      <div>
+        <h3 class="font-bold text-gray-900 border-b border-gray-300 pb-2 mb-3">PAJAK</h3>
+        <div class="space-y-2 pl-4">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Pajak Penghasilan (10%)</span>
+            <span class="font-mono">({formatCurrency(pajak)})</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Laba Bersih -->
+      <div class="bg-finance-50 border-2 border-finance-200 p-4 rounded-lg">
+        <div class="flex justify-between text-xl font-bold">
+          <span class="text-finance-800">LABA BERSIH</span>
+          <span class={`font-mono ${labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {labaBersih >= 0 ? formatCurrency(labaBersih) : `(${formatCurrency(Math.abs(labaBersih))})`}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 pt-4 border-t text-center text-sm text-gray-500">
+      <p>Laporan ini dihasilkan secara otomatis dari sistem Dashboard Bisnis</p>
+      <p class="mt-1">*HPP dihitung estimasi 60% dari penjualan</p>
+    </div>
+  </div>
+</MainLayout>
+
+<style>
+  @media print {
+    body { background: white; }
+    .no-print { display: none !important; }
+  }
+</style>

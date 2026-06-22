@@ -1,0 +1,129 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import Card from '../../../components/ui/Card.astro';
+import Button from '../../../components/ui/Button.astro';
+import { api } from '../../../lib/api';
+
+const { id } = Astro.params;
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
+
+const response = await api.get(`/inventory/locations/${id}`);
+const locationData = response.success ? response.data : null;
+const location = locationData?.location || { name: 'Unknown', description: '' };
+const stock = locationData?.stock || [];
+
+const totalStock = stock.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+const totalSKUs = stock.length;
+const lowStockItems = stock.filter((item: any) => item.quantity < 10).length;
+---
+
+<MainLayout title={`${location.name} - Persediaan`} activeModule="inventory">
+  <div class="mb-8">
+    <div class="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+      <a href="/inventory" class="hover:text-inventory-600">Persediaan</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">{location.name}</span>
+    </div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{location.name}</h1>
+        <p class="mt-2 text-gray-600">{location.description || 'Detail stok di lokasi ini'}</p>
+      </div>
+      <div class="mt-4 sm:mt-0">
+        <Button href="/inventory" variant="outline" color="inventory" size="md">
+          ← Kembali
+        </Button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white rounded-xl p-6 border border-gray-200">
+      <p class="text-sm text-gray-600">Total Stok</p>
+      <p class="text-3xl font-bold text-inventory-600">{totalStock}</p>
+      <p class="text-sm text-gray-500">unit</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 border border-gray-200">
+      <p class="text-sm text-gray-600">Total SKU</p>
+      <p class="text-3xl font-bold text-inventory-600">{totalSKUs}</p>
+      <p class="text-sm text-gray-500">varian</p>
+    </div>
+    <div class="bg-white rounded-xl p-6 border border-gray-200">
+      <p class="text-sm text-gray-600">Stok Rendah</p>
+      <p class="text-3xl font-bold text-red-600">{lowStockItems}</p>
+      <p class="text-sm text-gray-500">item &lt; 10 unit</p>
+    </div>
+  </div>
+
+  <Card title="Daftar Stok" color="inventory">
+    <div class="mb-4">
+      <input
+        type="text"
+        id="stockSearch"
+        placeholder="Cari produk..."
+        class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500 focus:border-inventory-500"
+      />
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Warna</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ukuran</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Stok</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="stockTableBody">
+          {stock.length > 0 ? stock.map((item: any) => (
+            <tr class="hover:bg-inventory-50 stock-row" data-search={`${item.product_name} ${item.color_name} ${item.size_name} ${item.sku}`.toLowerCase()}>
+              <td class="px-4 py-3 text-sm font-mono text-gray-600">{item.sku}</td>
+              <td class="px-4 py-3 text-sm font-medium text-gray-900">{item.product_name}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">
+                <span class="inline-flex items-center">
+                  <span class="w-3 h-3 rounded-full mr-2" style={`background-color: ${item.hex_code || '#ccc'}`}></span>
+                  {item.color_name}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-600">{item.size_name}</td>
+              <td class="px-4 py-3 text-center">
+                <span class={`px-3 py-1 text-sm font-semibold rounded-full ${
+                  item.quantity > 20 ? 'bg-green-100 text-green-800' :
+                  item.quantity > 10 ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {item.quantity} pcs
+                </span>
+              </td>
+            </tr>
+          )) : (
+            <tr>
+              <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                Belum ada stok di lokasi ini
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </Card>
+</MainLayout>
+
+<script>
+  const searchInput = document.getElementById('stockSearch');
+  const rows = document.querySelectorAll('.stock-row');
+
+  searchInput?.addEventListener('input', (e) => {
+    const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+    rows.forEach(row => {
+      const searchData = row.getAttribute('data-search') || '';
+      if (searchData.includes(searchTerm)) {
+        (row as HTMLElement).style.display = '';
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+  });
+</script>

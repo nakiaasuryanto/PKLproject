@@ -13,11 +13,13 @@ const stockData = await api.get('/inventory/stock');
 const lowStockData = await api.get('/inventory/stock?low_stock=true');
 const recentMovements = await api.get('/inventory/movements?limit=15');
 const locations = await api.get('/inventory/locations');
+const variantsData = await api.get('/inventory/variants');
 
 const stock = (stockData.success && stockData.data) ? stockData.data : [];
 const lowStock = (lowStockData.success && lowStockData.data) ? lowStockData.data : [];
 const movements = (recentMovements.success && recentMovements.data) ? recentMovements.data : [];
 const locationList = (locations.success && locations.data) ? locations.data : [];
+const variants = (variantsData.success && variantsData.data) ? variantsData.data : [];
 
 // Calculate stats
 const totalStock = stock.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
@@ -162,7 +164,7 @@ const lowStockCount = lowStock.length;
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200" id="stockTableBody">
-          {stock.length > 0 ? stock.slice(0, 50).map((item: any) => (
+          {stock.length > 0 ? stock.map((item: any) => (
             <tr class="hover:bg-inventory-50 stock-row" data-product={item.product_name?.toLowerCase() || ''}>
               <td class="px-6 py-4 text-sm font-medium text-gray-900">{item.product_name}</td>
               <td class="px-6 py-4 text-sm text-gray-600">
@@ -193,10 +195,28 @@ const lowStockCount = lowStock.length;
         </tbody>
       </table>
     </div>
-    {stock.length > 50 && (
-      <p class="mt-4 text-sm text-gray-500 text-center">
-        Menampilkan 50 dari {stock.length} item
-      </p>
+    <!-- Pagination -->
+    {stock.length > 0 && (
+      <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+        <p id="stockPaginationInfo" class="text-sm text-gray-600">
+          Menampilkan 1-{Math.min(10, stock.length)} dari {stock.length} item
+        </p>
+        <div class="flex items-center gap-2">
+          <button id="stockPrevBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            ← Sebelumnya
+          </button>
+          <span id="stockPageInfo" class="px-3 py-1.5 text-sm text-gray-600">1 / {Math.ceil(stock.length / 10)}</span>
+          <button id="stockNextBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Selanjutnya →
+          </button>
+        </div>
+        <a href="/inventory/stock" class="text-sm font-medium text-inventory-600 hover:text-inventory-700 inline-flex items-center">
+          Lihat Semua
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
     )}
   </Card>
 
@@ -303,6 +323,21 @@ const lowStockCount = lowStock.length;
   <!-- Stock Movement Modal -->
   <Modal id="stockMovementModal" title="Pergerakan Stok" color="inventory" size="lg">
     <form id="quickMovementForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Varian Produk</label>
+        <select
+          name="variant_id"
+          id="variantSelect"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500"
+        >
+          <option value="">Pilih Produk</option>
+          {variants.map((v: any) => (
+            <option value={v.variant_id}>{v.product_name} - {v.color_name} - {v.size_name} (Stok: {v.total_stock})</option>
+          ))}
+        </select>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Pergerakan</label>
@@ -400,9 +435,15 @@ const lowStockCount = lowStock.length;
   </div>
 </MainLayout>
 
-<script define:vars={{ locationList, API_BASE }}>
+<script define:vars={{ locationList, API_BASE, totalStock: stock.length }}>
   let selectedVariantId = null;
   let hasFullAccess = true;
+
+  // Pagination setup
+  const ITEMS_PER_PAGE = 10;
+  let stockCurrentPage = 1;
+  const stockTotalPages = Math.ceil(totalStock / ITEMS_PER_PAGE);
+  let stockFilteredRows = [];
 
   // Check user permissions on page load
   document.addEventListener('DOMContentLoaded', () => {
@@ -436,6 +477,10 @@ const lowStockCount = lowStock.length;
     if (!hasFullAccess) return;
     selectedVariantId = variantId;
     const modal = document.getElementById('stockMovementModal');
+    const variantSelect = document.getElementById('variantSelect');
+    if (variantSelect && variantId) {
+      variantSelect.value = variantId;
+    }
     modal.classList.remove('hidden');
   }
 
@@ -447,8 +492,9 @@ const lowStockCount = lowStock.length;
     e.preventDefault();
 
     const formData = new FormData(e.target);
+    const variantFromSelect = formData.get('variant_id');
     const data = {
-      product_color_size_id: selectedVariantId,
+      product_color_size_id: selectedVariantId || variantFromSelect,
       location_id: formData.get('location_id'),
       movement_type: formData.get('movement_type'),
       quantity: parseInt(formData.get('quantity')),
@@ -458,7 +504,7 @@ const lowStockCount = lowStock.length;
     };
 
     if (!data.product_color_size_id) {
-      showAlert('error', 'Silakan pilih varian dari tabel stok rendah');
+      showAlert('error', 'Silakan pilih varian produk');
       return;
     }
 
@@ -486,20 +532,76 @@ const lowStockCount = lowStock.length;
     }
   });
 
-  // Stock search functionality
+  // Stock search and pagination functionality
   const stockSearch = document.getElementById('stockSearch');
-  stockSearch?.addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('.stock-row');
-    rows.forEach(row => {
+  const stockTableBody = document.getElementById('stockTableBody');
+  const stockPrevBtn = document.getElementById('stockPrevBtn');
+  const stockNextBtn = document.getElementById('stockNextBtn');
+  const stockPageInfo = document.getElementById('stockPageInfo');
+  const stockPaginationInfo = document.getElementById('stockPaginationInfo');
+
+  function getStockFilteredRows() {
+    const searchTerm = stockSearch?.value.toLowerCase() || '';
+    const rows = stockTableBody?.querySelectorAll('.stock-row') || [];
+    return Array.from(rows).filter(row => {
       const product = row.getAttribute('data-product') || '';
-      if (product.includes(searchTerm)) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
-      }
+      return product.includes(searchTerm);
     });
+  }
+
+  function showStockPage(page) {
+    const allRows = stockTableBody?.querySelectorAll('.stock-row') || [];
+    stockFilteredRows = getStockFilteredRows();
+    const totalPages = Math.max(1, Math.ceil(stockFilteredRows.length / ITEMS_PER_PAGE));
+
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+
+    // Hide all rows first
+    allRows.forEach(row => row.style.display = 'none');
+
+    // Show only filtered rows for current page
+    stockFilteredRows.forEach((row, index) => {
+      row.style.display = index >= start && index < end ? '' : 'none';
+    });
+
+    if (stockPageInfo) stockPageInfo.textContent = `${page} / ${totalPages}`;
+    if (stockPaginationInfo) {
+      const showStart = stockFilteredRows.length > 0 ? start + 1 : 0;
+      const showEnd = Math.min(end, stockFilteredRows.length);
+      stockPaginationInfo.textContent = `Menampilkan ${showStart}-${showEnd} dari ${stockFilteredRows.length} item`;
+    }
+    if (stockPrevBtn) stockPrevBtn.disabled = page <= 1;
+    if (stockNextBtn) stockNextBtn.disabled = page >= totalPages;
+  }
+
+  function stockFilterAndPaginate() {
+    stockCurrentPage = 1;
+    showStockPage(stockCurrentPage);
+  }
+
+  stockSearch?.addEventListener('input', stockFilterAndPaginate);
+
+  stockPrevBtn?.addEventListener('click', () => {
+    const totalPages = Math.ceil(stockFilteredRows.length / ITEMS_PER_PAGE);
+    if (stockCurrentPage > 1) {
+      stockCurrentPage--;
+      showStockPage(stockCurrentPage);
+    }
   });
+
+  stockNextBtn?.addEventListener('click', () => {
+    const totalPages = Math.ceil(stockFilteredRows.length / ITEMS_PER_PAGE);
+    if (stockCurrentPage < totalPages) {
+      stockCurrentPage++;
+      showStockPage(stockCurrentPage);
+    }
+  });
+
+  // Initialize stock pagination
+  if (totalStock > 0) {
+    showStockPage(1);
+  }
 
   // Show alert
   function showAlert(type, message) {

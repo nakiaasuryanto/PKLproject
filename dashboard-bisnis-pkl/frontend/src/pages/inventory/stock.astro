@@ -1,0 +1,162 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import Card from '../../components/ui/Card.astro';
+import Button from '../../components/ui/Button.astro';
+import { api } from '../../lib/api';
+
+const stockData = await api.get('/inventory/stock');
+const stock = (stockData.success && stockData.data) ? stockData.data : [];
+
+const totalStock = stock.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+---
+
+<MainLayout title="Semua Stok - Inventory" activeModule="inventory">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Semua Stok</h1>
+      <p class="mt-2 text-gray-600">Daftar lengkap stok produk - Total: {totalStock} unit</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex gap-3">
+      <Button variant="outline" color="inventory" size="md" href="/inventory">
+        ← Kembali
+      </Button>
+      <Button variant="primary" color="inventory" size="md" href="/inventory/input">
+        + Input Stok
+      </Button>
+    </div>
+  </div>
+
+  <Card title={`Total ${stock.length} SKU`} color="inventory">
+    <div class="mb-6 flex flex-col md:flex-row gap-4">
+      <div class="flex-1">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Cari produk, warna, ukuran..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500 focus:border-inventory-500"
+        />
+      </div>
+      <select id="locationFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500">
+        <option value="">Semua Lokasi</option>
+        {[...new Set(stock.map((s: any) => s.location_name))].map((loc: any) => (
+          <option value={loc}>{loc}</option>
+        ))}
+      </select>
+      <select id="stockFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-inventory-500">
+        <option value="">Semua Stok</option>
+        <option value="low">Stok Rendah (&lt;10)</option>
+        <option value="normal">Stok Normal (10-20)</option>
+        <option value="high">Stok Tinggi (&gt;20)</option>
+      </select>
+    </div>
+
+    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+      <table class="min-w-full divide-y divide-gray-200" id="stockTable">
+        <thead class="bg-inventory-50 sticky top-0">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-inventory-700 uppercase">Produk</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-inventory-700 uppercase">Warna</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-inventory-700 uppercase">Ukuran</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-inventory-700 uppercase">Lokasi</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-inventory-700 uppercase">SKU</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-inventory-700 uppercase">Stok</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="tableBody">
+          {stock.length > 0 ? stock.map((item: any) => (
+            <tr class="hover:bg-inventory-50 stock-row"
+                data-product={item.product_name?.toLowerCase() || ''}
+                data-color={item.color_name?.toLowerCase() || ''}
+                data-size={item.size_name?.toLowerCase() || ''}
+                data-location={item.location_name || ''}
+                data-quantity={item.quantity || 0}>
+              <td class="px-4 py-3 text-sm font-medium text-gray-900">{item.product_name}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">
+                <span class="inline-flex items-center">
+                  <span class="w-3 h-3 rounded-full mr-2" style={`background-color: ${item.hex_code || '#ccc'}`}></span>
+                  {item.color_name}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-600">{item.size_name}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">{item.location_name}</td>
+              <td class="px-4 py-3 text-sm font-mono text-gray-500">{item.sku || '-'}</td>
+              <td class="px-4 py-3 whitespace-nowrap text-center">
+                <span class={`px-3 py-1 text-sm font-semibold rounded-full ${
+                  item.quantity > 20 ? 'bg-green-100 text-green-800' :
+                  item.quantity > 10 ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {item.quantity} pcs
+                </span>
+              </td>
+            </tr>
+          )) : (
+            <tr>
+              <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                Belum ada data stok
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex justify-between items-center text-sm text-gray-500 pt-4 border-t">
+      <span id="resultCount">Menampilkan {stock.length} item</span>
+      <span id="totalUnits">Total: {totalStock} unit</span>
+    </div>
+  </Card>
+</MainLayout>
+
+<script>
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const locationFilter = document.getElementById('locationFilter') as HTMLSelectElement;
+  const stockFilter = document.getElementById('stockFilter') as HTMLSelectElement;
+  const rows = document.querySelectorAll('.stock-row');
+  const resultCount = document.getElementById('resultCount');
+  const totalUnits = document.getElementById('totalUnits');
+
+  function filterRows() {
+    const searchTerm = searchInput?.value.toLowerCase() || '';
+    const locationValue = locationFilter?.value || '';
+    const stockValue = stockFilter?.value || '';
+
+    let visibleCount = 0;
+    let visibleUnits = 0;
+
+    rows.forEach(row => {
+      const product = row.getAttribute('data-product') || '';
+      const color = row.getAttribute('data-color') || '';
+      const size = row.getAttribute('data-size') || '';
+      const location = row.getAttribute('data-location') || '';
+      const quantity = parseInt(row.getAttribute('data-quantity') || '0');
+
+      const matchesSearch = product.includes(searchTerm) || color.includes(searchTerm) || size.includes(searchTerm);
+      const matchesLocation = !locationValue || location === locationValue;
+
+      let matchesStock = true;
+      if (stockValue === 'low') matchesStock = quantity < 10;
+      else if (stockValue === 'normal') matchesStock = quantity >= 10 && quantity <= 20;
+      else if (stockValue === 'high') matchesStock = quantity > 20;
+
+      if (matchesSearch && matchesLocation && matchesStock) {
+        (row as HTMLElement).style.display = '';
+        visibleCount++;
+        visibleUnits += quantity;
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+
+    if (resultCount) {
+      resultCount.textContent = `Menampilkan ${visibleCount} item`;
+    }
+    if (totalUnits) {
+      totalUnits.textContent = `Total: ${visibleUnits} unit`;
+    }
+  }
+
+  searchInput?.addEventListener('input', filterRows);
+  locationFilter?.addEventListener('change', filterRows);
+  stockFilter?.addEventListener('change', filterRows);
+</script>

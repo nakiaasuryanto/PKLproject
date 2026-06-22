@@ -1,7 +1,16 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import db from '../db.js';
 
 const router = express.Router();
+
+function generateNickname(fullName) {
+  const parts = fullName.trim().split(' ');
+  if (parts.length === 1) {
+    return parts[0].toLowerCase();
+  }
+  return parts[0].toLowerCase();
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -32,22 +41,67 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+  const connection = await db.getConnection();
+
   try {
+    await connection.beginTransaction();
+
     const { employee_code, name, email, phone, position, department, hire_date, salary } = req.body;
 
-    const [result] = await db.query(
+    const [empResult] = await connection.query(
       `INSERT INTO employees (employee_code, name, email, phone, position, department, hire_date, salary)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [employee_code, name, email, phone, position, department, hire_date, salary]
     );
 
+    const employeeId = empResult.insertId;
+
+    const username = generateNickname(name);
+    const password = phone ? phone.replace(/\D/g, '') : '123456';
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const roleMapping = {
+      'IT': 'it',
+      'Customer Service': 'customer_service',
+      'Operations': 'operations',
+      'Finance': 'finance',
+      'HRD': 'admin'
+    };
+    const role = roleMapping[department] || 'operations';
+
+    let finalUsername = username;
+    const [existingUsers] = await connection.query(
+      'SELECT username FROM users WHERE username LIKE ?',
+      [`${username}%`]
+    );
+
+    if (existingUsers.length > 0) {
+      finalUsername = `${username}${existingUsers.length + 1}`;
+    }
+
+    await connection.query(
+      `INSERT INTO users (username, password, name, email, role, employee_id)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [finalUsername, hashedPassword, name, email, role, employeeId]
+    );
+
+    await connection.commit();
+
     res.status(201).json({
       success: true,
-      data: { id: result.insertId }
+      data: {
+        id: employeeId,
+        user_created: true,
+        username: finalUsername,
+        default_password: password
+      }
     });
   } catch (error) {
+    await connection.rollback();
     console.error('Error creating employee:', error);
     res.status(500).json({ success: false, error: error.message });
+  } finally {
+    connection.release();
   }
 });
 
@@ -85,7 +139,7 @@ router.post('/attendance/check-in', async (req, res) => {
 
     const hour = new Date().getHours();
     const minute = new Date().getMinutes();
-    const status = (hour > 8 || (hour === 8 && minute > 30)) ? 'LATE' : 'PRESENT';
+    const status = (hour > 8 || (hour === 8 && minute > 0)) ? 'LATE' : 'PRESENT';
 
     const [result] = await db.query(
       `INSERT INTO attendance (employee_id, attendance_date, check_in, status)
@@ -101,7 +155,8 @@ router.post('/attendance/check-in', async (req, res) => {
       data: {
         id: result.insertId,
         check_in: checkInTime,
-        status
+        status,
+        message: status === 'LATE' ? 'Terlambat! Jam masuk adalah 08:00 WIB' : 'Tepat waktu'
       }
     });
   } catch (error) {
@@ -259,18 +314,92 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, position, department, salary, status } = req.body;
+    const { name, email, phone, position, department, salary, status, bio, address, birth_date, emergency_contact, emergency_phone } = req.body;
 
     await db.query(
       `UPDATE employees
-       SET name = ?, email = ?, phone = ?, position = ?, department = ?, salary = ?, status = ?
+       SET name = ?, email = ?, phone = ?, position = ?, department = ?, salary = ?, status = ?,
+           bio = COALESCE(?, bio), address = COALESCE(?, address), birth_date = COALESCE(?, birth_date),
+           emergency_contact = COALESCE(?, emergency_contact), emergency_phone = COALESCE(?, emergency_phone)
        WHERE id = ?`,
-      [name, email, phone, position, department, salary, status, id]
+      [name, email, phone, position, department, salary, status, bio, address, birth_date, emergency_contact, emergency_phone, id]
     );
 
     res.json({ success: true, data: { id, ...req.body } });
   } catch (error) {
     console.error('Error updating employee:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Leave Requests Routes
+router.get('/leave-requests/all', async (req, res) => {
+  try {
+    const { status, employee_id } = req.query;
+
+    let query = `
+      SELECT lr.*, e.name as employee_name, e.department
+      FROM leave_requests lr
+      JOIN employees e ON lr.employee_id = e.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (status) {
+      query += ' AND lr.status = ?';
+      params.push(status);
+    }
+
+    if (employee_id) {
+      query += ' AND lr.employee_id = ?';
+      params.push(employee_id);
+    }
+
+    query += ' ORDER BY lr.created_at DESC';
+
+    const [requests] = await db.query(query, params);
+    res.json({ success: true, data: requests });
+  } catch (error) {
+    console.error('Error fetching leave requests:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/leave-requests', async (req, res) => {
+  try {
+    const { employee_id, leave_type, start_date, end_date, reason } = req.body;
+
+    const [result] = await db.query(
+      `INSERT INTO leave_requests (employee_id, leave_type, start_date, end_date, reason)
+       VALUES (?, ?, ?, ?, ?)`,
+      [employee_id, leave_type, start_date, end_date, reason]
+    );
+
+    res.status(201).json({
+      success: true,
+      data: { id: result.insertId, message: 'Pengajuan izin berhasil dikirim' }
+    });
+  } catch (error) {
+    console.error('Error creating leave request:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/leave-requests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, approved_by, notes } = req.body;
+
+    await db.query(
+      `UPDATE leave_requests
+       SET status = ?, approved_by = ?, approved_at = NOW(), notes = ?
+       WHERE id = ?`,
+      [status, approved_by, notes, id]
+    );
+
+    res.json({ success: true, data: { id, status } });
+  } catch (error) {
+    console.error('Error updating leave request:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

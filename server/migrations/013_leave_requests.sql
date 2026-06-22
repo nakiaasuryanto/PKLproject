@@ -1,0 +1,24 @@
+-- Leave requests table for HR module
+CREATE TABLE IF NOT EXISTS leave_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id INT NOT NULL,
+  leave_type ENUM('SICK', 'ANNUAL', 'PERSONAL', 'OTHER') NOT NULL DEFAULT 'PERSONAL',
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  reason TEXT,
+  status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+  approved_by INT NULL,
+  approved_at DATETIME NULL,
+  notes TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+  FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Add bio/profile fields to employees table
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS bio TEXT NULL;
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS address TEXT NULL;
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS birth_date DATE NULL;
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(100) NULL;
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20) NULL;
