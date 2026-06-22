@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS leave_requests (
 );
 
 -- Add bio/profile fields to employees table
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS bio TEXT NULL;
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS address TEXT NULL;
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS birth_date DATE NULL;
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(100) NULL;
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20) NULL;
+ALTER TABLE employees ADD COLUMN bio TEXT NULL;
+ALTER TABLE employees ADD COLUMN address TEXT NULL;
+ALTER TABLE employees ADD COLUMN birth_date DATE NULL;
+ALTER TABLE employees ADD COLUMN emergency_contact VARCHAR(100) NULL;
+ALTER TABLE employees ADD COLUMN emergency_phone VARCHAR(20) NULL;
