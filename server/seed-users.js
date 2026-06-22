@@ -17,28 +17,53 @@ async function seedUsers() {
   console.log('Seeding users...');
 
   try {
-    // Clear existing users
-    await db.query('DELETE FROM user_sessions');
-    await db.query('DELETE FROM users');
+    // Check if users already exist
+    const [[{ count }]] = await db.query('SELECT COUNT(*) as count FROM users');
+    if (count > 0) {
+      console.log(`Users already exist (${count} users). Skipping seed.`);
+      process.exit(0);
+    }
+
+    // Check if nickname column exists
+    let hasNickname = true;
+    let hasEmployeeId = true;
+    try {
+      await db.query('SELECT nickname FROM users LIMIT 1');
+    } catch (e) {
+      hasNickname = false;
+      console.log('nickname column not found, will skip');
+    }
+    try {
+      await db.query('SELECT employee_id FROM users LIMIT 1');
+    } catch (e) {
+      hasEmployeeId = false;
+      console.log('employee_id column not found, will skip');
+    }
 
     for (const user of users) {
       const passwordHash = await bcrypt.hash(user.password, 10);
 
-      await db.query(
-        `INSERT INTO users (username, password_hash, name, nickname, email, role, employee_id, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)`,
-        [user.username, passwordHash, user.name, user.nickname, user.email, user.role, user.employee_id]
-      );
+      if (hasNickname && hasEmployeeId) {
+        await db.query(
+          `INSERT INTO users (username, password_hash, name, nickname, email, role, employee_id, is_active)
+           VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)`,
+          [user.username, passwordHash, user.name, user.nickname, user.email, user.role, user.employee_id]
+        );
+      } else {
+        await db.query(
+          `INSERT INTO users (username, password_hash, name, email, role, is_active)
+           VALUES (?, ?, ?, ?, ?, TRUE)`,
+          [user.username, passwordHash, user.name, user.email, user.role]
+        );
+      }
 
-      console.log(`Created user: ${user.username} (password: ${user.password})`);
+      console.log(`Created user: ${user.username}`);
     }
 
     console.log('\nAll users created successfully!');
     console.log('\nLogin credentials:');
     console.log('==================');
-    users.forEach(u => {
-      console.log(`${u.username} / ${u.password} (${u.role})`);
-    });
+    console.log('admin / admin123');
 
     process.exit(0);
   } catch (error) {
