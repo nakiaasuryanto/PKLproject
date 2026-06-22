@@ -45,11 +45,16 @@ router.get('/', async (req, res) => {
 
     transactions.forEach(t => {
       if (t.items) {
-        try {
-          t.items = JSON.parse(t.items);
-        } catch (e) {
-          t.items = [];
+        if (typeof t.items === 'string') {
+          try {
+            t.items = JSON.parse(t.items);
+          } catch (e) {
+            t.items = [];
+          }
         }
+        // If already parsed (object/array), keep as is
+      } else {
+        t.items = [];
       }
     });
 
@@ -76,12 +81,18 @@ router.get('/:id', async (req, res) => {
     }
 
     const transaction = transactions[0];
+    // Handle items - could be string, object, or null
     if (transaction.items) {
-      try {
-        transaction.items = JSON.parse(transaction.items);
-      } catch (e) {
-        transaction.items = [];
+      if (typeof transaction.items === 'string') {
+        try {
+          transaction.items = JSON.parse(transaction.items);
+        } catch (e) {
+          transaction.items = [];
+        }
       }
+      // If already an array/object, keep as is
+    } else {
+      transaction.items = [];
     }
 
     res.json({ success: true, data: transaction });

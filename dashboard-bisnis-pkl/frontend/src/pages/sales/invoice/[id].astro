@@ -40,8 +40,11 @@ function formatDate(date: string): string {
   });
 }
 
-// Use PUBLIC_SITE_URL for share link, fallback to current origin
-const siteUrl = import.meta.env.PUBLIC_SITE_URL || Astro.url.origin;
+// Use PUBLIC_SITE_URL for share link
+// In production (Railway), use RAILWAY_PUBLIC_DOMAIN or PUBLIC_SITE_URL
+const siteUrl = import.meta.env.PUBLIC_SITE_URL ||
+                (import.meta.env.RAILWAY_PUBLIC_DOMAIN ? `https://${import.meta.env.RAILWAY_PUBLIC_DOMAIN}` : null) ||
+                Astro.url.origin;
 const invoiceUrl = `${siteUrl}/sales/invoice/${id}`;
 const promoType = transaction.notes?.includes('Promo:') ? transaction.notes.replace('Promo: ', '') : null;
 ---
