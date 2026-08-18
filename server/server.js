@@ -9,6 +9,7 @@ import customerRoutes from './routes/customers.js';
 import employeeRoutes from './routes/employees.js';
 import dashboardRoutes from './routes/dashboard.js';
 import authRoutes from './routes/auth.js';
+import prospectingsRoutes from './routes/prospectings.js';
 
 dotenv.config();
 
@@ -68,6 +69,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/prospectings', prospectingsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

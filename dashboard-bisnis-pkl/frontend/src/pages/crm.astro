@@ -3,36 +3,22 @@ import MainLayout from '../layouts/MainLayout.astro';
 import Card from '../components/ui/Card.astro';
 import StatCard from '../components/ui/StatCard.astro';
 import Button from '../components/ui/Button.astro';
-import { api } from '../lib/api';
-
-// Fetch CRM data
-const customersData = await api.get('/customers');
-const statsData = await api.get('/customers/stats/summary');
-
-const customers = (customersData?.success && Array.isArray(customersData?.data)) ? customersData.data : [];
-const stats = (statsData?.success && statsData?.data) ? statsData.data : {};
-
-// Group customers by type
-const customersByType = customers.reduce((acc: Record<string, number>, c: any) => {
-  acc[c.customer_type] = (acc[c.customer_type] || 0) + 1;
-  return acc;
-}, {});
-
 ---
 
-<MainLayout title="CRM - Dashboard Bisnis" activeModule="crm">
+<MainLayout title="Prospecting - Dashboard Bisnis" activeModule="crm">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Customer Relationship Management</h1>
-      <p class="mt-2 text-gray-600">Kelola hubungan dengan pelanggan Anda</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Prospecting Management</h1>
+      <p class="mt-2 text-gray-600">Kelola prospecting (VG-style) dan pembayaran Virtual Account BCA</p>
     </div>
-    <div class="mt-4 sm:mt-0">
-      <Button variant="primary" color="crm" size="lg" href="/crm/customers/new">
+    <div class="mt-4 sm:mt-0 flex gap-3">
+      <span id="lastUpdate" class="text-sm text-gray-500 self-center"></span>
+      <Button variant="primary" color="crm" size="lg" id="addProspectingBtn">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        Tambah Customer
+        Tambah Prospecting
       </Button>
     </div>
   </div>
@@ -40,267 +26,609 @@ const customersByType = customers.reduce((acc: Record<string, number>, c: any) =
   <!-- Stats Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
     <StatCard
-      title="Total Customer"
-      value={stats.total_customers || 0}
-      change="Terdaftar di sistem"
+      title="Total Prospecting"
+      value="-"
+      change="Semua status"
       changeType="neutral"
       color="crm"
-      icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+      icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+      id="statTotal"
     />
     <StatCard
-      title="Customer Aktif"
-      value={stats.active_customers || 0}
-      change={stats.total_customers ? `${Math.round((stats.active_customers / stats.total_customers) * 100)}% dari total` : '0% dari total'}
+      title="Closing"
+      value="-"
+      change="Menunggu pembayaran"
+      changeType="neutral"
+      color="crm"
+      icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+      id="statClosing"
+    />
+    <StatCard
+      title="Closed (Paid)"
+      value="-"
+      change="Sudah dibayar"
       changeType="positive"
       color="crm"
       icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-    <StatCard
-      title="Total Pesanan"
-      value={stats.total_orders || 0}
-      change="Transaksi"
-      changeType="neutral"
-      color="crm"
-      icon="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+      id="statClosed"
     />
     <StatCard
       title="Total Revenue"
-      value={`Rp ${Math.round(Number(stats.total_revenue) || 0).toLocaleString('id-ID')}`}
-      change="Dari semua customer"
+      value="-"
+      change="Dari VA yang dibayar"
       changeType="positive"
       color="crm"
       icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      id="statRevenue"
     />
   </div>
 
-  <!-- Customer Type Breakdown -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-    <Card title="Perusahaan" color="crm">
-      <div class="text-center py-4">
-        <p class="text-3xl sm:text-4xl font-bold text-crm-600">{customersByType.COMPANY || 0}</p>
-        <p class="text-sm text-gray-600 mt-2">Customer Korporat</p>
-      </div>
-    </Card>
-    <Card title="Individual" color="crm">
-      <div class="text-center py-4">
-        <p class="text-3xl sm:text-4xl font-bold text-crm-600">{customersByType.INDIVIDUAL || 0}</p>
-        <p class="text-sm text-gray-600 mt-2">Customer Perorangan</p>
-      </div>
-    </Card>
-    <Card title="Reseller" color="crm">
-      <div class="text-center py-4">
-        <p class="text-3xl sm:text-4xl font-bold text-crm-600">{customersByType.RESELLER || 0}</p>
-        <p class="text-sm text-gray-600 mt-2">Mitra Reseller</p>
-      </div>
-    </Card>
+  <!-- Auto-refresh indicator -->
+  <div class="mb-4 flex items-center gap-3">
+    <div class="flex items-center gap-2">
+      <span id="refreshIndicator" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+      <span class="text-sm text-gray-500">Auto-refresh setiap 5 detik</span>
+    </div>
+    <button
+      id="refreshBtn"
+      class="px-3 py-1 text-sm bg-crm-100 text-crm-700 rounded-lg hover:bg-crm-200 transition"
+    >
+      Refresh Sekarang
+    </button>
   </div>
 
-  <!-- Customer List -->
-  <Card title="Daftar Customer" color="crm">
+  <!-- Prospecting List -->
+  <Card title="Daftar Prospecting" color="crm">
     <!-- Search and Filter -->
     <div class="mb-6 flex flex-col md:flex-row gap-4">
       <div class="flex-1">
         <input
           type="text"
-          id="customerSearch"
-          placeholder="Cari customer..."
+          id="searchInput"
+          placeholder="Cari nama kontak atau instansi..."
           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crm-500 focus:border-crm-500"
         />
       </div>
-      <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crm-500 focus:border-crm-500">
+      <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crm-500">
         <option value="">Semua Status</option>
-        <option value="active">Aktif</option>
-        <option value="inactive">Tidak Aktif</option>
+        <option value="New">New</option>
+        <option value="Follow Up">Follow Up</option>
+        <option value="Closing">Closing</option>
+        <option value="Closed">Closed</option>
+        <option value="Lost">Lost</option>
       </select>
-      <select id="typeFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crm-500 focus:border-crm-500">
-        <option value="">Semua Tipe</option>
-        <option value="COMPANY">Perusahaan</option>
-        <option value="INDIVIDUAL">Individual</option>
-        <option value="RESELLER">Reseller</option>
+      <select id="vaFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crm-500">
+        <option value="">Semua VA</option>
+        <option value="ACTIVE">VA Active</option>
+        <option value="PAID">VA Paid</option>
+        <option value="none">Belum Ada VA</option>
       </select>
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200" id="customerTable">
-        <thead class="bg-gray-50">
+    <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+      <table class="min-w-full divide-y divide-gray-200" id="prospectingsTable">
+        <thead class="bg-crm-50 sticky top-0">
           <tr>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Kota</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Kontak</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Status</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-crm-700 uppercase">ID</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-crm-700 uppercase">Kontak</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-crm-700 uppercase">Instansi</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-crm-700 uppercase">Produk</th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-crm-700 uppercase">Omzet</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-crm-700 uppercase">Status</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-crm-700 uppercase">VA Number</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-crm-700 uppercase">Aksi</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200" id="customerTableBody">
-          {customers.map((customer: any) => (
-            <tr class="hover:bg-crm-50 customer-row" data-status={customer.status} data-type={customer.customer_type} data-name={customer.name.toLowerCase()}>
-              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {customer.customer_code}
-              </td>
-              <td class="px-4 sm:px-6 py-4 text-sm text-gray-900">
-                <div>
-                  <p class="font-semibold">{customer.name}</p>
-                  {customer.company_name && (
-                    <p class="text-xs text-gray-500">{customer.company_name}</p>
-                  )}
-                </div>
-              </td>
-              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
-                <span class="px-2 py-1 text-xs font-medium rounded-full bg-crm-100 text-crm-800">
-                  {customer.customer_type}
-                </span>
-              </td>
-              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell">
-                {customer.city}
-              </td>
-              <td class="px-4 sm:px-6 py-4 text-sm text-gray-600 hidden lg:table-cell">
-                <div>
-                  <p>{customer.phone}</p>
-                  <p class="text-xs text-gray-500">{customer.email}</p>
-                </div>
-              </td>
-              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-semibold text-crm-600">
-                Rp {Math.round(Number(customer.total_spent) || 0).toLocaleString('id-ID')}
-              </td>
-              <td class="px-4 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                <span class={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  customer.status === 'active'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {customer.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
-                </span>
-              </td>
-              <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
-                <a href={`/crm/customer/${customer.id}`} class="text-crm-600 hover:text-crm-700 font-medium">
-                  Detail
-                </a>
-              </td>
-            </tr>
-          ))}
-          {customers.length === 0 && (
-            <tr>
-              <td colSpan="8" class="px-6 py-8 text-center text-gray-500">
-                Belum ada data customer
-              </td>
-            </tr>
-          )}
+        <tbody class="bg-white divide-y divide-gray-200" id="tableBody">
+          <tr>
+            <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+              Loading...
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
-    <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
-      <p id="paginationInfo" class="text-sm text-gray-600">
-        Menampilkan 1-{Math.min(10, customers.length)} dari {customers.length} customer
-      </p>
-      <div class="flex items-center gap-2">
-        <button id="prevBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-          ← Sebelumnya
-        </button>
-        <span id="pageInfo" class="px-3 py-1.5 text-sm text-gray-600">1 / {Math.ceil(customers.length / 10)}</span>
-        <button id="nextBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          Selanjutnya →
-        </button>
-      </div>
-      <a href="/crm/customers" class="text-sm font-medium text-crm-600 hover:text-crm-700 inline-flex items-center">
-        Lihat Semua
-        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </a>
+    <div class="mt-4 flex justify-between items-center text-sm text-gray-500 pt-4 border-t">
+      <span id="resultCount">Menampilkan 0 prospecting</span>
     </div>
   </Card>
+
+  <!-- Legend -->
+  <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+    <h3 class="font-semibold text-gray-700 mb-2">Status Legend (VG-style):</h3>
+    <div class="flex flex-wrap gap-4 text-sm">
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800">New</span>
+        <span class="text-gray-500">Prospecting baru</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-1 rounded-full bg-purple-100 text-purple-800">Follow Up</span>
+        <span class="text-gray-500">Sedang follow up</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Closing</span>
+        <span class="text-gray-500">Menunggu pembayaran VA</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-1 rounded-full bg-green-100 text-green-800">Closed</span>
+        <span class="text-gray-500">Sudah dibayar (auto dari BCA)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-1 rounded-full bg-red-100 text-red-800">Lost</span>
+        <span class="text-gray-500">Prospecting gagal</span>
+      </div>
+    </div>
+  </div>
 </MainLayout>
 
-<script define:vars={{ totalCustomers: customers.length }}>
-  // Client-side filtering and pagination
-  const ITEMS_PER_PAGE = 10;
-  let currentPage = 1;
-  let filteredRows = [];
+<!-- Add Prospecting Modal (VG Structure) -->
+<div id="addModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b">
+      <h2 class="text-xl font-bold text-gray-900">Tambah Prospecting Baru</h2>
+      <p class="text-sm text-gray-500 mt-1">Struktur VG: Instansi → Kontak → Prospecting</p>
+    </div>
+    <form id="addForm" class="p-6 space-y-6">
+      <!-- Instansi Section -->
+      <div class="border-b pb-4">
+        <h3 class="font-semibold text-gray-700 mb-3">Data Instansi (Perusahaan)</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Instansi</label>
+            <input type="text" name="instansi_nama" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" placeholder="PT/CV/UD..." />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Instansi</label>
+            <select name="instansi_jenis" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500">
+              <option value="">-- Pilih --</option>
+              <option value="Sekolah">Sekolah</option>
+              <option value="Universitas">Universitas</option>
+              <option value="Perusahaan">Perusahaan</option>
+              <option value="Instansi Pemerintah">Instansi Pemerintah</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Unit Bisnis</label>
+            <input type="text" name="unit_bisnis" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" />
+          </div>
+        </div>
+      </div>
 
-  const searchInput = document.getElementById('customerSearch');
-  const statusFilter = document.getElementById('statusFilter');
-  const typeFilter = document.getElementById('typeFilter');
-  const tableBody = document.getElementById('customerTableBody');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const pageInfo = document.getElementById('pageInfo');
-  const paginationInfo = document.getElementById('paginationInfo');
+      <!-- Kontak Section -->
+      <div class="border-b pb-4">
+        <h3 class="font-semibold text-gray-700 mb-3">Data Kontak (PIC)</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Kontak *</label>
+            <input type="text" name="kontak_nama" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Telepon</label>
+            <input type="text" name="kontak_telepon" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" placeholder="08xxx" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" name="kontak_email" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" />
+          </div>
+        </div>
+      </div>
 
-  function getFilteredRows() {
+      <!-- Prospecting Section -->
+      <div>
+        <h3 class="font-semibold text-gray-700 mb-3">Data Prospecting</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Produk</label>
+            <input type="text" name="produk" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" placeholder="Nama produk" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Bahan</label>
+            <input type="text" name="bahan" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" placeholder="Bahan produk" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
+            <input type="number" name="jumlah" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" placeholder="Qty" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Harga Satuan (Rp)</label>
+            <input type="number" name="harga_satuan" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" placeholder="0" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Saluran</label>
+            <select name="saluran" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500">
+              <option value="">-- Pilih --</option>
+              <option value="Website">Website</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Telepon">Telepon</option>
+              <option value="Email">Email</option>
+              <option value="Referral">Referral</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select name="status" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500">
+              <option value="New">New</option>
+              <option value="Follow Up">Follow Up</option>
+              <option value="Closing">Closing (siap generate VA)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-4 border-t">
+        <button type="button" id="cancelAddBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Batal</button>
+        <button type="submit" class="px-4 py-2 bg-crm-600 text-white rounded-lg hover:bg-crm-700">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Generate VA Modal -->
+<div id="vaModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl max-w-md w-full">
+    <div class="p-6 border-b">
+      <h2 class="text-xl font-bold text-gray-900">Generate Virtual Account</h2>
+    </div>
+    <form id="vaForm" class="p-6 space-y-4">
+      <input type="hidden" name="prospectingId" id="vaProspectingId" />
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Prospecting</label>
+        <p id="vaProspectingName" class="text-lg font-semibold text-gray-900">-</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pembayaran (Rp) *</label>
+        <input type="number" name="amount" id="vaAmount" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" />
+      </div>
+      <div class="flex justify-end gap-3 pt-4">
+        <button type="button" id="cancelVaBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Batal</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Generate VA</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'http://localhost:3001';
+  const APP_BCA_API = 'http://localhost:3000';
+  let prospectingsData: any[] = [];
+
+  // Format currency
+  function formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(amount);
+  }
+
+  // Get status badge class (VG-style statuses)
+  function getStatusBadge(status: string | null): string {
+    switch (status) {
+      case 'New':
+        return 'bg-blue-100 text-blue-800';
+      case 'Follow Up':
+        return 'bg-purple-100 text-purple-800';
+      case 'Closing':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Closed':
+        return 'bg-green-100 text-green-800';
+      case 'Lost':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  // Get VA status badge class
+  function getVaStatusBadge(status: string | null): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'bg-blue-100 text-blue-800';
+      case 'PAID':
+        return 'bg-emerald-100 text-emerald-800';
+      default:
+        return 'bg-gray-50 text-gray-400';
+    }
+  }
+
+  // Render table (VG structure)
+  function renderTable(data: any[]) {
+    const tableBody = document.getElementById('tableBody');
+    const resultCount = document.getElementById('resultCount');
+
+    if (!tableBody) return;
+
+    if (data.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+            Tidak ada data prospecting
+          </td>
+        </tr>
+      `;
+      if (resultCount) resultCount.textContent = 'Menampilkan 0 prospecting';
+      return;
+    }
+
+    tableBody.innerHTML = data.map(p => `
+      <tr class="hover:bg-crm-50 transition-colors"
+          data-id="${p.id}"
+          data-name="${(p.kontak_nama || '').toLowerCase()}"
+          data-status="${p.status || ''}"
+          data-va-status="${p.va_status || 'none'}">
+        <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">
+          #${p.id}
+        </td>
+        <td class="px-4 py-3 text-sm text-gray-900">
+          <div>
+            <p class="font-semibold">${p.kontak_nama || '-'}</p>
+            <p class="text-xs text-gray-500">${p.kontak_telepon || '-'}</p>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-sm text-gray-600">
+          <div>
+            <p>${p.instansi_nama || '-'}</p>
+            <p class="text-xs text-gray-400">${p.unit_bisnis || ''}</p>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-sm text-gray-600">
+          <div>
+            <p>${p.produk || '-'}</p>
+            <p class="text-xs text-gray-400">${p.bahan || ''}</p>
+          </div>
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+          ${p.omzet ? formatCurrency(parseFloat(p.omzet)) : '-'}
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-center">
+          <span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(p.status)}">
+            ${p.status || '-'}
+          </span>
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-sm">
+          ${p.va_number ? `
+            <span class="font-mono text-gray-600">${p.va_number}</span>
+            <span class="ml-1 px-1.5 py-0.5 text-xs rounded ${getVaStatusBadge(p.va_status)}">${p.va_status || ''}</span>
+          ` : '<span class="text-gray-400">-</span>'}
+        </td>
+        <td class="px-4 py-3 whitespace-nowrap text-center">
+          ${p.status === 'Closing' && !p.va_number ? `
+            <button class="generate-va-btn px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                    data-id="${p.id}" data-name="${p.kontak_nama}" data-amount="${p.omzet || 0}">
+              Generate VA
+            </button>
+          ` : (p.status === 'New' || p.status === 'Follow Up') ? `
+            <button class="set-closing-btn px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200"
+                    data-id="${p.id}">
+              Set Closing
+            </button>
+          ` : ''}
+        </td>
+      </tr>
+    `).join('');
+
+    if (resultCount) {
+      resultCount.textContent = `Menampilkan ${data.length} prospecting`;
+    }
+
+    // Add event listeners for action buttons
+    document.querySelectorAll('.generate-va-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const id = target.dataset.id;
+        const name = target.dataset.name;
+        const amount = target.dataset.amount;
+        openVaModal(id, name, amount);
+      });
+    });
+
+    document.querySelectorAll('.set-closing-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const target = e.target as HTMLElement;
+        const id = target.dataset.id;
+        await setClosing(id);
+      });
+    });
+  }
+
+  // Update stats
+  function updateStats(stats: any) {
+    const p = stats.prospecting || {};
+    const va = stats.va || {};
+
+    const statTotal = document.querySelector('#statTotal .text-2xl, #statTotal .text-3xl');
+    const statClosing = document.querySelector('#statClosing .text-2xl, #statClosing .text-3xl');
+    const statClosed = document.querySelector('#statClosed .text-2xl, #statClosed .text-3xl');
+    const statRevenue = document.querySelector('#statRevenue .text-2xl, #statRevenue .text-3xl');
+
+    if (statTotal) statTotal.textContent = p.total || '0';
+    if (statClosing) statClosing.textContent = p.closing || '0';
+    if (statClosed) statClosed.textContent = p.closed || '0';
+    if (statRevenue) statRevenue.textContent = formatCurrency(parseFloat(va.total_revenue) || 0);
+  }
+
+  // Filter rows
+  function filterRows() {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const statusFilter = document.getElementById('statusFilter') as HTMLSelectElement;
+    const vaFilter = document.getElementById('vaFilter') as HTMLSelectElement;
+
     const searchTerm = searchInput?.value.toLowerCase() || '';
     const statusValue = statusFilter?.value || '';
-    const typeValue = typeFilter?.value || '';
+    const vaValue = vaFilter?.value || '';
 
-    const rows = tableBody?.querySelectorAll('.customer-row') || [];
-    return Array.from(rows).filter(row => {
-      const name = row.getAttribute('data-name') || '';
-      const status = row.getAttribute('data-status') || '';
-      const type = row.getAttribute('data-type') || '';
+    const filtered = prospectingsData.filter(p => {
+      const matchesSearch = !searchTerm ||
+        (p.kontak_nama || '').toLowerCase().includes(searchTerm) ||
+        (p.instansi_nama || '').toLowerCase().includes(searchTerm);
+      const matchesStatus = !statusValue || p.status === statusValue;
+      const matchesVa = !vaValue ||
+        (vaValue === 'none' && !p.va_status) ||
+        (vaValue !== 'none' && p.va_status === vaValue);
 
-      const matchesSearch = name.includes(searchTerm);
-      const matchesStatus = !statusValue || status === statusValue;
-      const matchesType = !typeValue || type === typeValue;
-
-      return matchesSearch && matchesStatus && matchesType;
-    });
-  }
-
-  function showPage(page) {
-    const allRows = tableBody?.querySelectorAll('.customer-row') || [];
-    filteredRows = getFilteredRows();
-    const totalPages = Math.max(1, Math.ceil(filteredRows.length / ITEMS_PER_PAGE));
-
-    const start = (page - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-
-    // Hide all rows first
-    allRows.forEach(row => row.style.display = 'none');
-
-    // Show only filtered rows for current page
-    filteredRows.forEach((row, index) => {
-      row.style.display = index >= start && index < end ? '' : 'none';
+      return matchesSearch && matchesStatus && matchesVa;
     });
 
-    if (pageInfo) pageInfo.textContent = `${page} / ${totalPages}`;
-    if (paginationInfo) {
-      const showStart = filteredRows.length > 0 ? start + 1 : 0;
-      const showEnd = Math.min(end, filteredRows.length);
-      paginationInfo.textContent = `Menampilkan ${showStart}-${showEnd} dari ${filteredRows.length} customer`;
-    }
-    if (prevBtn) prevBtn.disabled = page <= 1;
-    if (nextBtn) nextBtn.disabled = page >= totalPages;
+    renderTable(filtered);
   }
 
-  function filterAndPaginate() {
-    currentPage = 1;
-    showPage(currentPage);
+  // Fetch data
+  async function fetchData() {
+    try {
+      const response = await fetch(`${API_BASE}/prospectings`);
+      const result = await response.json();
+
+      if (result.success) {
+        prospectingsData = result.data;
+        filterRows();
+      }
+
+      const statsResponse = await fetch(`${API_BASE}/prospectings/stats`);
+      const statsResult = await statsResponse.json();
+
+      if (statsResult.success) {
+        updateStats(statsResult.data);
+      }
+
+      const lastUpdate = document.getElementById('lastUpdate');
+      if (lastUpdate) {
+        lastUpdate.textContent = `Updated: ${new Date().toLocaleTimeString('id-ID')}`;
+      }
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+    }
   }
 
-  prevBtn?.addEventListener('click', () => {
-    const totalPages = Math.ceil(filteredRows.length / ITEMS_PER_PAGE);
-    if (currentPage > 1) {
-      currentPage--;
-      showPage(currentPage);
+  // Set status to Closing
+  async function setClosing(id: string | undefined) {
+    if (!id) return;
+    try {
+      await fetch(`${API_BASE}/prospectings/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Closing' })
+      });
+      await fetchData();
+    } catch (err) {
+      console.error('Failed to set closing:', err);
     }
-  });
+  }
 
-  nextBtn?.addEventListener('click', () => {
-    const totalPages = Math.ceil(filteredRows.length / ITEMS_PER_PAGE);
-    if (currentPage < totalPages) {
-      currentPage++;
-      showPage(currentPage);
+  // Open VA modal
+  function openVaModal(id: string | undefined, name: string | undefined, amount: string | undefined) {
+    const modal = document.getElementById('vaModal');
+    const idInput = document.getElementById('vaProspectingId') as HTMLInputElement;
+    const nameEl = document.getElementById('vaProspectingName');
+    const amountInput = document.getElementById('vaAmount') as HTMLInputElement;
+
+    if (idInput) idInput.value = id || '';
+    if (nameEl) nameEl.textContent = name || '-';
+    if (amountInput) amountInput.value = amount || '';
+
+    modal?.classList.remove('hidden');
+  }
+
+  // Generate VA
+  async function generateVA(prospectingId: string, amount: number) {
+    try {
+      const response = await fetch(`${APP_BCA_API}/api/va/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': 'dev-test-key-change-in-production'
+        },
+        body: JSON.stringify({
+          prospectingId: parseInt(prospectingId),
+          amount: amount,
+          unitBisnisId: '01'
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`VA berhasil dibuat!\n\nVA Number: ${result.data.vaNumber}\nAmount: ${formatCurrency(amount)}`);
+        await fetchData();
+      } else {
+        alert(`Gagal membuat VA: ${result.error || result.message}`);
+      }
+    } catch (err) {
+      console.error('Failed to generate VA:', err);
+      alert('Gagal membuat VA. Pastikan app-bca server berjalan.');
     }
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchData();
+    setInterval(fetchData, 5000);
+
+    // Refresh button
+    document.getElementById('refreshBtn')?.addEventListener('click', fetchData);
+
+    // Filter listeners
+    document.getElementById('searchInput')?.addEventListener('input', filterRows);
+    document.getElementById('statusFilter')?.addEventListener('change', filterRows);
+    document.getElementById('vaFilter')?.addEventListener('change', filterRows);
+
+    // Add Prospecting Modal
+    const addModal = document.getElementById('addModal');
+    document.getElementById('addProspectingBtn')?.addEventListener('click', () => {
+      addModal?.classList.remove('hidden');
+    });
+    document.getElementById('cancelAddBtn')?.addEventListener('click', () => {
+      addModal?.classList.add('hidden');
+    });
+
+    // Add Form Submit
+    document.getElementById('addForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      const data: any = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+
+      try {
+        await fetch(`${API_BASE}/prospectings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        form.reset();
+        addModal?.classList.add('hidden');
+        await fetchData();
+      } catch (err) {
+        console.error('Failed to add prospecting:', err);
+      }
+    });
+
+    // VA Modal
+    const vaModal = document.getElementById('vaModal');
+    document.getElementById('cancelVaBtn')?.addEventListener('click', () => {
+      vaModal?.classList.add('hidden');
+    });
+
+    // VA Form Submit
+    document.getElementById('vaForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const idInput = document.getElementById('vaProspectingId') as HTMLInputElement;
+      const amountInput = document.getElementById('vaAmount') as HTMLInputElement;
+
+      await generateVA(idInput.value, parseFloat(amountInput.value));
+      vaModal?.classList.add('hidden');
+    });
   });
-
-  searchInput?.addEventListener('input', filterAndPaginate);
-  statusFilter?.addEventListener('change', filterAndPaginate);
-  typeFilter?.addEventListener('change', filterAndPaginate);
-
-  // Initial display
-  document.addEventListener('DOMContentLoaded', () => showPage(1));
 </script>
+
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; background-color: #fef3c7; }
+    to { opacity: 1; background-color: transparent; }
+  }
+</style>
