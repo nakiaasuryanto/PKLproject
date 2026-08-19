@@ -261,18 +261,31 @@ router.post('/create', async (req, res) => {
 
     // Auto-generate VA for sales transactions
     let vaNumber = null;
+    let prospectingId = null;
     if (transaction_type === 'SALE' && total_amount > 0) {
       try {
-        // Find prospecting linked to this customer
-        let prospectingId = null;
-        if (customer_id) {
+        // Find prospecting by phone number in kontaks
+        if (customer_phone) {
           const [prospectings] = await connection.query(
             `SELECT p.id FROM prospectings p
              JOIN kontaks k ON p.kontak_id = k.id
-             JOIN customers c ON c.kontak_id = k.id
-             WHERE c.id = ? AND p.status != 'Closed'
+             WHERE k.telepon = ? AND p.status != 'Closed'
              ORDER BY p.id DESC LIMIT 1`,
-            [customer_id]
+            [customer_phone]
+          );
+          if (prospectings.length > 0) {
+            prospectingId = prospectings[0].id;
+          }
+        }
+
+        // Fallback: try by customer name in kontaks
+        if (!prospectingId && customer_name) {
+          const [prospectings] = await connection.query(
+            `SELECT p.id FROM prospectings p
+             JOIN kontaks k ON p.kontak_id = k.id
+             WHERE k.nama = ? AND p.status != 'Closed'
+             ORDER BY p.id DESC LIMIT 1`,
+            [customer_name]
           );
           if (prospectings.length > 0) {
             prospectingId = prospectings[0].id;
@@ -302,8 +315,8 @@ router.post('/create', async (req, res) => {
         // Update prospecting status to Closing if linked
         if (prospectingId) {
           await connection.query(
-            `UPDATE prospectings SET status = 'Closing' WHERE id = ?`,
-            [prospectingId]
+            `UPDATE prospectings SET status = 'Closing', omzet = ? WHERE id = ?`,
+            [total_amount, prospectingId]
           );
         }
       } catch (vaErr) {

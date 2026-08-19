@@ -339,8 +339,32 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       dateInput.valueAsDate = new Date();
     }
 
+    // Read URL params (from prospecting link)
+    const urlParams = new URLSearchParams(window.location.search);
+    const customerName = urlParams.get('customer');
+    const customerPhone = urlParams.get('phone');
+    const amount = urlParams.get('amount');
+
+    if (customerName) {
+      const nameInput = document.getElementById('customer_name');
+      if (nameInput) nameInput.value = customerName;
+    }
+    if (customerPhone) {
+      const phoneInput = document.getElementById('customer_phone');
+      if (phoneInput) phoneInput.value = customerPhone;
+    }
+
     // Add initial item row
     addNewItem();
+
+    // If amount from prospecting, set it as manual price
+    if (amount && parseInt(amount) > 0) {
+      const manualPriceInput = document.getElementById('manual_price');
+      if (manualPriceInput) {
+        manualPriceInput.value = parseInt(amount).toLocaleString('id-ID');
+        window.updateTotal();
+      }
+    }
 
     // Add item button handler
     document.getElementById('addItemBtn')?.addEventListener('click', addNewItem);
@@ -733,7 +757,12 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
       const result = await response.json();
 
       if (result.success) {
-        alert('Invoice berhasil dibuat!');
+        let msg = 'Invoice berhasil dibuat!';
+        if (result.data?.va_number) {
+          msg += `\n\nVA Number: ${result.data.va_number}`;
+          msg += `\nStatus: ${result.data.payment_status}`;
+        }
+        alert(msg);
         window.location.href = '/sales';
       } else {
         alert('Gagal membuat invoice: ' + (result.error || result.message || 'Unknown error'));

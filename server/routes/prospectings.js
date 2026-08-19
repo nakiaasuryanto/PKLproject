@@ -51,11 +51,15 @@ router.get('/', async (req, res) => {
         va.va_number,
         va.amount as va_amount,
         va.status as va_status,
-        va.paid_at
+        va.paid_at,
+        t.id as transaction_id,
+        t.total_amount as transaction_amount,
+        t.payment_status as transaction_status
       FROM prospectings p
       LEFT JOIN kontaks k ON k.id = p.kontak_id
       LEFT JOIN instansis i ON i.id = k.instansi_id
       LEFT JOIN virtual_accounts va ON va.prospecting_id = p.id
+      LEFT JOIN transactions t ON t.id = va.transaction_id
       WHERE p.deleted_at IS NULL
     `;
 

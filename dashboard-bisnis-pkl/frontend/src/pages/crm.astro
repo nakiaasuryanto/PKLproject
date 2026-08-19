@@ -267,43 +267,12 @@ import Button from '../components/ui/Button.astro';
   </div>
 </div>
 
-<!-- Generate VA Modal -->
-<div id="vaModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-xl shadow-xl max-w-md w-full">
-    <div class="p-6 border-b">
-      <h2 class="text-xl font-bold text-gray-900">Generate Virtual Account</h2>
-    </div>
-    <form id="vaForm" class="p-6 space-y-4">
-      <input type="hidden" name="prospectingId" id="vaProspectingId" />
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Prospecting</label>
-        <p id="vaProspectingName" class="text-lg font-semibold text-gray-900">-</p>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pembayaran (Rp) *</label>
-        <input type="number" name="amount" id="vaAmount" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-crm-500" />
-      </div>
-      <div class="flex justify-end gap-3 pt-4">
-        <button type="button" id="cancelVaBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Batal</button>
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Generate VA</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <script is:inline>
   // Use production API URLs
   const API_BASE = window.location.hostname === 'localhost'
     ? 'http://localhost:3001'
     : 'https://pklproject-backend.up.railway.app';
-
-  const APP_BCA_API = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000'
-    : 'https://api-bca-production.up.railway.app';
-
-  const APP_BCA_API_KEY = window.location.hostname === 'localhost'
-    ? 'dev-test-key-change-in-production'
-    : '3fad3e88ff3708737bef5ad030c9d5987a40ef7505e6060a';
 
   let prospectingsData = [];
 
@@ -393,7 +362,13 @@ import Button from '../components/ui/Button.astro';
           </div>
         </td>
         <td class="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
-          ${p.omzet ? formatCurrency(parseFloat(p.omzet)) : '-'}
+          ${p.transaction_amount ? `
+            <span class="text-green-600">${formatCurrency(parseFloat(p.transaction_amount))}</span>
+            <p class="text-xs text-gray-400">Invoice</p>
+          ` : p.omzet ? `
+            <span>${formatCurrency(parseFloat(p.omzet))}</span>
+            <p class="text-xs text-gray-400">Estimasi</p>
+          ` : '-'}
         </td>
         <td class="px-4 py-3 whitespace-nowrap text-center">
           <span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(p.status)}">
@@ -407,16 +382,15 @@ import Button from '../components/ui/Button.astro';
           ` : '<span class="text-gray-400">-</span>'}
         </td>
         <td class="px-4 py-3 whitespace-nowrap text-center">
-          ${p.status === 'Closing' && !p.va_number ? `
-            <button class="generate-va-btn px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
-                    data-id="${p.id}" data-name="${p.kontak_nama}" data-amount="${p.omzet || 0}">
-              Generate VA
-            </button>
-          ` : (p.status === 'New' || p.status === 'Follow Up') ? `
-            <button class="set-closing-btn px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200"
-                    data-id="${p.id}">
-              Set Closing
-            </button>
+          ${!p.va_number ? `
+            <a href="/sales/invoice/new?customer=${encodeURIComponent(p.kontak_nama || '')}&phone=${encodeURIComponent(p.kontak_telepon || '')}&amount=${p.omzet || 0}"
+               class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 inline-block">
+              Buat Invoice
+            </a>
+          ` : p.va_status === 'ACTIVE' ? `
+            <a href="/sales" class="text-xs text-yellow-600 hover:underline">Menunggu Bayar →</a>
+          ` : p.va_status === 'PAID' ? `
+            <a href="/sales" class="text-xs text-green-600 hover:underline">✓ Lunas →</a>
           ` : ''}
         </td>
       </tr>
@@ -426,24 +400,6 @@ import Button from '../components/ui/Button.astro';
       resultCount.textContent = `Menampilkan ${data.length} prospecting`;
     }
 
-    // Add event listeners for action buttons
-    document.querySelectorAll('.generate-va-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const target = e.target;
-        const id = target.dataset.id;
-        const name = target.dataset.name;
-        const amount = target.dataset.amount;
-        openVaModal(id, name, amount);
-      });
-    });
-
-    document.querySelectorAll('.set-closing-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const target = e.target;
-        const id = target.dataset.id;
-        await setClosing(id);
-      });
-    });
   }
 
   // Update stats
@@ -514,65 +470,6 @@ import Button from '../components/ui/Button.astro';
     }
   }
 
-  // Set status to Closing
-  async function setClosing(id) {
-    if (!id) return;
-    try {
-      await fetch(`${API_BASE}/prospectings/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Closing' })
-      });
-      await fetchData();
-    } catch (err) {
-      console.error('Failed to set closing:', err);
-    }
-  }
-
-  // Open VA modal
-  function openVaModal(id, name, amount) {
-    const modal = document.getElementById('vaModal');
-    const idInput = document.getElementById('vaProspectingId');
-    const nameEl = document.getElementById('vaProspectingName');
-    const amountInput = document.getElementById('vaAmount');
-
-    if (idInput) idInput.value = id || '';
-    if (nameEl) nameEl.textContent = name || '-';
-    if (amountInput) amountInput.value = amount || '';
-
-    modal?.classList.remove('hidden');
-  }
-
-  // Generate VA
-  async function generateVA(prospectingId, amount) {
-    try {
-      const response = await fetch(`${APP_BCA_API}/api/va/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': APP_BCA_API_KEY
-        },
-        body: JSON.stringify({
-          prospectingId: parseInt(prospectingId),
-          amount: amount,
-          unitBisnisId: '01'
-        })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert(`VA berhasil dibuat!\n\nVA Number: ${result.data.vaNumber}\nAmount: ${formatCurrency(amount)}`);
-        await fetchData();
-      } else {
-        alert(`Gagal membuat VA: ${result.error || result.message}`);
-      }
-    } catch (err) {
-      console.error('Failed to generate VA:', err);
-      alert('Gagal membuat VA. Pastikan app-bca server berjalan.');
-    }
-  }
-
   // Initialize
   document.addEventListener('DOMContentLoaded', () => {
     fetchData();
@@ -619,21 +516,6 @@ import Button from '../components/ui/Button.astro';
       }
     });
 
-    // VA Modal
-    const vaModal = document.getElementById('vaModal');
-    document.getElementById('cancelVaBtn')?.addEventListener('click', () => {
-      vaModal?.classList.add('hidden');
-    });
-
-    // VA Form Submit
-    document.getElementById('vaForm')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const idInput = document.getElementById('vaProspectingId');
-      const amountInput = document.getElementById('vaAmount');
-
-      await generateVA(idInput.value, parseFloat(amountInput.value));
-      vaModal?.classList.add('hidden');
-    });
   });
 </script>
 
