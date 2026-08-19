@@ -1,6 +1,6 @@
 # Dashboard Bisnis PKL
 
-Sistem dashboard bisnis terintegrasi untuk mengelola operasional bisnis. Menggabungkan Sales, Inventory, Finance, CRM, dan HR dalam satu platform.
+Sistem dashboard bisnis terintegrasi untuk mengelola operasional bisnis. Menggabungkan Sales, Inventory, Finance, Prospecting (CRM), dan HR dalam satu platform.
 
 ---
 
@@ -16,16 +16,53 @@ Sistem dashboard bisnis terintegrasi untuk mengelola operasional bisnis. Menggab
 |------|-------------|
 | Admin | Semua modul + summary |
 | IT | Semua modul + summary |
-| Customer Service | Dashboard, CRM, Sales, Inventory |
+| Customer Service | Dashboard, Prospecting, Sales, Inventory |
 | Operations | Dashboard, Inventory, Sales |
 | Finance | Dashboard, Finance, Sales |
 
+### Prospecting (CRM) - VG Style
+Sistem prospecting terintegrasi dengan struktur:
+- **Instansi** → Perusahaan/organisasi customer
+- **Kontak** → PIC dari instansi
+- **Prospecting** → Data deal/project
+
+**Flow Prospecting → Invoice → Pembayaran:**
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ Prospecting │───▶│   Invoice   │───▶│  VA Active  │───▶│    PAID     │
+│    (New)    │    │  (PENDING)  │    │  (Closing)  │    │  (Closed)   │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+                         │                                      │
+                         ▼                                      ▼
+                   Auto-generate                          Auto-create
+                   VA Number                              Journal Entry
+```
+
+**Fitur:**
+- Daftar prospecting baru → otomatis buat customer
+- Klik "Buat Invoice" → pre-fill data customer
+- VA auto-generate saat invoice dibuat
+- Status tracking: New → Follow Up → Closing → Closed
+- Link ke halaman Sales untuk toggle pembayaran
+
 ### Penjualan & Invoice
-- Buat invoice dengan pilih customer dan produk
+- Buat invoice dengan pilih customer dari Prospecting
+- **Auto-generate Virtual Account (VA)** saat invoice dibuat
 - **Integrasi otomatis dengan inventory** - stok berkurang saat transaksi
-- Metode pembayaran: Cash, Bank Transfer, Lainnya (E-Wallet/QRIS)
+- Metode pembayaran: Cash, Bank Transfer, VA, Lainnya
 - Status pembayaran: Pending, Paid, Cancelled
+- **Toggle Paid** - tandai invoice sebagai lunas
 - Tracking transaksi real-time
+
+### Keuangan (Finance)
+- Dashboard pendapatan vs pengeluaran
+- **Auto Journal Entry** - jurnal otomatis saat invoice dibayar:
+  - Debit: Kas (uang masuk)
+  - Credit: Pendapatan Penjualan
+- Laporan laba rugi
+- Breakdown pembayaran per metode
+- Chart trend bulanan
+- Format mata uang Indonesia (Rp 1.000.000)
 
 ### Inventory Management
 - Tracking stok per lokasi gudang
@@ -34,24 +71,30 @@ Sistem dashboard bisnis terintegrasi untuk mengelola operasional bisnis. Menggab
 - Import data via CSV
 - Integrasi dengan penjualan (auto reduce)
 
-### Keuangan
-- Dashboard pendapatan vs pengeluaran
-- Laporan laba rugi
-- Breakdown pembayaran per metode
-- Chart trend bulanan
-- Format mata uang Indonesia (Rp 1.000.000)
-
-### CRM (Customer Relationship Management)
-- Database customer (Perusahaan, Individual, Reseller)
-- Tracking total pembelian per customer
-- Riwayat interaksi customer
-- Status aktif/tidak aktif
-
 ### HR & Kehadiran
 - Database karyawan dengan department
 - **Sistem Check-in/Check-out** real-time
 - Tracking jam kerja & kehadiran
 - Ringkasan kehadiran bulanan
+
+---
+
+## Flow Integrasi
+
+```
+PROSPECTING                    SALES                      FINANCE
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│ 1. Daftar        │     │ 3. Buat Invoice  │     │ 5. Journal Entry │
+│    Customer      │────▶│    + Auto VA     │────▶│    Auto Created  │
+│                  │     │                  │     │                  │
+│ 2. Klik "Buat    │     │ 4. Toggle Paid   │     │ Debit: Kas       │
+│    Invoice"      │     │    di Sales      │     │ Credit: Penjualan│
+└──────────────────┘     └──────────────────┘     └──────────────────┘
+        │                        │                        │
+        ▼                        ▼                        ▼
+   Status: New            Status: Closing           Laporan Keuangan
+   → Closing              → Closed (Paid)           Terupdate
+```
 
 ---
 
@@ -90,6 +133,10 @@ npm run dev
 PKLproject/
 ├── server/                          # Backend API (Express + Node.js)
 │   ├── routes/                      # API endpoints
+│   │   ├── transactions.js          # Invoice + VA generation
+│   │   ├── prospectings.js          # Prospecting CRUD
+│   │   ├── customers.js             # Customer management
+│   │   └── ...
 │   ├── migrations/                  # SQL migration files
 │   ├── db.js                        # Database connection
 │   ├── migrate.js                   # Auto-migration script
@@ -100,7 +147,11 @@ PKLproject/
 ├── dashboard-bisnis-pkl/
 │   ├── frontend/                    # Frontend (Astro + TailwindCSS)
 │   │   ├── src/
-│   │   │   ├── pages/               # Halaman (index, sales, inventory, dll)
+│   │   │   ├── pages/               # Halaman
+│   │   │   │   ├── crm.astro        # Prospecting management
+│   │   │   │   ├── sales.astro      # Sales + Toggle Paid
+│   │   │   │   ├── sales/invoice/new.astro  # Buat invoice
+│   │   │   │   └── ...
 │   │   │   ├── components/          # Komponen UI
 │   │   │   ├── layouts/             # Layout templates
 │   │   │   └── lib/                 # API client & utilities
@@ -140,17 +191,21 @@ POST /api/auth/logout         - Logout user
 Dashboard:
 GET  /api/dashboard/overview  - Stats semua modul
 GET  /api/dashboard/sales-trend - Trend penjualan
-GET  /api/dashboard/payment-methods - Breakdown metode pembayaran
 
 Transactions:
 GET  /api/transactions        - List transaksi
-POST /api/transactions/create - Buat transaksi (dengan integrasi stok)
-GET  /api/transactions/stats/summary - Statistik transaksi
+POST /api/transactions/create - Buat transaksi + auto VA
+PATCH /api/transactions/:id/toggle-paid - Toggle status pembayaran
+
+Prospecting:
+GET  /prospectings            - List prospecting + VA info
+POST /prospectings            - Buat prospecting + auto customer
+PATCH /prospectings/:id/status - Update status
+GET  /prospectings/stats      - Statistik prospecting
 
 Inventory:
 GET  /api/inventory/stock     - Cek stok
 POST /api/inventory/movements - Pergerakan stok
-GET  /api/inventory/locations - List lokasi gudang
 
 Products:
 GET  /api/products            - List produk
@@ -159,32 +214,31 @@ POST /api/products            - Tambah produk
 Customers:
 GET  /api/customers           - List customer
 POST /api/customers           - Tambah customer
-GET  /api/customers/stats/summary - Statistik CRM
 
 Employees:
 GET  /api/employees           - List karyawan
 POST /api/employees/attendance/check-in  - Check-in
 POST /api/employees/attendance/check-out - Check-out
-GET  /api/employees/attendance/today     - Status kehadiran hari ini
 ```
 
 ---
 
 ## Database
 
-**14 Tabel + 6 Views:**
+**Tabel Utama:**
 
 | Tabel | Deskripsi |
 |-------|-----------|
+| `instansis` | Data perusahaan/organisasi |
+| `kontaks` | Data kontak PIC |
+| `prospectings` | Data prospecting/deal |
+| `customers` | Data customer (auto dari prospecting) |
+| `transactions` | Transaksi penjualan & pengeluaran |
+| `virtual_accounts` | Data VA untuk pembayaran |
+| `journal_entries` | Jurnal akuntansi (auto dari paid) |
 | `products` | Data produk |
-| `colors`, `sizes` | Varian warna & ukuran |
-| `product_colors`, `product_color_sizes` | Kombinasi varian (SKU) |
 | `stock_balances`, `stock_movements` | Stok & riwayat |
-| `transactions`, `expenses` | Transaksi & pengeluaran |
-| `customers`, `customer_interactions` | Data pelanggan & interaksi |
 | `employees`, `attendance` | Data karyawan & absensi |
-
-**Views:** `v_product_variants`, `v_stock_levels`, `v_low_stock_alert`, `v_sales_summary`, `v_top_customers`, `v_attendance_summary`
 
 ---
 
@@ -193,10 +247,11 @@ GET  /api/employees/attendance/today     - Status kehadiran hari ini
 | Halaman | Route | Deskripsi |
 |---------|-------|-----------|
 | Dashboard | `/` | Overview + stats |
-| Penjualan | `/sales` | Transaksi penjualan |
+| Penjualan | `/sales` | Transaksi + Toggle Paid |
+| Buat Invoice | `/sales/invoice/new` | Form invoice baru |
 | Inventory | `/inventory` | Manajemen stok |
-| Keuangan | `/finance` | Pendapatan & pengeluaran |
-| CRM | `/crm` | Customer management |
+| Keuangan | `/finance` | Pendapatan, pengeluaran, jurnal |
+| Prospecting | `/crm` | Prospecting management |
 | HR | `/hr` | Karyawan & absensi |
 
 ---
@@ -255,7 +310,7 @@ PUBLIC_API_URL=https://your-backend.railway.app/api
 | Penjualan (Sales) | Merah | `#EF4444` |
 | Inventory | Kuning | `#F59E0B` |
 | Keuangan (Finance) | Abu-abu | `#6B7280` |
-| CRM | Hijau | `#10B981` |
+| Prospecting | Hijau | `#10B981` |
 | HR | Biru | `#3B82F6` |
 
 ---
