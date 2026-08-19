@@ -252,38 +252,48 @@ router.post('/', async (req, res) => {
     const kontak_id = kontakResult.insertId;
 
     // 3. Create customer (integration with sales system)
-    // Generate customer code
-    const [lastCustomer] = await connection.query(
-      'SELECT customer_code FROM customers ORDER BY id DESC LIMIT 1'
-    );
-    let customerCode;
-    if (lastCustomer.length === 0) {
-      customerCode = 'CUST001';
-    } else {
-      const lastCode = lastCustomer[0].customer_code;
-      const lastNumber = parseInt(lastCode.replace('CUST', '')) || 0;
-      customerCode = `CUST${String(lastNumber + 1).padStart(3, '0')}`;
+    let customer_id = null;
+    let customerCode = null;
+    try {
+      // Generate customer code
+      const [lastCustomer] = await connection.query(
+        'SELECT customer_code FROM customers ORDER BY id DESC LIMIT 1'
+      );
+      if (lastCustomer.length === 0) {
+        customerCode = 'CUST001';
+      } else {
+        const lastCode = lastCustomer[0].customer_code;
+        const lastNumber = parseInt(lastCode.replace('CUST', '')) || 0;
+        customerCode = `CUST${String(lastNumber + 1).padStart(3, '0')}`;
+      }
+
+      // Determine customer type based on instansi
+      const customerType = instansi_nama ? 'COMPANY' : 'INDIVIDUAL';
+
+      // Try with kontak_id first, fallback to without
+      try {
+        const [customerResult] = await connection.query(
+          `INSERT INTO customers
+           (kontak_id, customer_code, name, company_name, email, phone, address, customer_type, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+          [kontak_id, customerCode, kontak_nama, instansi_nama || null,
+           kontak_email || null, kontak_telepon || null, instansi_alamat || null, customerType]
+        );
+        customer_id = customerResult.insertId;
+      } catch (colErr) {
+        // kontak_id column might not exist, try without it
+        const [customerResult] = await connection.query(
+          `INSERT INTO customers
+           (customer_code, name, company_name, email, phone, address, customer_type, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
+          [customerCode, kontak_nama, instansi_nama || null,
+           kontak_email || null, kontak_telepon || null, instansi_alamat || null, customerType]
+        );
+        customer_id = customerResult.insertId;
+      }
+    } catch (custErr) {
+      console.log('[Prospectings] Customer creation skipped:', custErr.message);
     }
-
-    // Determine customer type based on instansi
-    const customerType = instansi_nama ? 'COMPANY' : 'INDIVIDUAL';
-
-    const [customerResult] = await connection.query(
-      `INSERT INTO customers
-       (kontak_id, customer_code, name, company_name, email, phone, address, customer_type, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
-      [
-        kontak_id,
-        customerCode,
-        kontak_nama,
-        instansi_nama || null,
-        kontak_email || null,
-        kontak_telepon || null,
-        instansi_alamat || null,
-        customerType
-      ]
-    );
-    const customer_id = customerResult.insertId;
 
     // 4. Calculate omzet
     const omzet = (parseFloat(jumlah) || 0) * (parseFloat(harga_satuan) || 0);
