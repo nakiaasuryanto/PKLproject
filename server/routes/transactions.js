@@ -1,5 +1,6 @@
 import express from 'express';
 import db from '../db.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
@@ -297,12 +298,14 @@ router.post('/create', async (req, res) => {
         const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
         vaNumber = `88810${timestamp}${random}`;
 
-        // Insert VA record
+        // Insert VA record (id is UUID)
+        const vaId = uuidv4();
         await connection.query(
           `INSERT INTO virtual_accounts
-           (prospecting_id, transaction_id, va_number, customer_no, customer_name, amount, status, expires_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE', DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
+           (id, prospecting_id, transaction_id, va_number, customer_no, customer_name, amount, status, expires_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
           [
+            vaId,
             prospectingId,
             transactionId,
             vaNumber,
