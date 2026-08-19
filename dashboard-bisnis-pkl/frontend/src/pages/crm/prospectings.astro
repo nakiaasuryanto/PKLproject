@@ -138,7 +138,7 @@ import StatCard from '../../components/ui/StatCard.astro';
   let prospectingsData = [];
 
   // Format currency
-  function formatCurrency(amount: number): string {
+  function formatCurrency(amount) {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -147,7 +147,7 @@ import StatCard from '../../components/ui/StatCard.astro';
   }
 
   // Format date
-  function formatDate(dateStr: string | null): string {
+  function formatDate(dateStr) {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleString('id-ID', {
       day: '2-digit',
@@ -159,7 +159,7 @@ import StatCard from '../../components/ui/StatCard.astro';
   }
 
   // Get status badge class
-  function getStatusBadge(status: string | null): string {
+  function getStatusBadge(status) {
     switch (status) {
       case 'Closing':
         return 'bg-yellow-100 text-yellow-800';
@@ -171,7 +171,7 @@ import StatCard from '../../components/ui/StatCard.astro';
   }
 
   // Get VA status badge class
-  function getVaStatusBadge(status: string | null): string {
+  function getVaStatusBadge(status) {
     switch (status) {
       case 'ACTIVE':
         return 'bg-blue-100 text-blue-800';
@@ -185,7 +185,7 @@ import StatCard from '../../components/ui/StatCard.astro';
   }
 
   // Render table
-  function renderTable(data: any[]) {
+  function renderTable(data) {
     const tableBody = document.getElementById('tableBody');
     const resultCount = document.getElementById('resultCount');
 
@@ -248,7 +248,7 @@ import StatCard from '../../components/ui/StatCard.astro';
   }
 
   // Update stats
-  function updateStats(stats: any) {
+  function updateStats(stats) {
     const statClosing = document.getElementById('statClosing');
     const statClosed = document.getElementById('statClosed');
     const statVaActive = document.getElementById('statVaActive');
@@ -266,9 +266,9 @@ import StatCard from '../../components/ui/StatCard.astro';
 
   // Filter rows
   function filterRows() {
-    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-    const statusFilter = document.getElementById('statusFilter') as HTMLSelectElement;
-    const vaFilter = document.getElementById('vaFilter') as HTMLSelectElement;
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const vaFilter = document.getElementById('vaFilter');
 
     const searchTerm = searchInput?.value.toLowerCase() || '';
     const statusValue = statusFilter?.value || '';

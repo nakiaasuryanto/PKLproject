@@ -308,7 +308,7 @@ import Button from '../components/ui/Button.astro';
   let prospectingsData = [];
 
   // Format currency
-  function formatCurrency(amount: number): string {
+  function formatCurrency(amount) {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -317,7 +317,7 @@ import Button from '../components/ui/Button.astro';
   }
 
   // Get status badge class (VG-style statuses)
-  function getStatusBadge(status: string | null): string {
+  function getStatusBadge(status) {
     switch (status) {
       case 'New':
         return 'bg-blue-100 text-blue-800';
@@ -335,7 +335,7 @@ import Button from '../components/ui/Button.astro';
   }
 
   // Get VA status badge class
-  function getVaStatusBadge(status: string | null): string {
+  function getVaStatusBadge(status) {
     switch (status) {
       case 'ACTIVE':
         return 'bg-blue-100 text-blue-800';
@@ -347,7 +347,7 @@ import Button from '../components/ui/Button.astro';
   }
 
   // Render table (VG structure)
-  function renderTable(data: any[]) {
+  function renderTable(data) {
     const tableBody = document.getElementById('tableBody');
     const resultCount = document.getElementById('resultCount');
 
@@ -429,7 +429,7 @@ import Button from '../components/ui/Button.astro';
     // Add event listeners for action buttons
     document.querySelectorAll('.generate-va-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
+        const target = e.target;
         const id = target.dataset.id;
         const name = target.dataset.name;
         const amount = target.dataset.amount;
@@ -439,7 +439,7 @@ import Button from '../components/ui/Button.astro';
 
     document.querySelectorAll('.set-closing-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        const target = e.target as HTMLElement;
+        const target = e.target;
         const id = target.dataset.id;
         await setClosing(id);
       });
@@ -447,7 +447,7 @@ import Button from '../components/ui/Button.astro';
   }
 
   // Update stats
-  function updateStats(stats: any) {
+  function updateStats(stats) {
     const p = stats.prospecting || {};
     const va = stats.va || {};
 
@@ -464,9 +464,9 @@ import Button from '../components/ui/Button.astro';
 
   // Filter rows
   function filterRows() {
-    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-    const statusFilter = document.getElementById('statusFilter') as HTMLSelectElement;
-    const vaFilter = document.getElementById('vaFilter') as HTMLSelectElement;
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const vaFilter = document.getElementById('vaFilter');
 
     const searchTerm = searchInput?.value.toLowerCase() || '';
     const statusValue = statusFilter?.value || '';
@@ -515,7 +515,7 @@ import Button from '../components/ui/Button.astro';
   }
 
   // Set status to Closing
-  async function setClosing(id: string | undefined) {
+  async function setClosing(id) {
     if (!id) return;
     try {
       await fetch(`${API_BASE}/prospectings/${id}/status`, {
@@ -530,11 +530,11 @@ import Button from '../components/ui/Button.astro';
   }
 
   // Open VA modal
-  function openVaModal(id: string | undefined, name: string | undefined, amount: string | undefined) {
+  function openVaModal(id, name, amount) {
     const modal = document.getElementById('vaModal');
-    const idInput = document.getElementById('vaProspectingId') as HTMLInputElement;
+    const idInput = document.getElementById('vaProspectingId');
     const nameEl = document.getElementById('vaProspectingName');
-    const amountInput = document.getElementById('vaAmount') as HTMLInputElement;
+    const amountInput = document.getElementById('vaAmount');
 
     if (idInput) idInput.value = id || '';
     if (nameEl) nameEl.textContent = name || '-';
@@ -544,7 +544,7 @@ import Button from '../components/ui/Button.astro';
   }
 
   // Generate VA
-  async function generateVA(prospectingId: string, amount: number) {
+  async function generateVA(prospectingId, amount) {
     try {
       const response = await fetch(`${APP_BCA_API}/api/va/create`, {
         method: 'POST',
@@ -598,9 +598,9 @@ import Button from '../components/ui/Button.astro';
     // Add Form Submit
     document.getElementById('addForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const form = e.target as HTMLFormElement;
+      const form = e.target;
       const formData = new FormData(form);
-      const data: any = {};
+      const data = {};
       formData.forEach((value, key) => {
         data[key] = value;
       });
@@ -628,8 +628,8 @@ import Button from '../components/ui/Button.astro';
     // VA Form Submit
     document.getElementById('vaForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const idInput = document.getElementById('vaProspectingId') as HTMLInputElement;
-      const amountInput = document.getElementById('vaAmount') as HTMLInputElement;
+      const idInput = document.getElementById('vaProspectingId');
+      const amountInput = document.getElementById('vaAmount');
 
       await generateVA(idInput.value, parseFloat(amountInput.value));
       vaModal?.classList.add('hidden');
