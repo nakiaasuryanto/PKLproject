@@ -293,7 +293,15 @@ import Button from '../components/ui/Button.astro';
 
 <script>
   const API_BASE = 'http://localhost:3001';
-  const APP_BCA_API = 'http://localhost:3000';
+  // Production: Railway URL, Development: localhost
+  const APP_BCA_API = import.meta.env.PROD
+    ? 'https://api-bca-production.up.railway.app'
+    : 'http://localhost:3000';
+
+  // API Key for BCA service
+  const APP_BCA_API_KEY = import.meta.env.PROD
+    ? '3fad3e88ff3708737bef5ad030c9d5987a40ef7505e6060a'
+    : 'dev-test-key-change-in-production';
   let prospectingsData: any[] = [];
 
   // Format currency
@@ -539,7 +547,7 @@ import Button from '../components/ui/Button.astro';
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': 'dev-test-key-change-in-production'
+          'X-API-Key': APP_BCA_API_KEY
         },
         body: JSON.stringify({
           prospectingId: parseInt(prospectingId),
