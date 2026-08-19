@@ -9,14 +9,14 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001/api';
 const { id } = Astro.params;
 ---
 
-<MainLayout title={`Customer Detail - CRM`} activeModule="crm">
+<MainLayout title={`Customer Detail - Prospecting`} activeModule="crm">
   <!-- Page Header -->
   <div class="mb-8">
     <a href="/crm" class="inline-flex items-center text-crm-600 hover:text-crm-700 mb-4">
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
-      Kembali ke Daftar Customer
+      Kembali ke Prospecting
     </a>
 
     <div id="customerHeader" class="flex flex-col md:flex-row md:items-center md:justify-between">

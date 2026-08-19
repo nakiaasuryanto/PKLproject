@@ -8,18 +8,18 @@ const customersData = await api.get('/customers');
 const customers = (customersData?.success && Array.isArray(customersData?.data)) ? customersData.data : [];
 ---
 
-<MainLayout title="Semua Customer - CRM" activeModule="crm">
+<MainLayout title="Semua Customer - Prospecting" activeModule="crm">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
     <div>
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Semua Customer</h1>
-      <p class="mt-2 text-gray-600">Daftar lengkap semua customer</p>
+      <p class="mt-2 text-gray-600">Customer dari sistem Prospecting (otomatis dibuat saat tambah prospecting)</p>
     </div>
     <div class="mt-4 sm:mt-0 flex gap-3">
       <Button variant="outline" color="crm" size="md" href="/crm">
-        ← Kembali
+        ← Kembali ke Prospecting
       </Button>
-      <Button variant="primary" color="crm" size="md" href="/crm/customers/new">
-        + Tambah Customer
+      <Button variant="primary" color="crm" size="md" href="/crm">
+        + Tambah via Prospecting
       </Button>
     </div>
   </div>

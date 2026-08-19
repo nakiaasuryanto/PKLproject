@@ -196,7 +196,7 @@ router.get('/:id', async (req, res) => {
 
 /**
  * POST /prospectings
- * Create new prospecting with kontak and instansi
+ * Create new prospecting with kontak, instansi, AND customer (integrated)
  */
 router.post('/', async (req, res) => {
   const connection = await db.getConnection();
@@ -251,10 +251,44 @@ router.post('/', async (req, res) => {
     );
     const kontak_id = kontakResult.insertId;
 
-    // 3. Calculate omzet
+    // 3. Create customer (integration with sales system)
+    // Generate customer code
+    const [lastCustomer] = await connection.query(
+      'SELECT customer_code FROM customers ORDER BY id DESC LIMIT 1'
+    );
+    let customerCode;
+    if (lastCustomer.length === 0) {
+      customerCode = 'CUST001';
+    } else {
+      const lastCode = lastCustomer[0].customer_code;
+      const lastNumber = parseInt(lastCode.replace('CUST', '')) || 0;
+      customerCode = `CUST${String(lastNumber + 1).padStart(3, '0')}`;
+    }
+
+    // Determine customer type based on instansi
+    const customerType = instansi_nama ? 'COMPANY' : 'INDIVIDUAL';
+
+    const [customerResult] = await connection.query(
+      `INSERT INTO customers
+       (kontak_id, customer_code, name, company_name, email, phone, address, customer_type, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+      [
+        kontak_id,
+        customerCode,
+        kontak_nama,
+        instansi_nama || null,
+        kontak_email || null,
+        kontak_telepon || null,
+        instansi_alamat || null,
+        customerType
+      ]
+    );
+    const customer_id = customerResult.insertId;
+
+    // 4. Calculate omzet
     const omzet = (parseFloat(jumlah) || 0) * (parseFloat(harga_satuan) || 0);
 
-    // 4. Create prospecting
+    // 5. Create prospecting
     const [prospectingResult] = await connection.query(
       `INSERT INTO prospectings
        (kontak_id, status, produk, bahan, jumlah, harga_satuan, omzet, saluran, tanggal, user_id)
@@ -271,6 +305,8 @@ router.post('/', async (req, res) => {
         id: prospectingResult.insertId,
         kontak_id,
         instansi_id,
+        customer_id,
+        customer_code: customerCode,
         kontak_nama,
         instansi_nama,
         status
