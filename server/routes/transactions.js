@@ -300,7 +300,7 @@ router.post('/create', async (req, res) => {
         // Insert VA record
         await connection.query(
           `INSERT INTO virtual_accounts
-           (prospecting_id, transaction_id, va_number, customer_no, customer_name, amount, status, expired_at)
+           (prospecting_id, transaction_id, va_number, customer_no, customer_name, amount, status, expires_at)
            VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE', DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
           [
             prospectingId,
