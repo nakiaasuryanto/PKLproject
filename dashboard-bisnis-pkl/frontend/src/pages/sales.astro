@@ -132,7 +132,19 @@ function formatCurrency(amount: number | string): string {
                   {tx.payment_status || 'N/A'}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-center">
+              <td class="px-6 py-4 whitespace-nowrap text-center space-x-2">
+                <button
+                  class="toggle-paid-btn inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors"
+                  data-id={tx.id}
+                  data-status={tx.payment_status}
+                  class:list={[
+                    tx.payment_status === 'PAID'
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                  ]}
+                >
+                  {tx.payment_status === 'PAID' ? '✓ Paid' : '○ Set Paid'}
+                </button>
                 <a
                   href={`/sales/invoice/${tx.id}`}
                   class="inline-flex items-center px-2 py-1 text-xs font-medium text-sales-600 hover:text-sales-800 transition-colors"
@@ -236,6 +248,44 @@ function formatCurrency(amount: number | string): string {
 
     // Initial display
     if (rows.length > 0) showPage(1);
+
+    // Toggle Paid Button Handler
+    const API_BASE = window.location.hostname === 'localhost'
+      ? 'http://localhost:3001/api'
+      : 'https://pklproject-backend.up.railway.app/api';
+
+    document.querySelectorAll('.toggle-paid-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const target = e.target;
+        const id = target.dataset.id;
+        const currentStatus = target.dataset.status;
+
+        if (!confirm(currentStatus === 'PAID'
+          ? 'Tandai invoice ini sebagai BELUM DIBAYAR?'
+          : 'Tandai invoice ini sebagai SUDAH DIBAYAR? Jurnal akan dibuat otomatis.')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/transactions/${id}/toggle-paid`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            alert(result.data.message);
+            window.location.reload();
+          } else {
+            alert('Gagal: ' + (result.error || 'Unknown error'));
+          }
+        } catch (err) {
+          console.error('Error toggling paid status:', err);
+          alert('Terjadi kesalahan');
+        }
+      });
+    });
   });
 </script>
 

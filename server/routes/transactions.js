@@ -237,6 +237,9 @@ router.post('/create', async (req, res) => {
       notes = promo_type ? `Promo: ${promo_type}` : '';
     }
 
+    // Default to PENDING for sales, will be PAID when VA is paid
+    const initialPaymentStatus = transaction_type === 'EXPENSE' ? 'PAID' : 'PENDING';
+
     const [result] = await connection.query(
       `INSERT INTO transactions
        (transaction_type, transaction_date, customer_id, total_amount, payment_method, pic, notes, items, payment_status)
@@ -246,15 +249,67 @@ router.post('/create', async (req, res) => {
         transaction_date,
         customer_id,
         total_amount,
-        payment_method || 'CASH',
+        payment_method || 'VA', // Default to VA for sales
         pic_sales || pic || null,
         notes,
         JSON.stringify(items || []),
-        'PAID'
+        initialPaymentStatus
       ]
     );
 
     const transactionId = result.insertId;
+
+    // Auto-generate VA for sales transactions
+    let vaNumber = null;
+    if (transaction_type === 'SALE' && total_amount > 0) {
+      try {
+        // Find prospecting linked to this customer
+        let prospectingId = null;
+        if (customer_id) {
+          const [prospectings] = await connection.query(
+            `SELECT p.id FROM prospectings p
+             JOIN kontaks k ON p.kontak_id = k.id
+             JOIN customers c ON c.kontak_id = k.id
+             WHERE c.id = ? AND p.status != 'Closed'
+             ORDER BY p.id DESC LIMIT 1`,
+            [customer_id]
+          );
+          if (prospectings.length > 0) {
+            prospectingId = prospectings[0].id;
+          }
+        }
+
+        // Generate VA number (format: 88810 + 13 digit)
+        const timestamp = Date.now().toString().slice(-10);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        vaNumber = `88810${timestamp}${random}`;
+
+        // Insert VA record
+        await connection.query(
+          `INSERT INTO virtual_accounts
+           (prospecting_id, transaction_id, va_number, customer_no, customer_name, amount, status, expired_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE', DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
+          [
+            prospectingId,
+            transactionId,
+            vaNumber,
+            customer_phone || '',
+            customer_name || '',
+            total_amount
+          ]
+        );
+
+        // Update prospecting status to Closing if linked
+        if (prospectingId) {
+          await connection.query(
+            `UPDATE prospectings SET status = 'Closing' WHERE id = ?`,
+            [prospectingId]
+          );
+        }
+      } catch (vaErr) {
+        console.log('[Transaction] VA generation skipped:', vaErr.message);
+      }
+    }
 
     if (transaction_type === 'SALE' && items && items.length > 0) {
       for (const item of items) {
@@ -320,11 +375,131 @@ router.post('/create', async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: { id: transactionId }
+      data: {
+        id: transactionId,
+        va_number: vaNumber,
+        payment_status: initialPaymentStatus,
+        message: vaNumber ? `Invoice created with VA: ${vaNumber}` : 'Invoice created'
+      }
     });
   } catch (error) {
     await connection.rollback();
     console.error('Error creating transaction:', error);
+    res.status(500).json({ success: false, error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+/**
+ * Toggle payment status (PENDING <-> PAID)
+ * When marking as PAID, also creates journal entry
+ */
+router.patch('/:id/toggle-paid', async (req, res) => {
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const { id } = req.params;
+
+    // Get current transaction
+    const [transactions] = await connection.query(
+      'SELECT * FROM transactions WHERE id = ?',
+      [id]
+    );
+
+    if (transactions.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, error: 'Transaction not found' });
+    }
+
+    const transaction = transactions[0];
+    const newStatus = transaction.payment_status === 'PAID' ? 'PENDING' : 'PAID';
+    const paidAt = newStatus === 'PAID' ? new Date() : null;
+
+    // Update transaction status
+    await connection.query(
+      'UPDATE transactions SET payment_status = ?, paid_at = ? WHERE id = ?',
+      [newStatus, paidAt, id]
+    );
+
+    // If marking as PAID, create journal entry and update related records
+    if (newStatus === 'PAID') {
+      // Update VA status if exists
+      await connection.query(
+        `UPDATE virtual_accounts SET status = 'PAID', paid_at = NOW() WHERE transaction_id = ?`,
+        [id]
+      );
+
+      // Update prospecting status to Closed
+      const [vas] = await connection.query(
+        'SELECT prospecting_id FROM virtual_accounts WHERE transaction_id = ?',
+        [id]
+      );
+      if (vas.length > 0 && vas[0].prospecting_id) {
+        await connection.query(
+          `UPDATE prospectings SET status = 'Closed' WHERE id = ?`,
+          [vas[0].prospecting_id]
+        );
+      }
+
+      // Create journal entry
+      const journalDate = new Date().toISOString().split('T')[0];
+      const journalRef = `INV-${id}`;
+
+      // Check if journal_entries table exists and create entry
+      try {
+        // Debit: Kas/Bank (increase)
+        // Credit: Pendapatan Penjualan (increase)
+        await connection.query(
+          `INSERT INTO journal_entries
+           (entry_date, reference_number, description, account_code, account_name, debit, credit, transaction_id)
+           VALUES
+           (?, ?, ?, '1101', 'Kas', ?, 0, ?),
+           (?, ?, ?, '4101', 'Pendapatan Penjualan', 0, ?, ?)`,
+          [
+            journalDate, journalRef, `Pembayaran invoice #${id}`, transaction.total_amount, id,
+            journalDate, journalRef, `Pembayaran invoice #${id}`, transaction.total_amount, id
+          ]
+        );
+      } catch (journalErr) {
+        // Journal table might not exist, log and continue
+        console.log('[Transaction] Journal entry skipped:', journalErr.message);
+      }
+    } else {
+      // If marking as PENDING (unpaid), revert VA status
+      await connection.query(
+        `UPDATE virtual_accounts SET status = 'ACTIVE', paid_at = NULL WHERE transaction_id = ?`,
+        [id]
+      );
+
+      // Revert prospecting status to Closing
+      const [vas] = await connection.query(
+        'SELECT prospecting_id FROM virtual_accounts WHERE transaction_id = ?',
+        [id]
+      );
+      if (vas.length > 0 && vas[0].prospecting_id) {
+        await connection.query(
+          `UPDATE prospectings SET status = 'Closing' WHERE id = ?`,
+          [vas[0].prospecting_id]
+        );
+      }
+    }
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      data: {
+        id: parseInt(id),
+        payment_status: newStatus,
+        message: newStatus === 'PAID' ? 'Invoice marked as paid, journal created' : 'Invoice marked as unpaid'
+      }
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error toggling payment status:', error);
     res.status(500).json({ success: false, error: error.message });
   } finally {
     connection.release();
